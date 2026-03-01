@@ -1,0 +1,95 @@
+.contractor-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.contractor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.contractor-header__left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.contractor-header__avatar {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.contractor-header__name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.contractor-header__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.contractor-header__btn {
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: var(--radius-full);
+    transition: var(--transition);
+}
+
+.contractor-header__btn:hover {
+    background: var(--hover);
+    color: var(--text);
+}
+
+.contractor-content {
+    flex: 1;
+    padding: 16px;
+    padding-bottom: 80px;
+}
+
+.contractor-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    padding: 8px 0;
+    z-index: 100;
+}
+
+.contractor-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+
+.contractor-nav-item--active {
+    color: var(--color-primary);
+    font-weight: 600;
+}

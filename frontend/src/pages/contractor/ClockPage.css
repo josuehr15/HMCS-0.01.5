@@ -1,0 +1,121 @@
+.clock-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 16px 0;
+}
+
+.clock-page__time-display {
+    text-align: center;
+}
+
+.clock-page__time {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: 2px;
+    font-variant-numeric: tabular-nums;
+}
+
+.clock-page__date {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    text-transform: capitalize;
+}
+
+.clock-page__status {
+    text-align: center;
+}
+
+.clock-page__status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--hover);
+    color: var(--text-muted);
+}
+
+.clock-page__status-badge--active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.clock-page__button-area {
+    padding: 16px 0;
+}
+
+.clock-page__message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    width: 100%;
+}
+
+.clock-page__message--success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.clock-page__message--error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+}
+
+.clock-page__today {
+    width: 100%;
+}
+
+.clock-page__today-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.clock-page__today-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.clock-page__history {
+    width: 100%;
+}
+
+.clock-page__entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+
+.clock-page__entry:last-child {
+    border-bottom: none;
+}
+
+.clock-page__entry-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+}
+
+.clock-page__entry-hours {
+    font-weight: 600;
+    color: var(--text);
+}

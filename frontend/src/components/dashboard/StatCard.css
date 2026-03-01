@@ -1,0 +1,61 @@
+.stat-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.stat-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-card__title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.stat-card__value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.stat-card__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-card__icon--up {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.stat-card__icon--down {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+}
+
+.stat-card__icon--neutral {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--info);
+}
+
+.stat-card__change {
+    margin-top: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.stat-card__change--up {
+    color: var(--success);
+}
+
+.stat-card__change--down {
+    color: var(--error);
+}

@@ -1,0 +1,108 @@
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-layout__main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-layout__main--expanded {
+    margin-left: var(--sidebar-collapsed);
+}
+
+.admin-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.admin-header__menu-btn {
+    display: none;
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: var(--radius-sm);
+}
+
+.admin-header__menu-btn:hover {
+    background: var(--hover);
+}
+
+.admin-header__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    padding: 8px 16px;
+    flex: 1;
+    max-width: 400px;
+    color: var(--text-muted);
+}
+
+.admin-header__search-input {
+    border: none;
+    background: none;
+    outline: none;
+    color: var(--text);
+    flex: 1;
+    font-size: 0.875rem;
+}
+
+.admin-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.admin-header__icon-btn {
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: var(--radius-full);
+    transition: var(--transition);
+}
+
+.admin-header__icon-btn:hover {
+    background: var(--hover);
+    color: var(--text);
+}
+
+.admin-header__avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.admin-content {
+    padding: 24px;
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .admin-layout__main {
+        margin-left: 0;
+    }
+
+    .admin-header__menu-btn {
+        display: flex;
+    }
+}
