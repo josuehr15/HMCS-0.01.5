@@ -6,16 +6,16 @@ import { Menu, Bell, Search } from 'lucide-react';
 import './AdminLayout.css';
 
 const AdminLayout = () => {
-    const [collapsed, setCollapsed] = useState(false);
+    const [pinned, setPinned] = useState(false);
     const { user } = useAuth();
 
     return (
         <div className="admin-layout">
-            <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+            <Sidebar pinned={pinned} onPinToggle={() => setPinned(!pinned)} />
 
-            <div className={`admin-layout__main ${collapsed ? 'admin-layout__main--expanded' : ''}`}>
+            <div className={`admin-layout__main ${!pinned ? 'admin-layout__main--expanded' : ''}`}>
                 <header className="admin-header">
-                    <button className="admin-header__menu-btn" onClick={() => setCollapsed(!collapsed)}>
+                    <button className="admin-header__menu-btn" onClick={() => setPinned(!pinned)}>
                         <Menu size={20} />
                     </button>
 

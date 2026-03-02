@@ -1,3 +1,4 @@
+/* ─── Sidebar ────────────────────────────────────────── */
 .sidebar {
     position: fixed;
     top: 0;
@@ -9,7 +10,7 @@
     display: flex;
     flex-direction: column;
     z-index: 100;
-    transition: width 0.3s ease;
+    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
 }
 
@@ -17,13 +18,18 @@
     width: var(--sidebar-collapsed);
 }
 
+/* ─── Header ─────────────────────────────────────────── */
 .sidebar__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-    min-height: 64px;
+    padding: 20px 18px;
+    min-height: 72px;
+}
+
+.sidebar--collapsed .sidebar__header {
+    justify-content: center;
+    padding: 20px 0;
 }
 
 .sidebar__logo {
@@ -32,11 +38,16 @@
     gap: 12px;
 }
 
+.sidebar--collapsed .sidebar__logo {
+    justify-content: center;
+    width: 100%;
+}
+
 .sidebar__logo-icon {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #0D9488 0%, #08543D 100%);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -44,6 +55,7 @@
     font-weight: 800;
     font-size: 0.8rem;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.2);
 }
 
 .sidebar__logo-text {
@@ -53,40 +65,64 @@
     white-space: nowrap;
 }
 
-.sidebar__toggle {
+/* ─── Pin Button ─────────────────────────────────────── */
+.sidebar__pin {
     color: var(--text-muted);
     padding: 6px;
-    border-radius: var(--radius-sm);
-    transition: var(--transition);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
 }
 
-.sidebar__toggle:hover {
+.sidebar__pin:hover {
     background: var(--hover);
     color: var(--text);
 }
 
+.sidebar__pin--active {
+    color: #2A6C95;
+    background: rgba(42, 108, 149, 0.08);
+}
+
+.sidebar__pin--active:hover {
+    background: rgba(42, 108, 149, 0.12);
+    color: #2A6C95;
+}
+
+/* ─── Navigation ─────────────────────────────────────── */
 .sidebar__nav {
     flex: 1;
-    padding: 12px 8px;
+    padding: 4px 12px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
+.sidebar--collapsed .sidebar__nav {
+    padding: 4px 10px;
+}
+
 .sidebar__link {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
-    border-radius: var(--radius-md);
+    padding: 11px 14px;
+    border-radius: 10px;
     color: var(--text-muted);
     font-size: 0.875rem;
-    font-weight: 500;
-    transition: var(--transition);
+    font-weight: 450;
+    transition: all 0.15s ease;
     white-space: nowrap;
     width: 100%;
     text-align: left;
+    position: relative;
+}
+
+.sidebar--collapsed .sidebar__link {
+    justify-content: center;
+    padding: 11px;
 }
 
 .sidebar__link:hover {
@@ -94,25 +130,54 @@
     color: var(--text);
 }
 
+/* ─── Active Link — Azul #2A6C95 ────────────────────── */
 .sidebar__link--active {
-    background: rgba(42, 108, 149, 0.1);
-    color: var(--color-primary);
+    background: rgba(42, 108, 149, 0.07);
+    color: #2A6C95;
     font-weight: 600;
 }
 
-.sidebar__link--danger:hover {
-    color: var(--error);
+[data-theme="dark"] .sidebar__link--active {
+    background: rgba(42, 108, 149, 0.12);
+    color: #5BA3CF;
 }
 
+.sidebar__link--active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 55%;
+    background: #2A6C95;
+    border-radius: 0 3px 3px 0;
+}
+
+[data-theme="dark"] .sidebar__link--active::before {
+    background: #5BA3CF;
+}
+
+/* ─── Danger Link (Logout) ───────────────────────────── */
+.sidebar__link--danger:hover {
+    color: var(--error);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+/* ─── Footer ─────────────────────────────────────────── */
 .sidebar__footer {
-    padding: 12px 8px;
+    padding: 12px 12px;
     border-top: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-/* Mobile overlay */
+.sidebar--collapsed .sidebar__footer {
+    padding: 12px 10px;
+}
+
+/* ─── Mobile ─────────────────────────────────────────── */
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);

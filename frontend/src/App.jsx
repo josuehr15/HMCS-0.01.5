@@ -44,7 +44,6 @@ const AppRoutes = () => {
                 <Route path="time-entries" element={<div className="fade-in"><h2>Registro de Horas</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
                 <Route path="invoices" element={<div className="fade-in"><h2>Facturas</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
                 <Route path="payroll" element={<div className="fade-in"><h2>Nómina</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
-                <Route path="per-diem" element={<div className="fade-in"><h2>Per Diem</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
             </Route>
 
             {/* Contractor Routes */}
