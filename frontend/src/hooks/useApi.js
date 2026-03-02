@@ -25,9 +25,10 @@ const useApi = () => {
     const get = useCallback((url) => request('GET', url), [request]);
     const post = useCallback((url, data) => request('POST', url, data), [request]);
     const put = useCallback((url, data) => request('PUT', url, data), [request]);
+    const patch = useCallback((url, data) => request('PATCH', url, data), [request]);
     const del = useCallback((url) => request('DELETE', url), [request]);
 
-    return { get, post, put, del, loading, error };
+    return { get, post, put, patch, del, loading, error, request };
 };
 
 export default useApi;

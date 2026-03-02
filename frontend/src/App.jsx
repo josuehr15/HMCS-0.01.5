@@ -6,6 +6,7 @@ import ContractorLayout from './components/layout/ContractorLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/admin/Dashboard';
 import ClockPage from './pages/contractor/ClockPage';
+import Workers from './pages/admin/Workers';
 import './styles/globals.css';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -37,7 +38,7 @@ const AppRoutes = () => {
             }>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route path="workers" element={<div className="fade-in"><h2>Trabajadores</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
+                <Route path="workers" element={<Workers />} />
                 <Route path="clients" element={<div className="fade-in"><h2>Clientes</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
                 <Route path="projects" element={<div className="fade-in"><h2>Proyectos</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
                 <Route path="assignments" element={<div className="fade-in"><h2>Asignaciones</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />

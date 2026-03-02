@@ -7,8 +7,10 @@ const { successResponse, errorResponse } = require('../utils/responseHandler');
  */
 const getAllTrades = async (req, res) => {
     try {
+        const { include_inactive } = req.query;
+        const where = include_inactive === 'true' ? {} : { is_active: true };
         const trades = await Trade.findAll({
-            where: { is_active: true },
+            where,
             order: [['name', 'ASC']],
         });
 
