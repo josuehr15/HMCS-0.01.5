@@ -1,24 +1,42 @@
-const { Project, Client, Assignment, TimeEntry } = require('../models');
+const { Op } = require('sequelize');
+const { sequelize } = require('../config/database');
+const { Project, Client, Assignment, TimeEntry, Worker, Trade } = require('../models');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 
 /**
  * GET /api/projects
- * List all projects with optional filters: client_id, status.
+ * Filters: client_id, status, include_all
  */
 const getAllProjects = async (req, res) => {
     try {
-        const { client_id, status } = req.query;
-        const where = { is_active: true };
+        const { client_id, status, include_all } = req.query;
+        const where = { deleted_at: null };
 
+        if (include_all !== 'true') {
+            where.is_active = true;
+        }
         if (client_id) where.client_id = client_id;
-        if (status) where.status = status;
+        if (status && status !== 'all') where.status = status;
 
         const projects = await Project.findAll({
             where,
             include: [
                 { model: Client, as: 'client', attributes: ['id', 'company_name'] },
+                {
+                    model: Assignment,
+                    as: 'assignments',
+                    where: { is_active: true, status: 'active' },
+                    required: false,
+                    include: [
+                        {
+                            model: Worker, as: 'worker',
+                            attributes: ['id', 'first_name', 'last_name', 'worker_code'],
+                            include: [{ model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] }],
+                        },
+                    ],
+                },
             ],
-            order: [['created_at', 'DESC']],
+            order: [['name', 'ASC']],
         });
 
         return successResponse(res, projects, 'Projects retrieved successfully.');
@@ -30,23 +48,36 @@ const getAllProjects = async (req, res) => {
 
 /**
  * GET /api/projects/:id
- * Get single project with assignments and time entries.
  */
 const getProjectById = async (req, res) => {
     try {
         const project = await Project.findOne({
-            where: { id: req.params.id, is_active: true },
+            where: { id: req.params.id, deleted_at: null },
             include: [
                 { model: Client, as: 'client', attributes: ['id', 'company_name'] },
-                { model: Assignment, as: 'assignments' },
-                { model: TimeEntry, as: 'timeEntries' },
+                {
+                    model: Assignment,
+                    as: 'assignments',
+                    where: { is_active: true },
+                    required: false,
+                    include: [
+                        {
+                            model: Worker, as: 'worker',
+                            attributes: ['id', 'first_name', 'last_name', 'worker_code'],
+                            include: [{ model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] }],
+                        },
+                    ],
+                },
+                {
+                    model: TimeEntry,
+                    as: 'timeEntries',
+                    required: false,
+                    attributes: ['id', 'total_hours'],
+                },
             ],
         });
 
-        if (!project) {
-            return errorResponse(res, 'Project not found.', 404);
-        }
-
+        if (!project) return errorResponse(res, 'Project not found.', 404);
         return successResponse(res, project, 'Project retrieved successfully.');
     } catch (error) {
         console.error('getProjectById error:', error);
@@ -55,34 +86,69 @@ const getProjectById = async (req, res) => {
 };
 
 /**
+ * GET /api/projects/:id/linked-data
+ */
+const getProjectLinkedData = async (req, res) => {
+    try {
+        const project = await Project.findByPk(req.params.id);
+        if (!project) return errorResponse(res, 'Project not found.', 404);
+
+        const [assignments, timeEntries] = await Promise.all([
+            Assignment.count({ where: { project_id: project.id } }).catch(() => 0),
+            TimeEntry.count({ where: { project_id: project.id } }).catch(() => 0),
+        ]);
+        const total = assignments + timeEntries;
+
+        return successResponse(res, {
+            assignments, time_entries: timeEntries, total,
+            can_hard_delete: total === 0,
+        }, 'Linked data retrieved.');
+    } catch (error) {
+        console.error('getProjectLinkedData error:', error);
+        return errorResponse(res, 'Failed to get linked data.', 500);
+    }
+};
+
+/**
  * POST /api/projects
- * Create a new project. Requires GPS coordinates.
  */
 const createProject = async (req, res) => {
     try {
         const {
             client_id, name, address, latitude, longitude,
             gps_radius_meters, lunch_rule, lunch_duration_minutes,
-            work_hours_per_day, paid_hours_per_day, start_date, end_date, notes,
+            work_hours_per_day, paid_hours_per_day, start_date, end_date,
+            status, notes,
         } = req.body;
 
         if (!client_id || !name || !address || latitude === undefined || longitude === undefined) {
-            return errorResponse(res, 'Missing required fields: client_id, name, address, latitude, longitude.', 400);
+            return errorResponse(res, 'Campos requeridos: client_id, name, address, latitude, longitude.', 400);
         }
 
-        // Verify client exists
         const client = await Client.findByPk(client_id);
-        if (!client) {
-            return errorResponse(res, 'Invalid client_id.', 400);
-        }
+        if (!client) return errorResponse(res, 'Cliente no encontrado.', 400);
 
         const project = await Project.create({
-            client_id, name, address, latitude, longitude,
-            gps_radius_meters, lunch_rule, lunch_duration_minutes,
-            work_hours_per_day, paid_hours_per_day, start_date, end_date, notes,
+            client_id, name, address,
+            latitude: parseFloat(latitude),
+            longitude: parseFloat(longitude),
+            gps_radius_meters: parseInt(gps_radius_meters || 500),
+            lunch_rule: lunch_rule || 'paid',
+            lunch_duration_minutes: parseInt(lunch_duration_minutes || 60),
+            work_hours_per_day: parseFloat(work_hours_per_day || 9.00),
+            paid_hours_per_day: parseFloat(paid_hours_per_day || 10.00),
+            start_date: start_date || null,
+            end_date: end_date || null,
+            status: status || 'active',
+            is_active: true,
+            notes: notes || null,
         });
 
-        return successResponse(res, project, 'Project created successfully.', 201);
+        const full = await Project.findByPk(project.id, {
+            include: [{ model: Client, as: 'client', attributes: ['id', 'company_name'] }],
+        });
+
+        return successResponse(res, full, 'Proyecto creado exitosamente.', 201);
     } catch (error) {
         console.error('createProject error:', error);
         return errorResponse(res, 'Failed to create project.', 500);
@@ -91,17 +157,11 @@ const createProject = async (req, res) => {
 
 /**
  * PUT /api/projects/:id
- * Update project data.
  */
 const updateProject = async (req, res) => {
     try {
-        const project = await Project.findOne({
-            where: { id: req.params.id, is_active: true },
-        });
-
-        if (!project) {
-            return errorResponse(res, 'Project not found.', 404);
-        }
+        const project = await Project.findOne({ where: { id: req.params.id, deleted_at: null } });
+        if (!project) return errorResponse(res, 'Project not found.', 404);
 
         const {
             name, address, latitude, longitude, gps_radius_meters,
@@ -109,23 +169,29 @@ const updateProject = async (req, res) => {
             paid_hours_per_day, status, start_date, end_date, notes,
         } = req.body;
 
+        const newStatus = status || project.status;
         await project.update({
             name: name || project.name,
             address: address || project.address,
-            latitude: latitude !== undefined ? latitude : project.latitude,
-            longitude: longitude !== undefined ? longitude : project.longitude,
-            gps_radius_meters: gps_radius_meters !== undefined ? gps_radius_meters : project.gps_radius_meters,
+            latitude: latitude !== undefined ? parseFloat(latitude) : project.latitude,
+            longitude: longitude !== undefined ? parseFloat(longitude) : project.longitude,
+            gps_radius_meters: gps_radius_meters !== undefined ? parseInt(gps_radius_meters) : project.gps_radius_meters,
             lunch_rule: lunch_rule || project.lunch_rule,
-            lunch_duration_minutes: lunch_duration_minutes !== undefined ? lunch_duration_minutes : project.lunch_duration_minutes,
-            work_hours_per_day: work_hours_per_day !== undefined ? work_hours_per_day : project.work_hours_per_day,
-            paid_hours_per_day: paid_hours_per_day !== undefined ? paid_hours_per_day : project.paid_hours_per_day,
-            status: status || project.status,
+            lunch_duration_minutes: lunch_duration_minutes !== undefined ? parseInt(lunch_duration_minutes) : project.lunch_duration_minutes,
+            work_hours_per_day: work_hours_per_day !== undefined ? parseFloat(work_hours_per_day) : project.work_hours_per_day,
+            paid_hours_per_day: paid_hours_per_day !== undefined ? parseFloat(paid_hours_per_day) : project.paid_hours_per_day,
+            status: newStatus,
+            is_active: newStatus === 'active',
             start_date: start_date !== undefined ? start_date : project.start_date,
             end_date: end_date !== undefined ? end_date : project.end_date,
             notes: notes !== undefined ? notes : project.notes,
         });
 
-        return successResponse(res, project, 'Project updated successfully.');
+        const updated = await Project.findByPk(project.id, {
+            include: [{ model: Client, as: 'client', attributes: ['id', 'company_name'] }],
+        });
+
+        return successResponse(res, updated, 'Project updated successfully.');
     } catch (error) {
         console.error('updateProject error:', error);
         return errorResponse(res, 'Failed to update project.', 500);
@@ -133,35 +199,91 @@ const updateProject = async (req, res) => {
 };
 
 /**
- * DELETE /api/projects/:id
- * Soft delete.
+ * PATCH /api/projects/:id/toggle-status
+ * Cycles: active → on_hold → active
  */
-const deleteProject = async (req, res) => {
+const toggleProjectStatus = async (req, res) => {
     try {
-        const project = await Project.findOne({
-            where: { id: req.params.id, is_active: true },
+        const project = await Project.findOne({ where: { id: req.params.id, deleted_at: null } });
+        if (!project) return errorResponse(res, 'Project not found.', 404);
+
+        const newStatus = project.status === 'active' ? 'on_hold' : 'active';
+        const newIsActive = newStatus === 'active';
+        await project.update({ status: newStatus, is_active: newIsActive });
+
+        const updated = await Project.findByPk(project.id, {
+            include: [{ model: Client, as: 'client', attributes: ['id', 'company_name'] }],
         });
 
-        if (!project) {
-            return errorResponse(res, 'Project not found.', 404);
-        }
-
-        const assignmentCount = await Assignment.count({ where: { project_id: project.id } });
-        const timeEntryCount = await TimeEntry.count({ where: { project_id: project.id } });
-
-        await project.update({ is_active: false });
-
-        const response = { id: project.id, name: project.name };
-        if (assignmentCount > 0 || timeEntryCount > 0) {
-            response.warning = 'This project has linked data. It has been soft-deleted.';
-            response.linked_data = { assignments: assignmentCount, time_entries: timeEntryCount };
-        }
-
-        return successResponse(res, response, 'Project deactivated successfully.');
+        const msg = newStatus === 'active' ? 'Proyecto reactivado.' : 'Proyecto pausado.';
+        return successResponse(res, updated, msg);
     } catch (error) {
-        console.error('deleteProject error:', error);
-        return errorResponse(res, 'Failed to delete project.', 500);
+        console.error('toggleProjectStatus error:', error);
+        return errorResponse(res, 'Failed to toggle project status.', 500);
     }
 };
 
-module.exports = { getAllProjects, getProjectById, createProject, updateProject, deleteProject };
+/**
+ * DELETE /api/projects/:id  (soft deactivate — Level 1)
+ */
+const deleteProject = async (req, res) => {
+    try {
+        const project = await Project.findOne({ where: { id: req.params.id, deleted_at: null } });
+        if (!project) return errorResponse(res, 'Project not found.', 404);
+
+        await project.update({ is_active: false, status: 'on_hold' });
+        return successResponse(res, { id: project.id, action: 'deactivated' }, 'Proyecto desactivado.');
+    } catch (error) {
+        console.error('deleteProject error:', error);
+        return errorResponse(res, 'Failed to deactivate project.', 500);
+    }
+};
+
+/**
+ * DELETE /api/projects/:id/force
+ * Level 2: hard delete (no linked data) | Level 3: permanent hide (has linked data)
+ */
+const forceDeleteProject = async (req, res) => {
+    const t = await sequelize.transaction();
+    try {
+        const confirmed_id = req.body?.confirmed_id || req.query?.confirmed_id;
+        const project = await Project.findOne({ where: { id: req.params.id, deleted_at: null }, transaction: t });
+
+        if (!project) { await t.rollback(); return errorResponse(res, 'Project not found.', 404); }
+        if (String(confirmed_id) !== String(project.id)) {
+            await t.rollback();
+            return errorResponse(res, 'Confirmación de ID no coincide.', 400);
+        }
+
+        const [assignments, timeEntries] = await Promise.all([
+            Assignment.count({ where: { project_id: project.id }, transaction: t }).catch(() => 0),
+            TimeEntry.count({ where: { project_id: project.id }, transaction: t }).catch(() => 0),
+        ]);
+        const total = assignments + timeEntries;
+
+        if (total > 0) {
+            // Level 3: permanent hide
+            await project.update({ is_active: false, status: 'on_hold', deleted_at: new Date() }, { transaction: t });
+            await t.commit();
+            return successResponse(res, {
+                id: project.id, action: 'hidden',
+                linked_data: { assignments, time_entries: timeEntries, total },
+            }, 'Proyecto ocultado permanentemente. Datos conservados.');
+        }
+
+        // Level 2: hard delete
+        await project.destroy({ transaction: t });
+        await t.commit();
+        return successResponse(res, { id: project.id, action: 'deleted' }, 'Proyecto eliminado permanentemente.');
+    } catch (error) {
+        await t.rollback();
+        console.error('forceDeleteProject error:', error);
+        return errorResponse(res, 'Failed to permanently delete project.', 500);
+    }
+};
+
+module.exports = {
+    getAllProjects, getProjectById, getProjectLinkedData,
+    createProject, updateProject, deleteProject,
+    toggleProjectStatus, forceDeleteProject,
+};

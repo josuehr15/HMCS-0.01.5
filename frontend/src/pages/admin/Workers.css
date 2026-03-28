@@ -443,10 +443,11 @@
     background: #FAFAFA;
 }
 
-.worker-card__header {
+/* ── Worker Card top row ─────────────────────────────────────────── */
+.worker-card__top {
     display: flex;
-    align-items: center;
-    gap: 14px;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .worker-card__identity {
@@ -455,13 +456,54 @@
 }
 
 .worker-card__name {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     color: #111827;
-    margin: 0 0 4px;
+    margin: 0 0 3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Icon-only action buttons (top-right of card) */
+.worker-card__actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.wc-icon-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #F9FAFB;
+    color: #6B7280;
+    transition: all 0.18s;
+    flex-shrink: 0;
+}
+
+.wc-icon-btn--edit:hover {
+    background: #DBEAFE;
+    border-color: #2A6C95;
+    color: #2A6C95;
+}
+
+.wc-icon-btn--pause:hover {
+    background: #FEE2E2;
+    border-color: #DC2626;
+    color: #DC2626;
+}
+
+.wc-icon-btn--play:hover {
+    background: #D1FAE5;
+    border-color: #059669;
+    color: #059669;
 }
 
 .worker-card__body {
@@ -494,22 +536,35 @@
     flex-wrap: wrap;
 }
 
-.worker-card__footer {
-    display: flex;
-    gap: 8px;
-    padding-top: 12px;
+/* Stats bar */
+.worker-card__stats {
+    margin-top: 2px;
+    padding-top: 10px;
     border-top: 1px solid #F3F4F6;
 }
 
-.worker-card__btn {
-    flex: 1;
-    justify-content: center;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    gap: 5px;
-    height: 32px;
-    width: auto;
+.worker-card__stat-bar {
+    height: 5px;
+    background: #F3F4F6;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.worker-card__stat-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2A6C95, #10B981);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+    min-width: 3px;
+}
+
+.worker-card__stat-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #9CA3AF;
+    font-weight: 500;
 }
 
 /* ── Avatar ──────────────────────────────────────────────────────── */

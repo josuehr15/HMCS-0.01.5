@@ -52,6 +52,11 @@ const Client = sequelize.define('Client', {
         allowNull: false,
         defaultValue: true,
     },
+    deleted_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null,
+    },
 }, {
     tableName: 'clients',
     underscored: true,

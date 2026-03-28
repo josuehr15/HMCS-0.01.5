@@ -1,15 +1,17 @@
-/* ─── Sidebar ────────────────────────────────────────── */
+/* ─── Sidebar ───────────────────────────────────────────── */
 .sidebar {
     position: fixed;
-    top: 0;
+    top: 56px;
+    /* debajo del header global */
     left: 0;
-    height: 100vh;
+    height: calc(100vh - 56px);
     width: var(--sidebar-width);
     background: var(--bg-sidebar);
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    z-index: 100;
+    z-index: 90;
+    /* debajo del header (z:100) */
     transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
 }
@@ -18,51 +20,32 @@
     width: var(--sidebar-collapsed);
 }
 
-/* ─── Header ─────────────────────────────────────────── */
+/* ─── Header (solo icono pin cuando está expandido) ───────────────── */
 .sidebar__header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 20px 18px;
-    min-height: 72px;
+    justify-content: flex-end;
+    padding: 12px 14px;
+    min-height: 44px;
+    border-bottom: 1px solid var(--border);
 }
 
 .sidebar--collapsed .sidebar__header {
     justify-content: center;
-    padding: 20px 0;
+    padding: 12px 0;
 }
 
+/* Logo section hidden (moved to AdminLayout header) */
 .sidebar__logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.sidebar--collapsed .sidebar__logo {
-    justify-content: center;
-    width: 100%;
+    display: none;
 }
 
 .sidebar__logo-icon {
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(135deg, #0D9488 0%, #08543D 100%);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 800;
-    font-size: 0.8rem;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.2);
+    display: none;
 }
 
 .sidebar__logo-text {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--text);
-    white-space: nowrap;
+    display: none;
 }
 
 /* ─── Pin Button ─────────────────────────────────────── */
@@ -97,11 +80,42 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0;
 }
 
 .sidebar--collapsed .sidebar__nav {
     padding: 4px 10px;
+}
+
+/* ─── Sections ───────────────────────────────────────── */
+.sidebar__section {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 2px;
+}
+
+.sidebar__section-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 10px 14px 4px;
+    opacity: 0.65;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.sidebar__divider {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 14px;
+    opacity: 0.6;
+}
+
+.sidebar__divider--sm {
+    margin: 4px 10px;
 }
 
 .sidebar__link {
@@ -128,6 +142,8 @@
 .sidebar__link:hover {
     background: var(--hover);
     color: var(--text);
+    transform: none;
+    /* anula el hover global button:hover */
 }
 
 /* ─── Active Link — Azul #2A6C95 ────────────────────── */

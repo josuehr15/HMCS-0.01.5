@@ -11,6 +11,11 @@ const InvoiceLine = require('./InvoiceLine');
 const Payroll = require('./Payroll');
 const PayrollLine = require('./PayrollLine');
 const PerDiemEntry = require('./PerDiemEntry');
+const Document = require('./Document');
+const CompanySettings = require('./CompanySettings');
+const AccountingCategory = require('./AccountingCategory');
+const Transaction = require('./Transaction');
+const BankImport = require('./BankImport');
 
 // ─── User Associations ─────────────────────────────────
 User.hasOne(Worker, { foreignKey: 'user_id', as: 'worker' });
@@ -81,7 +86,24 @@ PayrollLine.belongsTo(Worker, { foreignKey: 'worker_id', as: 'worker' });
 PerDiemEntry.belongsTo(Worker, { foreignKey: 'worker_id', as: 'worker' });
 PerDiemEntry.belongsTo(Assignment, { foreignKey: 'assignment_id', as: 'assignment' });
 
+// ─── AccountingCategory Associations ───────────────────────────
+AccountingCategory.hasMany(Transaction, { foreignKey: 'category_id', as: 'transactions' });
+
+// ─── Transaction Associations ───────────────────────────────────
+Transaction.belongsTo(AccountingCategory, { foreignKey: 'category_id', as: 'category' });
+Transaction.belongsTo(Worker, { foreignKey: 'worker_id', as: 'worker' });
+Transaction.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
+Transaction.belongsTo(Invoice, { foreignKey: 'invoice_id', as: 'invoice' });
+Transaction.belongsTo(Payroll, { foreignKey: 'payroll_id', as: 'payroll' });
+// Self-reference for splits
+Transaction.hasMany(Transaction, { foreignKey: 'parent_transaction_id', as: 'splitChildren' });
+Transaction.belongsTo(Transaction, { foreignKey: 'parent_transaction_id', as: 'parentTransaction' });
+
+// ─── BankImport Associations ────────────────────────────────────
+BankImport.belongsTo(User, { foreignKey: 'imported_by_user_id', as: 'importedBy' });
+
 module.exports = {
     User, Worker, Client, Trade, Project, Assignment, ClientRate,
-    TimeEntry, Invoice, InvoiceLine, Payroll, PayrollLine, PerDiemEntry,
+    TimeEntry, Invoice, InvoiceLine, Payroll, PayrollLine, PerDiemEntry, Document, CompanySettings,
+    AccountingCategory, Transaction, BankImport,
 };

@@ -1,0 +1,810 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Accounting.css — Admin Accounting (5 tabs)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.ac-page {
+    padding: 24px 28px;
+    max-width: 1600px;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────────── */
+.ac-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border-bottom: 2px solid #E5E7EB;
+    margin-bottom: 0;
+    overflow-x: auto;
+    padding-bottom: 0;
+}
+
+.ac-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.ac-tab:hover {
+    color: #2A6C95;
+}
+
+.ac-tab--active {
+    color: #2A6C95;
+    border-bottom-color: #2A6C95;
+}
+
+.ac-tab-panel {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-top: none;
+    border-radius: 0 0 14px 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+    min-height: 400px;
+}
+
+.ac-tab-content {
+    padding: 24px;
+}
+
+/* ── Period / Year bar ────────────────────────────────────────────── */
+.ac-period-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.ac-period-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6B7280;
+}
+
+.ac-month-input {
+    padding: 6px 10px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #111827;
+    background: #F9FAFB;
+    cursor: pointer;
+}
+
+.ac-refresh-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #D1D5DB;
+    background: #F9FAFB;
+    cursor: pointer;
+    color: #6B7280;
+    transition: background 0.15s;
+}
+
+.ac-refresh-btn:hover {
+    background: #E5E7EB;
+}
+
+.ac-loading-txt {
+    font-size: 11px;
+    color: #9CA3AF;
+}
+
+/* ── P&L Box ──────────────────────────────────────────────────────── */
+.ac-pnl-box {
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.ac-section-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 14px;
+}
+
+.ac-pnl-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+
+.ac-pnl-col {
+    padding: 16px 20px;
+    border-right: 1px solid #E5E7EB;
+}
+
+.ac-pnl-col:last-child {
+    border-right: none;
+}
+
+.ac-pnl-type {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.ac-pnl-type--income {
+    color: #10B981;
+}
+
+.ac-pnl-type--expense {
+    color: #EF4444;
+}
+
+.ac-pnl-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #374151;
+    padding: 5px 0;
+    border-bottom: 1px dashed #F3F4F6;
+}
+
+.ac-pnl-row:last-child {
+    border-bottom: none;
+}
+
+.ac-pnl-row--total {
+    font-weight: 800;
+    font-size: 13px;
+    color: #111827;
+    border-top: 2px solid #E5E7EB;
+    padding-top: 8px;
+    border-bottom: none;
+    margin-top: 4px;
+}
+
+.ac-expense-txt {
+    color: #EF4444;
+}
+
+.ac-net-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: #EFF6FF;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+.ac-net-pos {
+    color: #2A6C95;
+}
+
+.ac-net-neg {
+    color: #EF4444;
+}
+
+.ac-perdiem-note {
+    font-size: 11px;
+    color: #9CA3AF;
+    padding: 8px 20px;
+    background: #F9FAFB;
+    margin: 0;
+}
+
+/* ── Cash flow mini chart ─────────────────────────────────────────── */
+.ac-cf-box {
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.ac-cf-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 140px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.ac-cf-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    min-width: 40px;
+}
+
+.ac-cf-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 120px;
+}
+
+.ac-cf-bar {
+    width: 14px;
+    min-height: 2px;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.3s;
+}
+
+.ac-cf-bar--income {
+    background: #10B981;
+}
+
+.ac-cf-bar--expense {
+    background: #EF4444;
+}
+
+.ac-cf-label {
+    font-size: 10px;
+    color: #9CA3AF;
+}
+
+.ac-cf-legend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #6B7280;
+    margin-top: 8px;
+}
+
+.ac-cf-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.ac-cf-dot--income {
+    background: #10B981;
+}
+
+.ac-cf-dot--expense {
+    background: #EF4444;
+}
+
+/* ── Margins tables ───────────────────────────────────────────────── */
+.ac-margins-box {
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.ac-margins-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.ac-margins-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 8px 10px;
+    border-bottom: 2px solid #E5E7EB;
+}
+
+.ac-margins-table th.r {
+    text-align: right;
+}
+
+.ac-margins-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #F3F4F6;
+    color: #374151;
+}
+
+.ac-margins-table td.r {
+    text-align: right;
+}
+
+.ac-margins-table tr:last-child td {
+    border-bottom: none;
+}
+
+.ac-pct {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.ac-pct--hi {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.ac-pct--mid {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.ac-pct--lo {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+/* ── Transactions ─────────────────────────────────────────────────── */
+.ac-income-amt {
+    color: #10B981;
+    font-weight: 700;
+}
+
+.ac-expense-amt {
+    color: #EF4444;
+    font-weight: 700;
+}
+
+.ac-tx-uncat {
+    background: #FFFBEB !important;
+}
+
+.ac-tx-child td {
+    background: #F9FAFB;
+}
+
+.ac-split-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    color: #6366F1;
+    background: #EDE9FE;
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-right: 5px;
+}
+
+.ac-uncat-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #92400E;
+    background: #FEF3C7;
+    border-radius: 10px;
+    padding: 3px 10px;
+}
+
+.ac-inline-cat-sel {
+    font-size: 11.5px;
+    padding: 5px 24px 5px 8px;
+    border: 1.5px solid #D1D5DB;
+    border-radius: 7px;
+    background: #F9FAFB;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    color: #374151;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    outline: none;
+}
+
+.ac-inline-cat-sel:hover {
+    border-color: #2A6C95;
+    background: #EFF6FF;
+}
+
+.ac-inline-cat-sel:focus {
+    border-color: #2A6C95;
+    box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.12);
+    background: #fff;
+}
+
+/* Estado: sin categoría */
+.ac-inline-cat-sel:invalid,
+.ac-inline-cat-sel option[value=""] {
+    color: #F59E0B;
+}
+
+/* Flash verde de auto-guardado */
+.ac-cat-saved {
+    animation: catSavedFlash 1s ease forwards;
+}
+
+@keyframes catSavedFlash {
+    0% {
+        border-color: #10B981;
+        background: #ECFDF5;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    60% {
+        border-color: #10B981;
+        background: #ECFDF5;
+    }
+
+    100% {
+        border-color: #D1D5DB;
+        background: #F9FAFB;
+        box-shadow: none;
+    }
+}
+
+.ac-type-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.ac-type-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 2px solid #E5E7EB;
+    background: #F9FAFB;
+    cursor: pointer;
+    color: #6B7280;
+    transition: all 0.15s;
+}
+
+.ac-type-btn--active {
+    border-color: #2A6C95;
+    background: #EFF6FF;
+    color: #2A6C95;
+}
+
+/* ── CSV Import ───────────────────────────────────────────────────── */
+.ac-import-header {
+    margin-bottom: 16px;
+}
+
+.ac-import-header h3 {
+    font-size: 16px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 4px;
+}
+
+.ac-import-sub {
+    font-size: 11px;
+    color: #9CA3AF;
+    margin: 0;
+}
+
+.ac-dropzone {
+    border: 2px dashed #D1D5DB;
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    background: #F9FAFB;
+    transition: border-color 0.15s;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 13px;
+    color: #6B7280;
+}
+
+.ac-dropzone:hover {
+    border-color: #2A6C95;
+    background: #EFF6FF;
+}
+
+.ac-csv-paste {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-family: monospace;
+    color: #374151;
+    background: #F9FAFB;
+    resize: vertical;
+    margin-bottom: 10px;
+}
+
+.ac-preview-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 10px;
+}
+
+.ac-ok {
+    color: #10B981;
+}
+
+.ac-dup {
+    color: #F59E0B;
+}
+
+.ac-dup-row {
+    background: #FEF2F2 !important;
+    opacity: 0.6;
+}
+
+.ac-split-row {
+    background: #EDE9FE30 !important;
+}
+
+.ac-dup-tag {
+    font-size: 10px;
+    color: #EF4444;
+    font-weight: 700;
+}
+
+.ac-sug-tag {
+    font-size: 10px;
+    color: #6366F1;
+    background: #EDE9FE;
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-right: 4px;
+}
+
+.ac-done-tag {
+    font-size: 10px;
+    color: #10B981;
+    font-weight: 700;
+}
+
+.ac-type-chip {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.ac-type-chip--income {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.ac-type-chip--expense {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+/* Split modal */
+.ac-split-info {
+    background: #F3F4F6;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: #374151;
+}
+
+.ac-split-info p {
+    margin: 3px 0;
+}
+
+.ac-split-part {
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.ac-split-part-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6B7280;
+    margin: 0 0 8px;
+}
+
+.ac-add-part-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #2A6C95;
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: background 0.15s;
+}
+
+.ac-add-part-btn:hover {
+    background: #DBEAFE;
+}
+
+.ac-split-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 12px;
+    border-radius: 8px;
+    gap: 12px;
+}
+
+.ac-split-total--ok {
+    background: #ECFDF5;
+    color: #065F46;
+}
+
+.ac-split-total--err {
+    background: #FEF2F2;
+    color: #991B1B;
+}
+
+/* ── Categories ───────────────────────────────────────────────────── */
+.ac-cat-section {
+    margin-bottom: 20px;
+}
+
+.ac-cat-type-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+.ac-cat-type-label--income {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.ac-cat-type-label--expense {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+/* ── Tax ──────────────────────────────────────────────────────────── */
+.ac-tax-box {
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.ac-tax-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 16px;
+    font-size: 13px;
+    color: #374151;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.ac-tax-row:last-child {
+    border-bottom: none;
+}
+
+.ac-tax-row--head {
+    background: #F9FAFB;
+    font-weight: 800;
+    font-size: 14px;
+    color: #111827;
+}
+
+.ac-tax-row--sub {
+    font-weight: 800;
+    color: #EF4444;
+    background: #FEF2F2;
+}
+
+.ac-tax-row--net {
+    background: #EFF6FF;
+    font-weight: 900;
+    font-size: 15px;
+    color: #2A6C95;
+    border-bottom: none;
+}
+
+.ac-tax-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #EF4444;
+    padding: 8px 16px;
+    background: #FFF5F5;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.ac-tax-divider {
+    height: 2px;
+    background: #E5E7EB;
+}
+
+/* ── Dark mode ────────────────────────────────────────────────────── */
+[data-theme="dark"] .ac-tab-panel {
+    background: #1F2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .ac-tab {
+    color: #9CA3AF;
+}
+
+[data-theme="dark"] .ac-tab--active {
+    color: #60A5FA;
+    border-bottom-color: #60A5FA;
+}
+
+[data-theme="dark"] .ac-tabs {
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .ac-pnl-box,
+[data-theme="dark"] .ac-cf-box,
+[data-theme="dark"] .ac-margins-box {
+    background: #111827;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .ac-pnl-row {
+    color: #D1D5DB;
+}
+
+[data-theme="dark"] .ac-net-row {
+    background: #1E3A5F;
+}
+
+[data-theme="dark"] .ac-month-input {
+    background: #1F2937;
+    border-color: #374151;
+    color: #F9FAFB;
+}
+
+[data-theme="dark"] .ac-dropzone {
+    background: #1F2937;
+    border-color: #374151;
+    color: #9CA3AF;
+}
+
+[data-theme="dark"] .ac-csv-paste {
+    background: #111827;
+    border-color: #374151;
+    color: #D1D5DB;
+}
+
+[data-theme="dark"] .ac-tax-box {
+    background: #111827;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .ac-tax-row {
+    color: #D1D5DB;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .ac-tax-row--head {
+    background: #1F2937;
+    color: #F9FAFB;
+}
+
+[data-theme="dark"] .ac-tax-row--net {
+    background: #1E3A5F;
+}

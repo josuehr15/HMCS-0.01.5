@@ -1,18 +1,39 @@
-const { User, Worker, Trade, Assignment, TimeEntry, sequelize } = require('../models');
+const { Op } = require('sequelize');
+const { User, Worker, Trade, Assignment, TimeEntry, InvoiceLine, PayrollLine } = require('../models');
+const { sequelize } = require('../config/database');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 const generateWorkerCode = require('../utils/generateWorkerCode');
 const bcrypt = require('bcryptjs');
 
 /**
  * GET /api/workers
- * List all workers with optional filters: status, trade_id, availability, include_inactive.
+ * Query params:
+ *   ?status=active|inactive        → filter by status
+ *   ?include_inactive=true         → include inactive (but never deleted_at workers)
+ *   ?trade_id=N                    → filter by trade
+ *   ?availability=...              → filter by availability
+ *
+ * DEFAULT: only workers with is_active=true AND deleted_at IS NULL
+ * Workers with deleted_at set are NEVER returned — permanently hidden.
  */
 const getAllWorkers = async (req, res) => {
     try {
         const { status, trade_id, availability, include_inactive } = req.query;
-        const where = include_inactive === 'true' ? {} : { is_active: true };
 
-        if (status) where.status = status;
+        // Base condition: never show permanently-deleted workers
+        const where = { deleted_at: null };
+
+        if (status === 'inactive') {
+            // Explicitly requested inactive list
+            where.is_active = false;
+        } else if (include_inactive === 'true') {
+            // Show all (active + inactive) — but still not deleted
+            // No is_active filter
+        } else {
+            // Default: only active
+            where.is_active = true;
+        }
+
         if (trade_id) where.trade_id = trade_id;
         if (availability) where.availability = availability;
 
@@ -22,7 +43,7 @@ const getAllWorkers = async (req, res) => {
                 { model: User, as: 'user', attributes: ['id', 'email', 'preferred_language', 'is_active'] },
                 { model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] },
             ],
-            order: [['created_at', 'DESC']],
+            order: [['first_name', 'ASC'], ['last_name', 'ASC']],
         });
 
         return successResponse(res, workers, 'Workers retrieved successfully.');
@@ -34,23 +55,18 @@ const getAllWorkers = async (req, res) => {
 
 /**
  * GET /api/workers/:id
- * Get a single worker with user, trade, and assignments.
  */
 const getWorkerById = async (req, res) => {
     try {
         const worker = await Worker.findOne({
-            where: { id: req.params.id },
+            where: { id: req.params.id, deleted_at: null },
             include: [
                 { model: User, as: 'user', attributes: ['id', 'email', 'preferred_language', 'is_active', 'last_login_at'] },
                 { model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] },
                 { model: Assignment, as: 'assignments' },
             ],
         });
-
-        if (!worker) {
-            return errorResponse(res, 'Worker not found.', 404);
-        }
-
+        if (!worker) return errorResponse(res, 'Worker not found.', 404);
         return successResponse(res, worker, 'Worker retrieved successfully.');
     } catch (error) {
         console.error('getWorkerById error:', error);
@@ -59,12 +75,87 @@ const getWorkerById = async (req, res) => {
 };
 
 /**
+ * GET /api/workers/:id/stats
+ * Hours and earnings this month + all time (approved entries only).
+ */
+const getWorkerStats = async (req, res) => {
+    try {
+        const worker = await Worker.findByPk(req.params.id);
+        if (!worker) return errorResponse(res, 'Worker not found.', 404);
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const monthEntries = await TimeEntry.findAll({
+            where: {
+                worker_id: worker.id,
+                status: 'approved',
+                clock_in: { [Op.gte]: startOfMonth },
+            },
+        });
+
+        let totalHoursMonth = 0;
+        monthEntries.forEach(e => { if (e.total_hours) totalHoursMonth += parseFloat(e.total_hours); });
+        const totalEarnedMonth = totalHoursMonth * parseFloat(worker.hourly_rate);
+
+        const allEntries = await TimeEntry.findAll({
+            where: { worker_id: worker.id, status: 'approved' },
+        });
+        let totalHoursAll = 0;
+        allEntries.forEach(e => { if (e.total_hours) totalHoursAll += parseFloat(e.total_hours); });
+        const totalEarnedAll = totalHoursAll * parseFloat(worker.hourly_rate);
+
+        return successResponse(res, {
+            total_hours_this_month: Math.round(totalHoursMonth * 10) / 10,
+            total_earned_this_month: Math.round(totalEarnedMonth * 100) / 100,
+            total_hours_all_time: Math.round(totalHoursAll * 10) / 10,
+            total_earned_all_time: Math.round(totalEarnedAll * 100) / 100,
+        }, 'Worker stats retrieved.');
+    } catch (error) {
+        console.error('getWorkerStats error:', error);
+        // Non-critical — return zeros so cards still render
+        return successResponse(res, {
+            total_hours_this_month: 0, total_earned_this_month: 0,
+            total_hours_all_time: 0, total_earned_all_time: 0,
+        }, 'Stats unavailable.');
+    }
+};
+
+/**
+ * GET /api/workers/:id/linked-data
+ * Count all records linked to this worker across all tables.
+ */
+const getWorkerLinkedData = async (req, res) => {
+    try {
+        const worker = await Worker.findByPk(req.params.id);
+        if (!worker) return errorResponse(res, 'Worker not found.', 404);
+
+        const wid = worker.id;
+        const [assignments, timeEntries, invoiceLines, payrollLines] = await Promise.all([
+            Assignment.count({ where: { worker_id: wid } }).catch(() => 0),
+            TimeEntry.count({ where: { worker_id: wid } }).catch(() => 0),
+            InvoiceLine.count({ where: { worker_id: wid } }).catch(() => 0),
+            PayrollLine.count({ where: { worker_id: wid } }).catch(() => 0),
+        ]);
+
+        const total = assignments + timeEntries + invoiceLines + payrollLines;
+
+        return successResponse(res, {
+            assignments, time_entries: timeEntries, invoice_lines: invoiceLines, payroll_lines: payrollLines,
+            total,
+            can_hard_delete: total === 0,
+        }, 'Linked data counts retrieved.');
+    } catch (error) {
+        console.error('getWorkerLinkedData error:', error);
+        return errorResponse(res, 'Failed to get linked data.', 500);
+    }
+};
+
+/**
  * POST /api/workers
- * Create a new worker + associated user account + auto-generate worker_code.
- * If email belongs to a deactivated worker → REACTIVATE instead of error.
+ * Create a new worker + user, OR reactivate if email belongs to soft-deleted worker.
  */
 const createWorker = async (req, res) => {
-    const t = await sequelize.transaction();
     try {
         const {
             email, password, first_name, last_name, phone, trade_id,
@@ -73,41 +164,34 @@ const createWorker = async (req, res) => {
         } = req.body;
 
         if (!email || !password || !first_name || !last_name || !phone || !trade_id || !hourly_rate) {
-            await t.rollback();
-            return errorResponse(res, 'Missing required fields: email, password, first_name, last_name, phone, trade_id, hourly_rate.', 400);
+            return errorResponse(res, 'Campos requeridos: email, password, first_name, last_name, phone, trade_id, hourly_rate.', 400);
         }
 
-        // Verify trade exists
-        const trade = await Trade.findByPk(trade_id, { transaction: t });
-        if (!trade) {
-            await t.rollback();
-            return errorResponse(res, 'Invalid trade_id.', 400);
-        }
+        const trade = await Trade.findByPk(trade_id);
+        if (!trade) return errorResponse(res, 'ID de oficio inválido.', 400);
 
-        // Check if email already exists
-        const existingUser = await User.findOne({ where: { email }, transaction: t });
+        // Check existing email
+        const existingUser = await User.findOne({ where: { email } });
 
         if (existingUser) {
-            // Check if it belongs to a soft-deleted (inactive) worker
+            // Look for a deactivated (not permanently deleted) worker
             const existingWorker = await Worker.findOne({
-                where: { user_id: existingUser.id, is_active: false },
-                transaction: t,
+                where: { user_id: existingUser.id, is_active: false, deleted_at: null },
             });
 
             if (existingWorker) {
-                // ── REACTIVATE the existing worker ──
-                const salt = await bcrypt.genSalt(10);
-                const password_hash = await bcrypt.hash(password, salt);
+                // ── REACTIVATE ──
+                const password_hash = await bcrypt.hash(password, await bcrypt.genSalt(10));
 
                 await existingUser.update({
                     is_active: true,
                     password_hash,
                     preferred_language: preferred_language || existingUser.preferred_language,
-                }, { transaction: t });
-
+                });
                 await existingWorker.update({
                     first_name, last_name, phone,
-                    trade_id, hourly_rate,
+                    trade_id: parseInt(trade_id),
+                    hourly_rate: parseFloat(hourly_rate),
                     address: address || existingWorker.address,
                     emergency_contact_name: emergency_contact_name || existingWorker.emergency_contact_name,
                     emergency_contact_phone: emergency_contact_phone || existingWorker.emergency_contact_phone,
@@ -115,9 +199,8 @@ const createWorker = async (req, res) => {
                     status: 'active',
                     availability: 'available',
                     is_active: true,
-                }, { transaction: t });
-
-                await t.commit();
+                    deleted_at: null,
+                });
 
                 const fullWorker = await Worker.findByPk(existingWorker.id, {
                     include: [
@@ -125,36 +208,38 @@ const createWorker = async (req, res) => {
                         { model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] },
                     ],
                 });
-
-                return successResponse(res, fullWorker, 'Trabajador reactivado exitosamente.', 200);
+                return successResponse(res, { ...fullWorker.toJSON(), reactivated: true }, 'Trabajador reactivado exitosamente.', 200);
             }
 
-            // Email belongs to an ACTIVE worker — real conflict
-            await t.rollback();
+            // Permanently deleted? treat email as taken by system
+            const permanentlyDeleted = await Worker.findOne({
+                where: { user_id: existingUser.id, deleted_at: { [Op.ne]: null } },
+            });
+            if (permanentlyDeleted) {
+                return errorResponse(res, 'El email pertenece a un perfil eliminado permanentemente. Usa otro email.', 409);
+            }
+
+            // Active worker with that email
             return errorResponse(res, 'El email ya está registrado por un trabajador activo.', 409);
         }
 
-        // ── CREATE NEW worker ──
-        const salt = await bcrypt.genSalt(10);
-        const password_hash = await bcrypt.hash(password, salt);
-
+        // ── CREATE NEW ──
+        const password_hash = await bcrypt.hash(password, await bcrypt.genSalt(10));
         const user = await User.create({
-            email,
-            password_hash,
-            role: 'contractor',
+            email, password_hash, role: 'contractor',
             preferred_language: preferred_language || 'es',
-        }, { transaction: t });
+            is_active: true,
+        });
 
         const worker_code = await generateWorkerCode();
-
         const worker = await Worker.create({
-            user_id: user.id,
-            worker_code,
-            first_name, last_name, phone, trade_id, hourly_rate,
+            user_id: user.id, worker_code,
+            first_name, last_name, phone,
+            trade_id: parseInt(trade_id),
+            hourly_rate: parseFloat(hourly_rate),
             address, emergency_contact_name, emergency_contact_phone, notes,
-        }, { transaction: t });
-
-        await t.commit();
+            status: 'active', availability: 'available', is_active: true,
+        });
 
         const fullWorker = await Worker.findByPk(worker.id, {
             include: [
@@ -162,10 +247,8 @@ const createWorker = async (req, res) => {
                 { model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] },
             ],
         });
-
         return successResponse(res, fullWorker, 'Worker created successfully.', 201);
     } catch (error) {
-        await t.rollback();
         console.error('createWorker error:', error);
         return errorResponse(res, 'Failed to create worker.', 500);
     }
@@ -173,17 +256,11 @@ const createWorker = async (req, res) => {
 
 /**
  * PUT /api/workers/:id
- * Update worker data. Cannot change worker_code.
  */
 const updateWorker = async (req, res) => {
     try {
-        const worker = await Worker.findOne({
-            where: { id: req.params.id },
-        });
-
-        if (!worker) {
-            return errorResponse(res, 'Worker not found.', 404);
-        }
+        const worker = await Worker.findOne({ where: { id: req.params.id, deleted_at: null } });
+        if (!worker) return errorResponse(res, 'Worker not found.', 404);
 
         const {
             first_name, last_name, phone, trade_id, hourly_rate,
@@ -191,10 +268,13 @@ const updateWorker = async (req, res) => {
             emergency_contact_phone, notes, ssn_encrypted,
         } = req.body;
 
-        if (trade_id && trade_id !== worker.trade_id) {
+        if (trade_id && String(trade_id) !== String(worker.trade_id)) {
             const trade = await Trade.findByPk(trade_id);
             if (!trade) return errorResponse(res, 'Invalid trade_id.', 400);
         }
+
+        const newStatus = status || worker.status;
+        const newIsActive = newStatus === 'active';
 
         await worker.update({
             first_name: first_name || worker.first_name,
@@ -202,7 +282,8 @@ const updateWorker = async (req, res) => {
             phone: phone || worker.phone,
             trade_id: trade_id || worker.trade_id,
             hourly_rate: hourly_rate !== undefined ? hourly_rate : worker.hourly_rate,
-            status: status || worker.status,
+            status: newStatus,
+            is_active: newIsActive,
             availability: availability || worker.availability,
             address: address !== undefined ? address : worker.address,
             emergency_contact_name: emergency_contact_name !== undefined ? emergency_contact_name : worker.emergency_contact_name,
@@ -211,13 +292,14 @@ const updateWorker = async (req, res) => {
             ssn_encrypted: ssn_encrypted !== undefined ? ssn_encrypted : worker.ssn_encrypted,
         });
 
+        await User.update({ is_active: newIsActive }, { where: { id: worker.user_id } });
+
         const updatedWorker = await Worker.findByPk(worker.id, {
             include: [
                 { model: User, as: 'user', attributes: ['id', 'email', 'preferred_language', 'is_active'] },
                 { model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] },
             ],
         });
-
         return successResponse(res, updatedWorker, 'Worker updated successfully.');
     } catch (error) {
         console.error('updateWorker error:', error);
@@ -227,14 +309,11 @@ const updateWorker = async (req, res) => {
 
 /**
  * PATCH /api/workers/:id/toggle-status
- * Toggle worker between active/inactive (soft toggle — no hard delete).
+ * Soft toggle: active ↔ inactive. Never deletes anything.
  */
 const toggleWorkerStatus = async (req, res) => {
     try {
-        const worker = await Worker.findByPk(req.params.id, {
-            include: [{ model: User, as: 'user' }],
-        });
-
+        const worker = await Worker.findOne({ where: { id: req.params.id, deleted_at: null } });
         if (!worker) return errorResponse(res, 'Worker not found.', 404);
 
         const newStatus = worker.status === 'active' ? 'inactive' : 'active';
@@ -263,43 +342,44 @@ const toggleWorkerStatus = async (req, res) => {
 
 /**
  * DELETE /api/workers/:id
- * Soft delete (is_active = false). Maintained for backwards compatibility.
+ * LEVEL 1 only — soft deactivate (sets is_active=false, status=inactive).
+ * This is the "Desactivar" action, not "Eliminar".
+ *
+ * Note: Real deletion (levels 2&3) is handled by forceDeleteWorker.
  */
 const deleteWorker = async (req, res) => {
     try {
-        const worker = await Worker.findOne({ where: { id: req.params.id, is_active: true } });
-        if (!worker) return errorResponse(res, 'Worker not found.', 404);
-
-        const assignmentCount = await Assignment.count({ where: { worker_id: worker.id } });
+        const worker = await Worker.findOne({ where: { id: req.params.id, is_active: true, deleted_at: null } });
+        if (!worker) return errorResponse(res, 'Worker not found or already inactive.', 404);
 
         await worker.update({ is_active: false, status: 'inactive' });
         await User.update({ is_active: false }, { where: { id: worker.user_id } });
 
-        const response = { id: worker.id, worker_code: worker.worker_code };
-        if (assignmentCount > 0) {
-            response.warning = `This worker has ${assignmentCount} assignment(s) linked.`;
-            response.linked_data = { assignments: assignmentCount };
-        }
-
-        return successResponse(res, response, 'Worker deactivated successfully.');
+        return successResponse(res, {
+            id: worker.id, worker_code: worker.worker_code, action: 'deactivated',
+        }, 'Trabajador desactivado.');
     } catch (error) {
         console.error('deleteWorker error:', error);
-        return errorResponse(res, 'Failed to delete worker.', 500);
+        return errorResponse(res, 'Failed to deactivate worker.', 500);
     }
 };
 
 /**
  * DELETE /api/workers/:id/force
- * HARD delete: deactivates User (frees email slot) + marks worker as permanently deleted.
- * Requires worker_code confirmation from client.
- * Does NOT physically destroy rows — sets deleted_at and anonymizes email.
+ * 3-level deletion logic:
+ *
+ * Requires `worker_code` confirmation via body or query.
+ *
+ * LEVEL 2 (no linked data) → hard delete: Worker + User removed from DB. Email freed.
+ * LEVEL 3 (has linked data) → permanent hide: sets deleted_at = NOW(). Data stays intact.
  */
 const forceDeleteWorker = async (req, res) => {
     const t = await sequelize.transaction();
     try {
         const confirmed_code = req.body?.confirmed_code || req.query?.confirmed_code;
 
-        const worker = await Worker.findByPk(req.params.id, {
+        const worker = await Worker.findOne({
+            where: { id: req.params.id, deleted_at: null },
             include: [{ model: User, as: 'user' }],
             transaction: t,
         });
@@ -311,33 +391,48 @@ const forceDeleteWorker = async (req, res) => {
 
         if (confirmed_code !== worker.worker_code) {
             await t.rollback();
-            return errorResponse(res, 'Worker code confirmation does not match.', 400);
+            return errorResponse(res, 'El código del trabajador no coincide.', 400);
         }
 
-        // Count linked data
-        const assignmentCount = await Assignment.count({ where: { worker_id: worker.id }, transaction: t });
+        // Count ALL linked data across all tables
+        const [assignments, timeEntries, invoiceLines, payrollLines] = await Promise.all([
+            Assignment.count({ where: { worker_id: worker.id }, transaction: t }).catch(() => 0),
+            TimeEntry.count({ where: { worker_id: worker.id }, transaction: t }).catch(() => 0),
+            InvoiceLine.count({ where: { worker_id: worker.id }, transaction: t }).catch(() => 0),
+            PayrollLine.count({ where: { worker_id: worker.id }, transaction: t }).catch(() => 0),
+        ]);
+        const totalLinked = assignments + timeEntries + invoiceLines + payrollLines;
 
-        // Anonymize email so it can be reused, then deactivate user
-        const anonymizedEmail = `deleted_${worker.id}_${Date.now()}@removed.invalid`;
-        await worker.user.update({
-            email: anonymizedEmail,
-            is_active: false,
-        }, { transaction: t });
+        if (totalLinked > 0) {
+            // ── LEVEL 3: Has data → permanently hide (never reappear) ──
+            await worker.update({
+                is_active: false,
+                status: 'inactive',
+                deleted_at: new Date(),
+                notes: `[OCULTO PERMANENTEMENTE ${new Date().toISOString()}] ${worker.notes || ''}`.trim(),
+            }, { transaction: t });
+            // Deactivate user but keep email (data integrity for reports)
+            await User.update({ is_active: false }, { where: { id: worker.user_id }, transaction: t });
 
-        // Mark worker as permanently deleted
-        await worker.update({
-            is_active: false,
-            status: 'inactive',
-            notes: `[ELIMINADO ${new Date().toISOString()}] ${worker.notes || ''}`.trim(),
-        }, { transaction: t });
+            await t.commit();
+            return successResponse(res, {
+                id: worker.id, worker_code: worker.worker_code,
+                action: 'hidden',
+                linked_data: { assignments, time_entries: timeEntries, invoice_lines: invoiceLines, payroll_lines: payrollLines, total: totalLinked },
+            }, 'Trabajador ocultado permanentemente. Los datos vinculados se conservan.');
+        }
+
+        // ── LEVEL 2: No linked data → hard delete ──
+        const userId = worker.user_id;
+        await worker.destroy({ transaction: t });
+        if (userId) {
+            await User.destroy({ where: { id: userId }, transaction: t });
+        }
 
         await t.commit();
-
         return successResponse(res, {
-            id: worker.id,
-            worker_code: worker.worker_code,
-            linked_data: { assignments: assignmentCount },
-        }, 'Perfil eliminado permanentemente. El email ha quedado libre.');
+            id: worker.id, worker_code: worker.worker_code, action: 'deleted',
+        }, 'Trabajador eliminado permanentemente. El email ha quedado libre.');
     } catch (error) {
         await t.rollback();
         console.error('forceDeleteWorker error:', error);
@@ -347,26 +442,20 @@ const forceDeleteWorker = async (req, res) => {
 
 /**
  * PUT /api/workers/:id/reset-password
- * Generate a temporary password and force change on next login.
  */
 const resetWorkerPassword = async (req, res) => {
     try {
-        const worker = await Worker.findByPk(req.params.id, {
+        const worker = await Worker.findOne({
+            where: { id: req.params.id, deleted_at: null },
             include: [{ model: User, as: 'user' }],
         });
-
         if (!worker) return errorResponse(res, 'Worker not found.', 404);
 
-        // Generate readable temp password
         const chars = 'abcdefghijkmnpqrstuvwxyz23456789';
         let tempPassword = 'hmcs-';
-        for (let i = 0; i < 6; i++) {
-            tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
+        for (let i = 0; i < 6; i++) tempPassword += chars[Math.floor(Math.random() * chars.length)];
 
-        const salt = await bcrypt.genSalt(10);
-        const password_hash = await bcrypt.hash(tempPassword, salt);
-
+        const password_hash = await bcrypt.hash(tempPassword, await bcrypt.genSalt(10));
         await worker.user.update({ password_hash });
 
         return successResponse(res, {
@@ -380,33 +469,6 @@ const resetWorkerPassword = async (req, res) => {
     }
 };
 
-/**
- * GET /api/workers/:id/linked-data
- * Count linked records before force delete.
- */
-const getWorkerLinkedData = async (req, res) => {
-    try {
-        const worker = await Worker.findByPk(req.params.id);
-        if (!worker) return errorResponse(res, 'Worker not found.', 404);
-
-        const assignmentCount = await Assignment.count({ where: { worker_id: worker.id } });
-
-        // Try to count time entries if model exists
-        let timeEntryCount = 0;
-        try {
-            timeEntryCount = await TimeEntry.count({ where: { worker_id: worker.id } });
-        } catch { /* model might not have this association */ }
-
-        return successResponse(res, {
-            assignments: assignmentCount,
-            time_entries: timeEntryCount,
-        }, 'Linked data counts retrieved.');
-    } catch (error) {
-        console.error('getWorkerLinkedData error:', error);
-        return errorResponse(res, 'Failed to get linked data.', 500);
-    }
-};
-
 module.exports = {
     getAllWorkers,
     getWorkerById,
@@ -417,4 +479,5 @@ module.exports = {
     forceDeleteWorker,
     resetWorkerPassword,
     getWorkerLinkedData,
+    getWorkerStats,
 };

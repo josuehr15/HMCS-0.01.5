@@ -1,77 +1,137 @@
+/* ─── Layout raíz ────────────────────────────────────────────────────────────── */
 .admin-layout {
     display: flex;
+    flex-direction: column;
     min-height: 100vh;
 }
 
-.admin-layout__main {
-    flex: 1;
-    margin-left: var(--sidebar-width);
-    transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
-}
-
-.admin-layout__main--expanded {
-    margin-left: var(--sidebar-collapsed);
-}
-
+/* ── Global Header ────────────────────────────────────────────────────────────── */
 .admin-header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 12px 24px;
+    height: 64px;
+    padding: 0 24px;
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
-    position: sticky;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+    position: fixed;
     top: 0;
-    z-index: 50;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    gap: 16px;
 }
 
-.admin-header__menu-btn {
-    display: none;
-    color: var(--text-muted);
-    padding: 8px;
-    border-radius: var(--radius-sm);
+/* ── Brand / Logo ── */
+.admin-header__brand {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    min-width: 40px;
 }
 
-.admin-header__menu-btn:hover {
-    background: var(--hover);
+.admin-header__logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: cover;
+    object-position: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    display: block;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.admin-header__logo:hover {
+    transform: scale(1.05);
+}
+
+/* ── Search Center ── */
+.admin-header__search-wrap {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 0 24px;
 }
 
 .admin-header__search {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    width: 100%;
+    max-width: 480px;
+    height: 40px;
     background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-full);
-    padding: 8px 16px;
-    flex: 1;
-    max-width: 400px;
-    color: var(--text-muted);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 0 14px;
+    transition: all 0.2s ease;
+}
+
+.admin-header__search:focus-within {
+    border-color: #2A6C95;
+    background: var(--bg-card);
+    box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.1);
+}
+
+.admin-header__search-icon {
+    color: var(--text-faint);
+    flex-shrink: 0;
+}
+
+.admin-header__search:focus-within .admin-header__search-icon {
+    color: #2A6C95;
 }
 
 .admin-header__search-input {
+    flex: 1;
     border: none;
     background: none;
     outline: none;
-    color: var(--text);
-    flex: 1;
     font-size: 0.875rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
 }
 
+.admin-header__search-input::placeholder {
+    color: var(--text-faint);
+}
+
+.admin-header__search-kbd {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    background: var(--hover);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    font-family: 'Inter', monospace;
+}
+
+/* ── Actions Right ── */
 .admin-header__actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    flex-shrink: 0;
     margin-left: auto;
 }
 
+/* Bell button */
 .admin-header__icon-btn {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--text-muted);
-    padding: 8px;
-    border-radius: var(--radius-full);
-    transition: var(--transition);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
 }
 
 .admin-header__icon-btn:hover {
@@ -79,30 +139,128 @@
     color: var(--text);
 }
 
+/* Notification badge */
+.admin-header__badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 16px;
+    height: 16px;
+    background: #EF4444;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-card);
+    font-family: 'Inter', sans-serif;
+}
+
+/* Divider vertical */
+.admin-header__divider {
+    width: 1px;
+    height: 28px;
+    background: var(--border);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* User block */
+.admin-header__user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 10px 4px 4px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.admin-header__user:hover {
+    background: var(--hover);
+}
+
+.admin-header__user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+}
+
+.admin-header__user-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    text-transform: capitalize;
+    line-height: 1;
+}
+
+.admin-header__user-role {
+    font-size: 0.68rem;
+    color: var(--text-faint);
+    font-weight: 400;
+    line-height: 1;
+}
+
+/* Avatar */
 .admin-header__avatar {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, #2A6C95 0%, #08543D 100%);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: 700;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
+    font-family: 'Montserrat', sans-serif;
+    box-shadow: 0 2px 8px rgba(42, 108, 149, 0.35);
+    flex-shrink: 0;
 }
 
-.admin-content {
-    padding: 24px;
+/* ── Body (debajo del header) ────────────────────────────────────────────────── */
+.admin-body {
+    display: flex;
     flex: 1;
+    padding-top: 64px;
+    /* altura del header fixed */
+    min-height: 100vh;
+}
+
+/* ── Contenido principal ─────────────────────────────────────────────────────── */
+.admin-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    min-height: calc(100vh - 64px);
+    overflow-y: auto;
+    transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--bg);
+}
+
+.admin-content--expanded {
+    margin-left: var(--sidebar-collapsed);
 }
 
 @media (max-width: 768px) {
-    .admin-layout__main {
+
+    .admin-content,
+    .admin-content--expanded {
         margin-left: 0;
     }
 
-    .admin-header__menu-btn {
-        display: flex;
+    .admin-header__user-info {
+        display: none;
+    }
+
+    .admin-header__search-kbd {
+        display: none;
+    }
+
+    .admin-header__search-wrap {
+        padding: 0 12px;
     }
 }

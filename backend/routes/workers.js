@@ -12,36 +12,43 @@ const {
     forceDeleteWorker,
     resetWorkerPassword,
     getWorkerLinkedData,
+    getWorkerStats,
 } = require('../controllers/workerController');
 
 // All routes require JWT authentication
 router.use(auth);
 
-// GET    /api/workers          - List all (admin only)
+// ── Collection routes ──────────────────────────────────────────────
+// GET    /api/workers
 router.get('/', checkRole('admin'), getAllWorkers);
 
-// GET    /api/workers/:id      - Get one (admin only)
-router.get('/:id', checkRole('admin'), getWorkerById);
-
-// GET    /api/workers/:id/linked-data  - Count linked records (pre-delete)
-router.get('/:id/linked-data', checkRole('admin'), getWorkerLinkedData);
-
-// POST   /api/workers          - Create (or reactivate if email exists inactive)
+// POST   /api/workers  (create or reactivate)
 router.post('/', checkRole('admin'), createWorker);
 
-// PUT    /api/workers/:id      - Update worker data
-router.put('/:id', checkRole('admin'), updateWorker);
-
-// PATCH  /api/workers/:id/toggle-status  - Toggle active/inactive
+// ── Sub-resource routes (must come BEFORE /:id) ────────────────────
+// PATCH  /api/workers/:id/toggle-status
 router.patch('/:id/toggle-status', checkRole('admin'), toggleWorkerStatus);
 
-// PUT    /api/workers/:id/reset-password  - Generate temp password
+// PUT    /api/workers/:id/reset-password
 router.put('/:id/reset-password', checkRole('admin'), resetWorkerPassword);
 
-// DELETE /api/workers/:id      - Soft delete
-router.delete('/:id', checkRole('admin'), deleteWorker);
+// GET    /api/workers/:id/linked-data
+router.get('/:id/linked-data', checkRole('admin'), getWorkerLinkedData);
 
-// DELETE /api/workers/:id/force - Hard delete (anonymize email, requires worker_code confirmation)
+// GET    /api/workers/:id/stats
+router.get('/:id/stats', checkRole('admin'), getWorkerStats);
+
+// DELETE /api/workers/:id/force
 router.delete('/:id/force', checkRole('admin'), forceDeleteWorker);
+
+// ── Single-resource routes (must come AFTER sub-resources) ─────────
+// GET    /api/workers/:id
+router.get('/:id', checkRole('admin'), getWorkerById);
+
+// PUT    /api/workers/:id
+router.put('/:id', checkRole('admin'), updateWorker);
+
+// DELETE /api/workers/:id  (soft delete)
+router.delete('/:id', checkRole('admin'), deleteWorker);
 
 module.exports = router;

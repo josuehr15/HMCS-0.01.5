@@ -4,7 +4,7 @@ import {
     Phone, MapPin, Briefcase, DollarSign, User, AlertTriangle,
     Users, CheckCircle, Clock, Shield, LayoutGrid, List,
     Settings, Wrench, Pencil, Trash2, Save, Key, Mail,
-    FileText, Play, Pause, Copy, ExternalLink, LogIn
+    FileText, Play, Pause, Copy, ExternalLink, LogIn, EyeOff
 } from 'lucide-react';
 import useApi from '../../hooks/useApi';
 import './Workers.css';
@@ -48,8 +48,20 @@ function FormField({ label, required, children, hint }) {
 }
 
 // ─── Worker Card ───────────────────────────────────────────────────────────────
-function WorkerCard({ worker, onEdit, onToggle, onCardClick }) {
+function WorkerCard({ worker, onEdit, onToggle, onCardClick, getStats }) {
     const isActive = worker.status === 'active';
+    const [stats, setStats] = useState(null);
+
+    // Lazy-load stats once card mounts
+    useEffect(() => {
+        if (!getStats) return;
+        getStats(worker.id).then(s => setStats(s)).catch(() => { });
+    }, [worker.id, getStats]);
+
+    const hoursPercent = stats
+        ? Math.min(100, (stats.total_hours_this_month / 160) * 100) // 160h = full month
+        : 0;
+
     return (
         <div
             className={`worker-card ${!isActive ? 'worker-card--inactive' : ''}`}
@@ -57,8 +69,10 @@ function WorkerCard({ worker, onEdit, onToggle, onCardClick }) {
             role="button"
             tabIndex={0}
             onKeyDown={e => e.key === 'Enter' && onCardClick(worker)}
+            style={{ cursor: 'pointer' }}
         >
-            <div className="worker-card__header">
+            {/* Top row: avatar + name + action buttons */}
+            <div className="worker-card__top">
                 <div className={`workers-avatar workers-avatar--lg ${!isActive ? 'workers-avatar--grey' : ''}`}>
                     {worker.first_name?.[0]}{worker.last_name?.[0]}
                 </div>
@@ -66,49 +80,66 @@ function WorkerCard({ worker, onEdit, onToggle, onCardClick }) {
                     <p className="worker-card__name">{worker.first_name} {worker.last_name}</p>
                     <code className="workers-code">{worker.worker_code}</code>
                 </div>
+                {/* Action buttons — top right, icon-only */}
+                <div className="worker-card__actions" onClick={e => e.stopPropagation()}>
+                    <button
+                        className="wc-icon-btn wc-icon-btn--edit"
+                        onClick={e => { e.stopPropagation(); onEdit(worker); }}
+                        title="Editar"
+                    >
+                        <Edit2 size={14} />
+                    </button>
+                    <button
+                        className={`wc-icon-btn ${isActive ? 'wc-icon-btn--pause' : 'wc-icon-btn--play'}`}
+                        onClick={e => { e.stopPropagation(); onToggle(worker); }}
+                        title={isActive ? 'Desactivar' : 'Reactivar'}
+                    >
+                        {isActive ? <Pause size={14} /> : <Play size={14} />}
+                    </button>
+                </div>
             </div>
 
+            {/* Info rows */}
             <div className="worker-card__body">
                 <div className="worker-card__row">
-                    <Wrench size={13} className="worker-card__ico" />
+                    <Wrench size={12} className="worker-card__ico" />
                     <span>{worker.trade?.name_es || worker.trade?.name || '—'}</span>
                 </div>
                 <div className="worker-card__row">
-                    <DollarSign size={13} className="worker-card__ico" />
+                    <DollarSign size={12} className="worker-card__ico" />
                     <span className="worker-card__rate">${parseFloat(worker.hourly_rate || 0).toFixed(2)}/hr</span>
                 </div>
                 {worker.phone && (
                     <div className="worker-card__row">
-                        <Phone size={13} className="worker-card__ico" />
+                        <Phone size={12} className="worker-card__ico" />
                         <span>{worker.phone}</span>
                     </div>
                 )}
             </div>
 
+            {/* Badges */}
             <div className="worker-card__badges">
                 <StatusBadge status={worker.status} />
                 <AvailabilityBadge availability={worker.availability} />
             </div>
 
-            <div className="worker-card__footer" onClick={e => e.stopPropagation()}>
-                <button
-                    className="workers-action-btn workers-action-btn--edit worker-card__btn"
-                    onClick={e => { e.stopPropagation(); onEdit(worker); }}
-                    title="Editar"
-                >
-                    <Edit2 size={13} /> Editar
-                </button>
-                <button
-                    className={`workers-action-btn worker-card__btn ${isActive ? 'workers-action-btn--deactivate' : 'workers-action-btn--reactivate'}`}
-                    onClick={e => { e.stopPropagation(); onToggle(worker); }}
-                    title={isActive ? 'Desactivar' : 'Reactivar'}
-                >
-                    {isActive ? <><Pause size={13} /> Desactivar</> : <><Play size={13} /> Reactivar</>}
-                </button>
+            {/* Stats bar */}
+            <div className="worker-card__stats">
+                <div className="worker-card__stat-bar">
+                    <div
+                        className="worker-card__stat-fill"
+                        style={{ width: `${hoursPercent}%` }}
+                    />
+                </div>
+                <div className="worker-card__stat-text">
+                    <span>{stats ? `${stats.total_hours_this_month}h este mes` : '—'}</span>
+                    <span>{stats ? `$${stats.total_earned_this_month.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}</span>
+                </div>
             </div>
         </div>
     );
 }
+
 
 // ─── Worker Drawer ─────────────────────────────────────────────────────────────
 function WorkerDrawer({ worker, trades, onClose, onEdit, onDeleted, onToggle, api, showToast }) {
@@ -179,10 +210,10 @@ function WorkerDrawer({ worker, trades, onClose, onEdit, onDeleted, onToggle, ap
     const startDelete = async () => {
         try {
             const res = await get(`/workers/${worker.id}/linked-data`);
-            const data = res.data || res;
-            setLinkedData(data.data || data);
+            const data = res.data?.data || res.data || res;
+            setLinkedData(data);
         } catch {
-            setLinkedData({ assignments: 0, time_entries: 0 });
+            setLinkedData({ assignments: 0, time_entries: 0, invoice_lines: 0, payroll_lines: 0, total: 0, can_hard_delete: true });
         }
         setDeleteStep(1);
     };
@@ -191,12 +222,21 @@ function WorkerDrawer({ worker, trades, onClose, onEdit, onDeleted, onToggle, ap
         if (confirmCode !== worker.worker_code) return;
         setDeleteLoading(true);
         try {
-            await del(`/workers/${worker.id}/force?confirmed_code=${encodeURIComponent(confirmCode)}`);
-            showToast(`Perfil de ${worker.first_name} eliminado permanentemente`);
+            const res = await del(`/workers/${worker.id}/force?confirmed_code=${encodeURIComponent(confirmCode)}`);
+            const data = res.data?.data || res.data || res;
+            const action = data?.action;
+
+            if (action === 'deleted') {
+                showToast(`Perfil de ${worker.first_name} eliminado permanentemente. Email liberado.`, 'success');
+            } else if (action === 'hidden') {
+                showToast(`${worker.first_name} ocultado del sistema. Los datos históricos se conservan.`, 'success');
+            } else {
+                showToast(`Perfil de ${worker.first_name} procesado.`, 'success');
+            }
             onDeleted(worker.id);
             onClose();
         } catch (err) {
-            showToast(err.response?.data?.message || 'Error al eliminar perfil', 'error');
+            showToast(err.response?.data?.message || err.message || 'Error al eliminar perfil', 'error');
         } finally {
             setDeleteLoading(false);
             setDeleteStep(0);
@@ -352,68 +392,103 @@ function WorkerDrawer({ worker, trades, onClose, onEdit, onDeleted, onToggle, ap
                 </div>
             )}
 
-            {/* ── Delete Step 1: Warning + linked data ── */}
-            {deleteStep === 1 && (
-                <div className="workers-modal-overlay" style={{ zIndex: 1200 }} onClick={() => setDeleteStep(0)}>
-                    <div className="workers-confirm-modal" onClick={e => e.stopPropagation()}>
-                        <div className="workers-confirm-modal__icon" style={{ background: '#FEE2E2', color: '#DC2626' }}>
-                            <Trash2 size={28} />
-                        </div>
-                        <h3>Eliminar Perfil Completo</h3>
-                        <p>¿Eliminar permanentemente el perfil de <strong>{worker.first_name} {worker.last_name}</strong>?</p>
-                        {linkedData && (
-                            <div className="delete-linked-data">
-                                <p className="delete-linked-data__title">Este trabajador tiene registros vinculados:</p>
-                                <ul>
-                                    {linkedData.assignments > 0 && <li>• {linkedData.assignments} asignación(es)</li>}
-                                    {linkedData.time_entries > 0 && <li>• {linkedData.time_entries} registro(s) de horas</li>}
-                                    {linkedData.assignments === 0 && linkedData.time_entries === 0 && <li>• Sin datos vinculados</li>}
-                                </ul>
-                                <p className="delete-linked-data__warning">⚠️ El email quedará libre para reutilizar. Esta acción es irreversible.</p>
+            {/* ── Delete Step 1: Warning + linked data — differentiated by level ── */}
+            {deleteStep === 1 && linkedData && (() => {
+                const canHardDelete = linkedData.can_hard_delete ?? (linkedData.total === 0);
+                const total = linkedData.total ?? (linkedData.assignments + linkedData.time_entries);
+                return (
+                    <div className="workers-modal-overlay" style={{ zIndex: 1200 }} onClick={() => setDeleteStep(0)}>
+                        <div className="workers-confirm-modal" onClick={e => e.stopPropagation()}>
+                            <div className="workers-confirm-modal__icon" style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                                {canHardDelete ? <Trash2 size={28} /> : <EyeOff size={28} />}
                             </div>
-                        )}
-                        <div className="workers-confirm-modal__actions">
-                            <button className="workers-btn-outline" onClick={() => setDeleteStep(0)}>Cancelar</button>
-                            <button className="workers-btn-danger" onClick={() => setDeleteStep(2)}>
-                                Sí, continuar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
-            {/* ── Delete Step 2: Type worker_code ── */}
-            {deleteStep === 2 && (
-                <div className="workers-modal-overlay" style={{ zIndex: 1200 }} onClick={() => { setDeleteStep(0); setConfirmCode(''); }}>
-                    <div className="workers-confirm-modal" onClick={e => e.stopPropagation()}>
-                        <div className="workers-confirm-modal__icon" style={{ background: '#FEE2E2', color: '#DC2626' }}>
-                            <Shield size={28} />
-                        </div>
-                        <h3>Confirmación Final</h3>
-                        <p>Escribe el código del trabajador para confirmar:</p>
-                        <div className="delete-code-confirm">
-                            <code className="delete-code-target">{worker.worker_code}</code>
-                            <input
-                                className="delete-code-input wf-input"
-                                value={confirmCode}
-                                onChange={e => setConfirmCode(e.target.value.toUpperCase())}
-                                placeholder="Escribe el código aquí"
-                                autoFocus
-                            />
-                        </div>
-                        <div className="workers-confirm-modal__actions">
-                            <button className="workers-btn-outline" onClick={() => { setDeleteStep(0); setConfirmCode(''); }}>Cancelar</button>
-                            <button
-                                className="workers-btn-danger"
-                                onClick={confirmHardDelete}
-                                disabled={confirmCode !== worker.worker_code || deleteLoading}
-                            >
-                                <Trash2 size={15} /> {deleteLoading ? 'Eliminando...' : 'Eliminar Definitivamente'}
-                            </button>
+                            {canHardDelete ? (
+                                /* LEVEL 2: no linked data → hard delete */
+                                <>
+                                    <h3>Eliminar Perfil Permanentemente</h3>
+                                    <p>Este trabajador <strong>no tiene datos vinculados</strong>. Puedes eliminarlo de forma permanente.</p>
+                                    <div className="delete-linked-data" style={{ background: '#F0FDF4', borderColor: '#BBF7D0' }}>
+                                        <p className="delete-linked-data__title" style={{ color: '#065F46' }}>✓ Sin datos vinculados</p>
+                                        <ul><li style={{ color: '#047857' }}>• Asignaciones: 0 &nbsp;• Horas: 0 &nbsp;• Facturas: 0</li></ul>
+                                        <p className="delete-linked-data__warning">
+                                            El registro del trabajador y su usuario se borrarán de la base de datos. El email quedará libre para reutilizar.
+                                        </p>
+                                    </div>
+                                </>
+                            ) : (
+                                /* LEVEL 3: has linked data → permanent hide */
+                                <>
+                                    <h3>Ocultar Perfil Permanentemente</h3>
+                                    <p>Este trabajador <strong>tiene datos vinculados</strong>. No se puede borrar para proteger la contabilidad.</p>
+                                    <div className="delete-linked-data">
+                                        <p className="delete-linked-data__title">Datos vinculados (se conservarán):</p>
+                                        <ul>
+                                            {linkedData.assignments > 0 && <li>• {linkedData.assignments} asignación(es)</li>}
+                                            {linkedData.time_entries > 0 && <li>• {linkedData.time_entries} registro(s) de horas</li>}
+                                            {linkedData.invoice_lines > 0 && <li>• {linkedData.invoice_lines} línea(s) de factura</li>}
+                                            {linkedData.payroll_lines > 0 && <li>• {linkedData.payroll_lines} línea(s) de nómina</li>}
+                                        </ul>
+                                        <p className="delete-linked-data__warning">
+                                            El perfil quedará oculto permanentemente. No aparecerá en ninguna vista, pero los datos históricos se conservan.
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+
+                            <div className="workers-confirm-modal__actions">
+                                <button className="workers-btn-outline" onClick={() => setDeleteStep(0)}>Cancelar</button>
+                                <button className="workers-btn-danger" onClick={() => setDeleteStep(2)}>
+                                    Sí, continuar →
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
+
+            {/* ── Delete Step 2: Type worker_code to confirm ── */}
+            {deleteStep === 2 && (() => {
+                const canHardDelete = linkedData?.can_hard_delete ?? (linkedData?.total === 0);
+                return (
+                    <div className="workers-modal-overlay" style={{ zIndex: 1200 }} onClick={() => { setDeleteStep(0); setConfirmCode(''); }}>
+                        <div className="workers-confirm-modal" onClick={e => e.stopPropagation()}>
+                            <div className="workers-confirm-modal__icon" style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                                <Shield size={28} />
+                            </div>
+                            <h3>Confirmación Final</h3>
+                            <p>
+                                {canHardDelete
+                                    ? 'Para eliminar permanentemente, escribe el código del trabajador:'
+                                    : 'Para ocultar permanentemente, escribe el código del trabajador:'}
+                            </p>
+                            <div className="delete-code-confirm">
+                                <code className="delete-code-target">{worker.worker_code}</code>
+                                <input
+                                    className="delete-code-input wf-input"
+                                    value={confirmCode}
+                                    onChange={e => setConfirmCode(e.target.value.toUpperCase())}
+                                    placeholder="Escribe el código aquí"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="workers-confirm-modal__actions">
+                                <button className="workers-btn-outline" onClick={() => { setDeleteStep(0); setConfirmCode(''); }}>Cancelar</button>
+                                <button
+                                    className="workers-btn-danger"
+                                    onClick={confirmHardDelete}
+                                    disabled={confirmCode !== worker.worker_code || deleteLoading}
+                                >
+                                    {canHardDelete
+                                        ? <><Trash2 size={15} /> {deleteLoading ? 'Eliminando...' : 'Eliminar Definitivamente'}</>
+                                        : <><EyeOff size={15} /> {deleteLoading ? 'Ocultando...' : 'Ocultar Permanentemente'}</>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </>
     );
 }
@@ -508,11 +583,18 @@ function TradesModal({ trades, onClose, onRefresh, api }) {
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function Workers() {
     const apiHook = useApi();
-    const { get, post, put, patch, del, loading } = apiHook;
+    const { get, post, put, patch, del } = apiHook;
+
+    // Stable callback for per-card stats fetch
+    const getStats = useCallback(async (workerId) => {
+        const res = await get(`/workers/${workerId}/stats`);
+        return res.data || res;
+    }, [get]);
 
     const [workers, setWorkers] = useState([]);
     const [trades, setTrades] = useState([]);
     const [filteredWorkers, setFiltered] = useState([]);
+    const [isLoading, setIsLoading] = useState(true); // local loading flag
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('workers_view') || 'cards');
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('create');
@@ -526,17 +608,28 @@ export default function Workers() {
     const [submitting, setSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterTrade, setFilterTrade] = useState('');
-    const [filterStatus, setFilterStatus] = useState('');
+    const [filterStatus, setFilterStatus] = useState('active'); // default: show only actives
 
     const changeView = (mode) => { setViewMode(mode); localStorage.setItem('workers_view', mode); };
 
-    // ── Fetch ────────────────────────────────────────────────────────────────
+    // ── Fetch — delegates status filtering to backend ─────────────────────
     const fetchWorkers = useCallback(async () => {
+        setIsLoading(true);
         try {
-            const res = await get('/workers?include_inactive=true');
-            setWorkers(res.data || res);
-        } catch { showToast('Error al cargar trabajadores', 'error'); }
-    }, [get]);
+            let url = '/workers';
+            if (filterStatus === 'inactive') url += '?status=inactive';
+            else if (filterStatus === 'all') url += '?include_inactive=true';
+            // else '' → default active-only
+            const res = await get(url);
+            const list = res.data || res;
+            setWorkers(Array.isArray(list) ? list : []);
+        } catch {
+            showToast('Error al cargar trabajadores', 'error');
+            setWorkers([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [get, filterStatus]);
 
     const fetchTrades = useCallback(async () => {
         try {
@@ -547,7 +640,7 @@ export default function Workers() {
 
     useEffect(() => { fetchWorkers(); fetchTrades(); }, [fetchWorkers, fetchTrades]);
 
-    // ── Filter ───────────────────────────────────────────────────────────────
+    // ── Client-side filter (search + trade — status is server-side) ───────
     useEffect(() => {
         let list = [...workers];
         if (searchTerm.trim()) {
@@ -559,9 +652,8 @@ export default function Workers() {
             );
         }
         if (filterTrade) list = list.filter(w => String(w.trade_id) === filterTrade);
-        if (filterStatus) list = list.filter(w => w.status === filterStatus);
         setFiltered(list);
-    }, [workers, searchTerm, filterTrade, filterStatus]);
+    }, [workers, searchTerm, filterTrade]);
 
     // ── Toast ────────────────────────────────────────────────────────────────
     const showToast = (msg, type = 'success') => {
@@ -708,9 +800,9 @@ export default function Workers() {
                 </div>
                 <div className="workers-select-wrapper">
                     <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="workers-select">
-                        <option value="">Todos los estados</option>
                         <option value="active">Activos</option>
                         <option value="inactive">Inactivos</option>
+                        <option value="all">Todos</option>
                     </select>
                     <ChevronDown size={13} className="workers-select__arrow" />
                 </div>
@@ -722,7 +814,7 @@ export default function Workers() {
             </div>
 
             {/* Content */}
-            {loading ? (
+            {isLoading ? (
                 <div className="workers-loading"><div className="workers-spinner" /><p>Cargando trabajadores...</p></div>
             ) : filteredWorkers.length === 0 ? (
                 <div className="workers-empty">
@@ -732,7 +824,7 @@ export default function Workers() {
             ) : viewMode === 'cards' ? (
                 <div className="workers-cards-grid">
                     {filteredWorkers.map(w => (
-                        <WorkerCard key={w.id} worker={w} onEdit={openEdit} onToggle={handleToggle} onCardClick={setDrawerWorker} />
+                        <WorkerCard key={w.id} worker={w} onEdit={openEdit} onToggle={handleToggle} onCardClick={setDrawerWorker} getStats={getStats} />
                     ))}
                 </div>
             ) : (

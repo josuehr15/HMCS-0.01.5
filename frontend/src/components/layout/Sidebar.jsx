@@ -3,21 +3,38 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import {
-    LayoutDashboard, Users, Building2, Briefcase, Clock,
-    FileText, DollarSign, LogOut, Sun, Moon,
-    Pin, FolderKanban,
+    LayoutDashboard, Users, Building2, FolderKanban, Clock,
+    FileText, DollarSign, LogOut, Sun, Moon, Pin,
+    Calculator, BarChart2, Settings,
 } from 'lucide-react';
 import './Sidebar.css';
 
-const adminMenu = [
-    { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/admin/workers', label: 'Trabajadores', icon: Users },
-    { path: '/admin/clients', label: 'Clientes', icon: Building2 },
-    { path: '/admin/projects', label: 'Proyectos', icon: FolderKanban },
-    { path: '/admin/assignments', label: 'Asignaciones', icon: Briefcase },
-    { path: '/admin/time-entries', label: 'Registro de Horas', icon: Clock },
-    { path: '/admin/invoices', label: 'Facturas', icon: FileText },
-    { path: '/admin/payroll', label: 'Nómina', icon: DollarSign },
+const MENU_SECTIONS = [
+    {
+        label: 'Operaciones',
+        items: [
+            { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+            { path: '/admin/workers', label: 'Trabajadores', icon: Users },
+            { path: '/admin/clients', label: 'Clientes', icon: Building2 },
+            { path: '/admin/projects', label: 'Proyectos', icon: FolderKanban },
+            { path: '/admin/time-entries', label: 'Registro de Horas', icon: Clock },
+            { path: '/admin/invoices', label: 'Facturas', icon: FileText },
+            { path: '/admin/payroll', label: 'Nómina', icon: DollarSign },
+        ],
+    },
+    {
+        label: 'Finanzas',
+        items: [
+            { path: '/admin/accounting', label: 'Contabilidad', icon: Calculator },
+            { path: '/admin/reports', label: 'Reportes', icon: BarChart2 },
+        ],
+    },
+    {
+        label: 'Sistema',
+        items: [
+            { path: '/admin/settings', label: 'Configuración', icon: Settings },
+        ],
+    },
 ];
 
 const Sidebar = ({ pinned, onPinToggle }) => {
@@ -52,15 +69,11 @@ const Sidebar = ({ pinned, onPinToggle }) => {
             onMouseLeave={handleMouseLeave}
         >
             <div className="sidebar__header">
-                <div className="sidebar__logo">
-                    <div className="sidebar__logo-icon">HM</div>
-                    {expanded && <span className="sidebar__logo-text">HMCS</span>}
-                </div>
                 {expanded && (
                     <button
                         className={`sidebar__pin ${pinned ? 'sidebar__pin--active' : ''}`}
                         onClick={onPinToggle}
-                        title={pinned ? 'Desfijar sidebar' : 'Fijar sidebar abierto'}
+                        title={pinned ? 'Desfijar sidebar' : 'Fijar sidebar'}
                     >
                         <Pin size={16} />
                     </button>
@@ -68,18 +81,27 @@ const Sidebar = ({ pinned, onPinToggle }) => {
             </div>
 
             <nav className="sidebar__nav">
-                {adminMenu.map((item) => (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) =>
-                            `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
-                        }
-                        title={!expanded ? item.label : undefined}
-                    >
-                        <item.icon size={20} />
-                        {expanded && <span>{item.label}</span>}
-                    </NavLink>
+                {MENU_SECTIONS.map((section, si) => (
+                    <div key={section.label} className="sidebar__section">
+                        {/* Section divider — only show when expanded and not the first section */}
+                        {expanded && si > 0 && <div className="sidebar__divider" />}
+                        {expanded && <p className="sidebar__section-label">{section.label}</p>}
+                        {!expanded && si > 0 && <div className="sidebar__divider sidebar__divider--sm" />}
+
+                        {section.items.map((item) => (
+                            <NavLink
+                                key={item.path}
+                                to={item.path}
+                                className={({ isActive }) =>
+                                    `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
+                                }
+                                title={!expanded ? item.label : undefined}
+                            >
+                                <item.icon size={20} />
+                                {expanded && <span>{item.label}</span>}
+                            </NavLink>
+                        ))}
+                    </div>
                 ))}
             </nav>
 

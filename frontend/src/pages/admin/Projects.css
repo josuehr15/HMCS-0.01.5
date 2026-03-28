@@ -1,0 +1,659 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Projects.css — Admin Projects page
+   Mirrors Workers.css / Clients.css design system
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Page ─────────────────────────────────────────────────────────── */
+.projects-page {
+    padding: 24px 28px;
+    max-width: 1600px;
+}
+
+/* ── Header ───────────────────────────────────────────────────────── */
+.projects-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.projects-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+    letter-spacing: -0.3px;
+}
+
+.projects-subtitle {
+    font-size: 13px;
+    color: #6B7280;
+    margin: 4px 0 0;
+}
+
+/* ── Stat cards ───────────────────────────────────────────────────── */
+.projects-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1100px) {
+    .projects-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .projects-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.projects-stat-card {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    transition: box-shadow 0.18s;
+}
+
+.projects-stat-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+}
+
+.projects-stat-card__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.projects-stat-card__value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.projects-stat-card__label {
+    font-size: 11px;
+    color: #6B7280;
+    margin: 2px 0 0;
+    font-weight: 500;
+}
+
+/* ── Cards grid ───────────────────────────────────────────────────── */
+.projects-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 1400px) {
+    .projects-cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1000px) {
+    .projects-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .projects-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Project Card ─────────────────────────────────────────────────── */
+.proj-card {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.proj-card:hover {
+    border-color: #2A6C95;
+    box-shadow: 0 6px 20px rgba(42, 108, 149, .12);
+    transform: translateY(-1px);
+}
+
+.proj-card--inactive {
+    opacity: 0.65;
+}
+
+.proj-card--inactive:hover {
+    border-color: #9CA3AF;
+}
+
+/* Top row */
+.proj-card__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.proj-card__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #2A6C95, #1E5270);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.proj-card__identity {
+    flex: 1;
+    min-width: 0;
+}
+
+.proj-card__name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.proj-card__client {
+    font-size: 11px;
+    color: #6B7280;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.proj-card__actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* Address row */
+.proj-card__address {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: #6B7280;
+}
+
+.proj-card__row-icon {
+    color: #9CA3AF;
+    flex-shrink: 0;
+}
+
+/* Middle: status + stats */
+.proj-card__middle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.proj-card__stats {
+    display: flex;
+    gap: 10px;
+    font-size: 10px;
+    color: #6B7280;
+}
+
+.proj-card__stats span {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Dates row */
+.proj-card__dates {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #6B7280;
+}
+
+/* Footer: GPS + lunch rules */
+.proj-card__footer {
+    padding-top: 8px;
+    border-top: 1px solid #F3F4F6;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.proj-card__gps,
+.proj-card__lunch {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #6B7280;
+    flex-wrap: wrap;
+}
+
+.proj-card__radius {
+    background: #EFF6FF;
+    color: #2A6C95;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 9px;
+    font-weight: 600;
+    margin-left: 2px;
+}
+
+/* ── Icon buttons (project cards) ─────────────────────────────────── */
+.pc-icon-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #F9FAFB;
+    color: #6B7280;
+    transition: all 0.18s;
+    flex-shrink: 0;
+}
+
+.pc-icon-btn--edit:hover {
+    background: #DBEAFE;
+    border-color: #2A6C95;
+    color: #2A6C95;
+}
+
+.pc-icon-btn--pause:hover {
+    background: #FEF3C7;
+    border-color: #F59E0B;
+    color: #D97706;
+}
+
+.pc-icon-btn--play:hover {
+    background: #D1FAE5;
+    border-color: #059669;
+    color: #059669;
+}
+
+/* ── Status badges ────────────────────────────────────────────────── */
+.proj-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.proj-badge--active {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.proj-badge--hold {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.proj-badge--done {
+    background: #F3F4F6;
+    color: #374151;
+}
+
+.proj-hrs-badge {
+    font-size: 10px;
+    color: #2A6C95;
+    background: #EFF6FF;
+    border-radius: 10px;
+    padding: 2px 7px;
+    font-weight: 600;
+}
+
+/* ── Drawer ───────────────────────────────────────────────────────── */
+.project-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 440px;
+    max-width: 96vw;
+    background: #fff;
+    box-shadow: -8px 0 40px rgba(0, 0, 0, .12);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideInRight 0.25s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Drawer icon (project) */
+.proj-drawer-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2A6C95, #1E5270);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Map link inside drawer */
+.proj-map-link {
+    margin-left: 6px;
+    font-size: 12px;
+    color: #2A6C95;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.proj-map-link:hover {
+    text-decoration: underline;
+}
+
+/* Map container */
+.proj-map-container {
+    margin-top: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #E5E7EB;
+}
+
+/* ── Assignments section in drawer ────────────────────────────────── */
+.proj-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.proj-assign-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #2A6C95;
+    background: #EFF6FF;
+    border: 1px solid #BAE6FD;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.proj-assign-btn:hover {
+    background: #DBEAFE;
+}
+
+.proj-assignments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.proj-assignment-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    transition: border-color 0.15s;
+}
+
+.proj-assignment-row--done {
+    opacity: 0.6;
+}
+
+.proj-assignment-row:hover {
+    border-color: #CBD5E1;
+}
+
+.workers-avatar-sm {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #2A6C95, #1E5270);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.proj-assignment-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.proj-assignment-name {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.proj-assignment-meta {
+    display: block;
+    font-size: 10px;
+    color: #9CA3AF;
+}
+
+.proj-assignment-right {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.proj-asgn-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 12px;
+}
+
+.proj-asgn-badge--active {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.proj-asgn-badge--completed {
+    background: #F3F4F6;
+    color: #374151;
+}
+
+.proj-asgn-badge--cancelled {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.proj-end-btn {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #BBF7D0;
+    border-radius: 5px;
+    background: #F0FDF4;
+    color: #059669;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.proj-end-btn:hover {
+    background: #D1FAE5;
+    border-color: #6EE7B7;
+}
+
+/* ── GPS extractor in modal ───────────────────────────────────────── */
+.proj-maps-extractor {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.proj-maps-extractor .wf-input {
+    flex: 1;
+}
+
+.proj-extract-btn {
+    padding: 8px 14px;
+    background: #2A6C95;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.proj-extract-btn:hover {
+    background: #1E5270;
+}
+
+.proj-maps-error {
+    font-size: 11px;
+    color: #DC2626;
+    margin: 2px 0 6px;
+}
+
+.proj-maps-hint {
+    font-size: 10px;
+    color: #9CA3AF;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+/* Preview map link */
+.proj-preview-map {
+    margin-bottom: 10px;
+}
+
+.proj-preview-link {
+    font-size: 11px;
+    color: #2A6C95;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.proj-preview-link:hover {
+    text-decoration: underline;
+}
+
+/* Wide modal */
+.workers-modal--wide {
+    max-width: 640px !important;
+}
+
+/* 3-col grid for modal */
+.wf-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+@media (max-width: 560px) {
+    .wf-grid-3 {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* ── Dark mode ────────────────────────────────────────────────────── */
+[data-theme="dark"] .projects-title,
+[data-theme="dark"] .projects-stat-card__value,
+[data-theme="dark"] .proj-card__name {
+    color: #F9FAFB;
+}
+
+[data-theme="dark"] .projects-stat-card,
+[data-theme="dark"] .proj-card,
+[data-theme="dark"] .project-drawer {
+    background: #1F2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .projects-stat-card__label,
+[data-theme="dark"] .proj-card__client,
+[data-theme="dark"] .proj-card__address,
+[data-theme="dark"] .proj-card__dates {
+    color: #9CA3AF;
+}
+
+[data-theme="dark"] .proj-card__footer {
+    border-color: #374151;
+}
+
+[data-theme="dark"] .pc-icon-btn {
+    background: #374151;
+    border-color: #4B5563;
+    color: #9CA3AF;
+}
+
+[data-theme="dark"] .proj-assignment-row {
+    background: #111827;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .proj-maps-hint {
+    background: #111827;
+    border-color: #374151;
+}

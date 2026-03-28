@@ -3,29 +3,32 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const checkRole = require('../middleware/checkRole');
 const {
-    getAllClients,
-    getClientById,
-    createClient,
-    updateClient,
-    deleteClient,
+    getAllClients, getClientById, getClientLinkedData,
+    createClient, updateClient, deleteClient,
+    toggleClientStatus, forceDeleteClient, resetClientPassword,
+    addClientRate, updateClientRate, deleteClientRate,
 } = require('../controllers/clientController');
 
-// All routes require JWT authentication
 router.use(auth);
 
-// GET /api/clients - List all (admin only)
+// ── Sub-resource routes (must be BEFORE /:id) ──────────────────────
+router.get('/:id/linked-data', checkRole('admin'), getClientLinkedData);
+router.patch('/:id/toggle-status', checkRole('admin'), toggleClientStatus);
+router.put('/:id/reset-password', checkRole('admin'), resetClientPassword);
+router.delete('/:id/force', checkRole('admin'), forceDeleteClient);
+
+// Client rates nested routes
+router.post('/:id/rates', checkRole('admin'), addClientRate);
+router.put('/:id/rates/:rateId', checkRole('admin'), updateClientRate);
+router.delete('/:id/rates/:rateId', checkRole('admin'), deleteClientRate);
+
+// ── Collection routes ──────────────────────────────────────────────
 router.get('/', checkRole('admin'), getAllClients);
-
-// GET /api/clients/:id - Get one (admin only)
-router.get('/:id', checkRole('admin'), getClientById);
-
-// POST /api/clients - Create (admin only)
 router.post('/', checkRole('admin'), createClient);
 
-// PUT /api/clients/:id - Update (admin only)
+// ── Single-resource routes (after sub-resources) ───────────────────
+router.get('/:id', checkRole('admin'), getClientById);
 router.put('/:id', checkRole('admin'), updateClient);
-
-// DELETE /api/clients/:id - Soft delete (admin only)
 router.delete('/:id', checkRole('admin'), deleteClient);
 
 module.exports = router;

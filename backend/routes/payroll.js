@@ -3,17 +3,32 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const checkRole = require('../middleware/checkRole');
 const {
-    generatePayroll, getAllPayrolls, getPayrollById,
-    approvePayroll, markWorkerPaid, getPayrollReview,
+    getAllPayrolls, getPayrollStats, getPendingWeeks, getPayrollById,
+    generatePayroll, updatePayrollStatus, deletePayroll,
+    markWorkerPaid, updatePayrollLine,
+    approvePayroll,
 } = require('../controllers/payrollController');
 
 router.use(auth);
 
+// ── Sub-routes BEFORE /:id ────────────────────────────────────────────
+router.get('/stats', checkRole('admin'), getPayrollStats);
+router.get('/pending-weeks', checkRole('admin'), getPendingWeeks);
 router.post('/generate', checkRole('admin'), generatePayroll);
-router.get('/review', checkRole('admin'), getPayrollReview);
+
+// ── PayrollLine routes ─────────────────────────────────────────────────
+router.patch('/lines/:id/pay', checkRole('admin'), markWorkerPaid);
+router.put('/lines/:id', checkRole('admin'), updatePayrollLine);
+
+// ── Collection ─────────────────────────────────────────────────────────
 router.get('/', checkRole('admin'), getAllPayrolls);
+
+// ── Single-resource ────────────────────────────────────────────────────
 router.get('/:id', checkRole('admin'), getPayrollById);
+router.patch('/:id/status', checkRole('admin'), updatePayrollStatus);
+router.delete('/:id', checkRole('admin'), deletePayroll);
+
+// Legacy
 router.put('/:id/approve', checkRole('admin'), approvePayroll);
-router.put('/lines/:id/paid', checkRole('admin'), markWorkerPaid);
 
 module.exports = router;

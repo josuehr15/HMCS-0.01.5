@@ -78,6 +78,11 @@ const Project = sequelize.define('Project', {
         allowNull: false,
         defaultValue: true,
     },
+    deleted_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null,
+    },
 }, {
     tableName: 'projects',
     underscored: true,

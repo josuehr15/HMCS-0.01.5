@@ -77,6 +77,11 @@ const TimeEntry = sequelize.define('TimeEntry', {
         type: DataTypes.TEXT,
         allowNull: true,
     },
+    edited_by_user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'users', key: 'id' },
+    },
     is_active: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

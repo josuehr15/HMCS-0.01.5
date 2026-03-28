@@ -7,6 +7,14 @@ import Login from './pages/Login';
 import Dashboard from './pages/admin/Dashboard';
 import ClockPage from './pages/contractor/ClockPage';
 import Workers from './pages/admin/Workers';
+import Clients from './pages/admin/Clients';
+import Projects from './pages/admin/Projects';
+import Timesheets from './pages/admin/Timesheets';
+import Invoices from './pages/admin/Invoices';
+import Payroll from './pages/admin/Payroll';
+import Accounting from './pages/admin/Accounting';
+import Reports from './pages/admin/Reports';
+import Settings from './pages/admin/Settings';
 import './styles/globals.css';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -39,12 +47,14 @@ const AppRoutes = () => {
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="workers" element={<Workers />} />
-                <Route path="clients" element={<div className="fade-in"><h2>Clientes</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
-                <Route path="projects" element={<div className="fade-in"><h2>Proyectos</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
-                <Route path="assignments" element={<div className="fade-in"><h2>Asignaciones</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
-                <Route path="time-entries" element={<div className="fade-in"><h2>Registro de Horas</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
-                <Route path="invoices" element={<div className="fade-in"><h2>Facturas</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
-                <Route path="payroll" element={<div className="fade-in"><h2>Nómina</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
+                <Route path="clients" element={<Clients />} />
+                <Route path="projects" element={<Projects />} />
+                <Route path="time-entries" element={<Timesheets />} />
+                <Route path="invoices" element={<Invoices />} />
+                <Route path="payroll" element={<Payroll />} />
+                <Route path="accounting" element={<Accounting />} />
+                <Route path="reports" element={<Reports />} />
+                <Route path="settings" element={<Settings />} />
             </Route>
 
             {/* Contractor Routes */}

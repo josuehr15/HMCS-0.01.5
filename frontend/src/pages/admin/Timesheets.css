@@ -1,0 +1,792 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Timesheets.css — Admin Timesheets (Calendar view)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Page ─────────────────────────────────────────────────────────── */
+.ts-page {
+    padding: 24px 28px;
+    max-width: 1800px;
+}
+
+/* ── Header ───────────────────────────────────────────────────────── */
+.ts-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.ts-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+    letter-spacing: -0.3px;
+}
+
+.ts-subtitle {
+    font-size: 13px;
+    color: #6B7280;
+    margin: 4px 0 0;
+}
+
+/* ── Stat cards ───────────────────────────────────────────────────── */
+.ts-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1100px) {
+    .ts-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .ts-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ts-stat-card {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    transition: box-shadow 0.18s;
+}
+
+.ts-stat-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+}
+
+.ts-stat-card__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ts-stat-card__value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+}
+
+.ts-stat-card__label {
+    font-size: 11px;
+    color: #6B7280;
+    margin: 2px 0 0;
+    font-weight: 500;
+}
+
+/* ── Month navigation ─────────────────────────────────────────────── */
+.ts-month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.ts-month-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+    min-width: 200px;
+    text-align: center;
+}
+
+.ts-month-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    background: #fff;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.ts-month-btn:hover {
+    background: #F3F4F6;
+    border-color: #2A6C95;
+    color: #2A6C95;
+}
+
+/* ── Bulk actions ─────────────────────────────────────────────────── */
+.ts-bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.ts-bulk-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: #2A6C95;
+    background: #EFF6FF;
+    border-radius: 10px;
+    padding: 3px 10px;
+}
+
+.ts-bulk-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+}
+
+.ts-bulk-btn--approve {
+    background: #D1FAE5;
+    color: #065F46;
+    border-color: #A7F3D0;
+}
+
+.ts-bulk-btn--approve:hover {
+    background: #A7F3D0;
+}
+
+.ts-bulk-btn--reject {
+    background: #FEE2E2;
+    color: #991B1B;
+    border-color: #FCA5A5;
+}
+
+.ts-bulk-btn--reject:hover {
+    background: #FCA5A5;
+}
+
+.ts-bulk-btn--clear {
+    background: #F3F4F6;
+    color: #6B7280;
+    border-color: #E5E7EB;
+}
+
+.ts-bulk-btn--clear:hover {
+    background: #E5E7EB;
+}
+
+.ts-select-all-btn {
+    font-size: 11px;
+    color: #6B7280;
+    background: none;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.ts-select-all-btn:hover {
+    border-color: #2A6C95;
+    color: #2A6C95;
+}
+
+/* ── Calendar grid ────────────────────────────────────────────────── */
+.ts-calendar {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+}
+
+/* Header row */
+.ts-cal-header {
+    display: grid;
+    grid-template-columns: 36px repeat(7, 1fr) 110px;
+    background: #F9FAFB;
+    border-bottom: 2px solid #E5E7EB;
+}
+
+.ts-cal-day-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6B7280;
+    text-align: center;
+    padding: 8px 4px;
+    border-left: 1px solid #E5E7EB;
+}
+
+.ts-cal-week-label,
+.ts-cal-week-summary-header {
+    font-size: 10px;
+    font-weight: 700;
+    color: #9CA3AF;
+    padding: 8px 4px;
+    text-align: center;
+}
+
+.ts-cal-week-summary-header {
+    border-left: 2px solid #E5E7EB;
+}
+
+/* Week row */
+.ts-cal-row {
+    display: grid;
+    grid-template-columns: 36px repeat(7, 1fr) 110px;
+    border-bottom: 1px solid #E5E7EB;
+    min-height: 90px;
+}
+
+.ts-cal-row:last-child {
+    border-bottom: none;
+}
+
+.ts-cal-week-label {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 8px;
+    background: #F9FAFB;
+    border-right: 1px solid #E5E7EB;
+    font-size: 10px;
+    font-weight: 700;
+    color: #9CA3AF;
+}
+
+/* Day cell */
+.ts-cal-cell {
+    border-left: 1px solid #E5E7EB;
+    padding: 4px;
+    min-height: 90px;
+    vertical-align: top;
+    background: #fff;
+    overflow: hidden;
+}
+
+.ts-cal-cell--other {
+    background: #FAFAFA;
+}
+
+.ts-cal-cell--today {
+    background: #EFF6FF;
+}
+
+.ts-cal-cell--today .ts-cal-cell__date {
+    color: #2A6C95;
+    font-weight: 800;
+}
+
+.ts-cal-cell__date {
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    text-align: right;
+    margin-bottom: 3px;
+}
+
+.ts-cal-cell__entries {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+/* ── Cell Entry chip ──────────────────────────────────────────────── */
+.ts-cell-entry {
+    border-radius: 6px;
+    padding: 4px 5px;
+    cursor: pointer;
+    border: 1px solid #E5E7EB;
+    background: #F9FAFB;
+    transition: all 0.15s;
+    font-size: 10px;
+}
+
+.ts-cell-entry:hover {
+    border-color: #2A6C95;
+    background: #EFF6FF;
+}
+
+.ts-cell-entry--sel {
+    background: #DBEAFE;
+    border-color: #93C5FD;
+}
+
+.ts-cell-entry--manual {
+    border-left: 3px solid #8B5CF6;
+}
+
+.ts-cell-entry--live {
+    border-left: 3px solid #EF4444;
+    animation: ts-live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ts-live-pulse {
+
+    0%,
+    100% {
+        background: #F9FAFB;
+    }
+
+    50% {
+        background: #FEF2F2;
+    }
+}
+
+.ts-cell-entry__top {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-bottom: 2px;
+}
+
+.ts-cell-entry__check {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.ts-cell-entry__check input {
+    width: 11px;
+    height: 11px;
+    cursor: pointer;
+}
+
+.ts-cell-entry__initials {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #2A6C95, #1E5270);
+    color: white;
+    font-size: 8px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.ts-cell-entry__time {
+    color: #6B7280;
+    font-size: 9px;
+    line-height: 1.2;
+}
+
+.ts-cell-entry__hrs {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-weight: 700;
+    color: #374151;
+    font-size: 10px;
+}
+
+.ts-cell-entry__proj {
+    color: #9CA3AF;
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ts-manual-dot {
+    font-size: 8px;
+    font-weight: 800;
+    background: #EDE9FE;
+    color: #7C3AED;
+    border-radius: 3px;
+    padding: 1px 3px;
+}
+
+/* ── Status badges ────────────────────────────────────────────────── */
+.ts-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.ts-badge--sm {
+    font-size: 9px;
+    padding: 1px 4px;
+}
+
+.ts-badge--live {
+    background: #FEE2E2;
+    color: #B91C1C;
+}
+
+.ts-badge--pending {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.ts-badge--approved {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.ts-badge--flagged {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.ts-badge--rejected {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+.ts-badge--manual {
+    background: #EDE9FE;
+    color: #7C3AED;
+}
+
+.ts-pulse {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #EF4444;
+    animation: pulseAnim 1.4s ease-in-out infinite;
+}
+
+@keyframes pulseAnim {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.4;
+        transform: scale(1.4);
+    }
+}
+
+/* ── Week Summary ─────────────────────────────────────────────────── */
+.ts-week-summary {
+    border-left: 2px solid #E5E7EB;
+    padding: 6px 6px;
+    background: #F9FAFB;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 90px;
+}
+
+.ts-week-summary__title {
+    font-size: 10px;
+    font-weight: 700;
+    color: #6B7280;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.ts-week-summary__empty {
+    font-size: 10px;
+    color: #D1D5DB;
+}
+
+.ts-week-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.ts-week-row__initials {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #2A6C95, #1E5270);
+    color: white;
+    font-size: 8px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.ts-week-row__hrs {
+    font-size: 10px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.ts-week-row__ot {
+    font-size: 9px;
+    background: #FEF3C7;
+    color: #92400E;
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-weight: 700;
+}
+
+.ts-week-summary__total {
+    border-top: 1px solid #E5E7EB;
+    padding-top: 4px;
+    margin-top: 2px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #374151;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.ts-week-summary__pending {
+    color: #F59E0B;
+}
+
+.ts-approve-week-btn {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    background: #D1FAE5;
+    color: #065F46;
+    border: 1px solid #A7F3D0;
+    border-radius: 5px;
+    padding: 3px 6px;
+    cursor: pointer;
+    margin-top: 2px;
+    transition: background 0.15s;
+}
+
+.ts-approve-week-btn:hover {
+    background: #A7F3D0;
+}
+
+/* ── Drawer ───────────────────────────────────────────────────────── */
+.ts-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 440px;
+    max-width: 96vw;
+    background: #fff;
+    box-shadow: -8px 0 40px rgba(0, 0, 0, .12);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideInRight 0.25s ease;
+}
+
+.ts-drawer-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2A6C95, #1E5270);
+    color: white;
+    font-size: 18px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.ts-hours-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #111827;
+    margin-top: 6px;
+}
+
+.ts-gps-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #6B7280;
+    padding: 4px 6px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+}
+
+.ts-gps-row--ok {
+    background: #F0FDF4;
+}
+
+.ts-gps-row--warn {
+    background: #FEF3C7;
+}
+
+.ts-gps-dist {
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.ts-manual-box {
+    background: #EDE9FE;
+    border: 1px solid #C4B5FD;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.ts-manual-box__label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #7C3AED;
+    margin-bottom: 4px;
+}
+
+.ts-manual-box__text {
+    font-size: 12px;
+    color: #4C1D95;
+}
+
+/* Status action buttons */
+.ts-status-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ts-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+}
+
+.ts-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ts-action-btn--approve {
+    background: #D1FAE5;
+    color: #065F46;
+    border-color: #A7F3D0;
+}
+
+.ts-action-btn--approve:hover:not(:disabled) {
+    background: #A7F3D0;
+}
+
+.ts-action-btn--flag {
+    background: #FEF3C7;
+    color: #92400E;
+    border-color: #FDE68A;
+}
+
+.ts-action-btn--flag:hover:not(:disabled) {
+    background: #FDE68A;
+}
+
+.ts-action-btn--reject {
+    background: #FEE2E2;
+    color: #991B1B;
+    border-color: #FCA5A5;
+}
+
+.ts-action-btn--reject:hover:not(:disabled) {
+    background: #FCA5A5;
+}
+
+/* ── Modal extras ─────────────────────────────────────────────────── */
+.ts-manual-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    color: #92400E;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+}
+
+.ts-calc-hrs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #2A6C95;
+    background: #EFF6FF;
+    border: 1px solid #BAE6FD;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+}
+
+/* ── Dark mode ────────────────────────────────────────────────────── */
+[data-theme="dark"] .ts-title,
+[data-theme="dark"] .ts-month-title,
+[data-theme="dark"] .ts-stat-card__value,
+[data-theme="dark"] .ts-cal-cell__date {
+    color: #F9FAFB;
+}
+
+[data-theme="dark"] .ts-stat-card,
+[data-theme="dark"] .ts-calendar,
+[data-theme="dark"] .ts-drawer {
+    background: #1F2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .ts-cal-header,
+[data-theme="dark"] .ts-cal-week-label,
+[data-theme="dark"] .ts-week-summary {
+    background: #111827;
+}
+
+[data-theme="dark"] .ts-cal-cell {
+    background: #1F2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .ts-cal-cell--other {
+    background: #111827;
+}
+
+[data-theme="dark"] .ts-cal-cell--today {
+    background: #1E3A5F;
+}
+
+[data-theme="dark"] .ts-cell-entry {
+    background: #374151;
+    border-color: #4B5563;
+}
+
+[data-theme="dark"] .ts-stat-card__label {
+    color: #9CA3AF;
+}

@@ -159,14 +159,34 @@
    ═══════════════════════════════════════════════════════ */
 .ds-card {
     background: var(--bg-card);
-    border-radius: 12px;
+    border-radius: 16px;
+    padding: 22px 24px;
     border: 1px solid var(--border);
-    padding: 22px;
-    transition: border 0.25s, box-shadow 0.25s, transform 0.25s, opacity 0.25s;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.04),
+        0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+    position: relative;
+    overflow: hidden;
 }
 
 .ds-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.06),
+        0 12px 28px rgba(0, 0, 0, 0.09);
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .ds-card {
+    box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.25),
+        0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .ds-card:hover {
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.35),
+        0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 /* ─── Sizes (only in edit mode) ─── */
@@ -190,30 +210,23 @@
 
 /* ─── Edit mode ─── */
 .ds-card--editing {
-    border: 2px dashed #2DB84B;
     cursor: pointer;
 }
 
 .ds-card--editing:hover {
-    box-shadow: 0 4px 16px rgba(45, 184, 75, 0.12);
+    transform: none;
 }
 
 /* Selected (first click) */
 .ds-card--selected {
-    border-color: #0D9488 !important;
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.25) !important;
-    transform: scale(1.015);
-    background: rgba(13, 148, 136, 0.02);
+    outline: 2px solid #2A6C95;
+    outline-offset: 2px;
 }
 
 /* Swap target (second click candidate) */
 .ds-card--swap-target {
-    border-color: #2DB84B !important;
-}
-
-.ds-card--swap-target:hover {
-    box-shadow: 0 0 0 3px rgba(45, 184, 75, 0.2), 0 8px 20px rgba(45, 184, 75, 0.1) !important;
-    transform: scale(1.01);
+    outline: 2px dashed #0D9488;
+    outline-offset: 2px;
 }
 
 /* ─── Controls bar inside card ─── */
