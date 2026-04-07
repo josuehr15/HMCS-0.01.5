@@ -11,7 +11,9 @@ import Clients from './pages/admin/Clients';
 import Projects from './pages/admin/Projects';
 import Timesheets from './pages/admin/Timesheets';
 import Invoices from './pages/admin/Invoices';
+import InvoicePrint from './pages/admin/InvoicePrint';
 import Payroll from './pages/admin/Payroll';
+import VoucherPrint from './pages/admin/VoucherPrint';
 import Accounting from './pages/admin/Accounting';
 import Reports from './pages/admin/Reports';
 import Settings from './pages/admin/Settings';
@@ -39,6 +41,17 @@ const AppRoutes = () => {
             } />
 
             {/* Admin Routes */}
+            <Route path="/admin/invoices/:id" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <InvoicePrint />
+                </ProtectedRoute>
+            } />
+            <Route path="/admin/payroll/voucher/:id" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <VoucherPrint />
+                </ProtectedRoute>
+            } />
+
             <Route path="/admin" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                     <AdminLayout />

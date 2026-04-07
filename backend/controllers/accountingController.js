@@ -434,9 +434,12 @@ const getPnL = async (req, res) => {
         });
 
         // Per diem total for the period (passthrough, excluded from P&L)
-        const perDiemWhere = {};
-        if (Object.keys(dateWhere).length) perDiemWhere.week_start_date = dateWhere;
-        const perDiemTotal = await PerDiemEntry.sum('amount', { where: { ...perDiemWhere, is_active: true } }) || 0;
+        // M-3: Only apply date filter if a date range was actually specified
+        const perDiemWhere = { is_active: true };
+        if (dateWhere && Object.keys(dateWhere).length > 0) {
+            perDiemWhere.week_start_date = dateWhere;
+        }
+        const perDiemTotal = await PerDiemEntry.sum('amount', { where: perDiemWhere }) || 0;
 
         return successResponse(res, {
             period: period || `${start_date} to ${end_date}`,
@@ -455,11 +458,23 @@ const getMarginsWorkers = async (req, res) => {
     try {
         const { start_date, end_date, year } = req.query;
         const dateFilter = buildDateFilter(start_date, end_date, year);
+        const invoiceDateWhere = Object.keys(dateFilter).length > 0 ? { invoice_date: dateFilter } : {};
 
         const invoiceLines = await InvoiceLine.findAll({
             include: [
-                { model: Worker, as: 'worker', attributes: ['id', 'first_name', 'last_name', 'worker_code'] },
-                { association: 'invoice', where: { status: { [Op.in]: ['sent', 'paid', 'approved'] }, is_active: true }, required: true },
+                {
+                    model: Worker, as: 'worker',
+                    attributes: ['id', 'first_name', 'last_name', 'worker_code'],
+                },
+                {
+                    association: 'invoice',
+                    where: {
+                        status: { [Op.in]: ['sent', 'paid', 'approved'] },
+                        is_active: true,
+                        ...invoiceDateWhere,
+                    },
+                    required: true,
+                },
             ],
         });
 
@@ -511,8 +526,12 @@ const getMarginsWorkers = async (req, res) => {
 
 const getMarginsClients = async (req, res) => {
     try {
+        const { start_date, end_date, year } = req.query;
+        const dateFilter = buildDateFilter(start_date, end_date, year);
+        const invoiceDateWhere = Object.keys(dateFilter).length > 0 ? { invoice_date: dateFilter } : {};
+
         const invoices = await Invoice.findAll({
-            where: { is_active: true, status: { [Op.in]: ['sent', 'paid', 'approved'] } },
+            where: { is_active: true, status: { [Op.in]: ['sent', 'paid', 'approved'] }, ...invoiceDateWhere },
             include: [
                 { model: require('../models').Client, as: 'client', attributes: ['id', 'company_name'] },
                 {

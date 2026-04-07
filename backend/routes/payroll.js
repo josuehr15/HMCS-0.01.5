@@ -5,7 +5,7 @@ const checkRole = require('../middleware/checkRole');
 const {
     getAllPayrolls, getPayrollStats, getPendingWeeks, getPayrollById,
     generatePayroll, updatePayrollStatus, deletePayroll,
-    markWorkerPaid, updatePayrollLine,
+    markWorkerPaid, updatePayrollLine, getPayrollLineById,
     approvePayroll,
 } = require('../controllers/payrollController');
 
@@ -17,6 +17,7 @@ router.get('/pending-weeks', checkRole('admin'), getPendingWeeks);
 router.post('/generate', checkRole('admin'), generatePayroll);
 
 // ── PayrollLine routes ─────────────────────────────────────────────────
+router.get('/lines/:id', checkRole('admin'), getPayrollLineById);
 router.patch('/lines/:id/pay', checkRole('admin'), markWorkerPaid);
 router.put('/lines/:id', checkRole('admin'), updatePayrollLine);
 

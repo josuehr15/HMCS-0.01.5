@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Settings, Landmark, FileText, TrendingUp, DollarSign,
     Users, Clock, AlertTriangle, Zap, PieChart, Building2,
@@ -12,6 +13,7 @@ import {
 } from 'recharts';
 import useApi from '../../hooks/useApi';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -72,16 +74,39 @@ const CustomTooltip = ({ active, payload, label }) => {
 const Dashboard = () => {
     const { get } = useApi();
     const { user } = useAuth();
+    const navigate = useNavigate();
+
+    // ── Routes Map ──
+    const widgetRoutes = {
+        bank: null,
+        invoices: '/admin/invoices',
+        pnl: null,
+        payroll: '/admin/payroll',
+        workforce: '/admin/workers',
+        cashflow: null,
+        activity: null,
+        projects: '/admin/projects',
+        funnel: '/admin/invoices',
+        quickActions: null,
+        clientSummary: '/admin/clients',
+    };
 
     // ── UI State ──
     const [editing, setEditing] = useState(false);
     const [activeWidgets, setActiveWidgets] = useState(() => {
-        try { return JSON.parse(localStorage.getItem('hmcs_widgets')) || DEFAULT_WIDGETS; }
-        catch { return DEFAULT_WIDGETS; }
+        try {
+            const saved = localStorage.getItem('hmcs_widget_order');
+            if (saved) return JSON.parse(saved);
+        } catch {}
+        return DEFAULT_WIDGETS;
     });
     const [widgetSizes, setWidgetSizes] = useState(() => {
-        try { return JSON.parse(localStorage.getItem('hmcs_sizes')) || {}; }
-        catch { return {}; }
+        try {
+            const saved = localStorage.getItem('hmcs_widget_sizes');
+            return saved ? JSON.parse(saved) : {};
+        } catch {
+            return {};
+        }
     });
     const [showModal, setShowModal] = useState(false);
     const [selectedForSwap, setSelectedForSwap] = useState(null);
@@ -205,10 +230,16 @@ const Dashboard = () => {
 
     // Resize S/M/L
     const setSize = (id, size) => {
-        setWidgetSizes(prev => ({ ...prev, [id]: size }));
+        setWidgetSizes(prev => {
+            const updated = { ...prev, [id]: size };
+            try {
+                localStorage.setItem('hmcs_widget_sizes', JSON.stringify(updated));
+            } catch {}
+            return updated;
+        });
     };
 
-    const getSize = (id) => widgetSizes[id] || 'M';
+    const getSize = (id) => widgetSizes[id] || 'S';
 
     // Toggle widget
     const toggleWidget = (id) => {
@@ -219,6 +250,10 @@ const Dashboard = () => {
 
     // Save & exit
     const saveAndExit = () => {
+        try {
+            localStorage.setItem('hmcs_widget_sizes', JSON.stringify(widgetSizes));
+            localStorage.setItem('hmcs_widget_order', JSON.stringify(activeWidgets));
+        } catch {}
         setEditing(false);
         setSelectedForSwap(null);
     };
@@ -226,24 +261,33 @@ const Dashboard = () => {
     /* ═══════════════════════════════════════════════════════
        SECTION WRAPPER (inside Dashboard for state access)
        ═══════════════════════════════════════════════════════ */
-    const WidgetCard = ({ id, children }) => {
+    const WidgetCard = ({ id, children, onNavigate }) => {
         const size = getSize(id);
         const isSelected = selectedForSwap === id;
         const isSwapTarget = selectedForSwap && selectedForSwap !== id;
         const idx = activeWidgets.indexOf(id);
 
         const sizeClass = `ds-card--${size.toLowerCase()}`;
+        const isNavigable = !editing && onNavigate;
 
         return (
             <div
                 className={[
                     'ds-card',
+                    sizeClass,
                     editing && 'ds-card--editing',
-                    editing && sizeClass,
                     isSelected && 'ds-card--selected',
                     isSwapTarget && 'ds-card--swap-target',
+                    isNavigable && 'ds-card--navigable',
                 ].filter(Boolean).join(' ')}
-                onClick={() => handleCardClick(id)}
+                onClick={() => {
+                    if (editing) {
+                        handleCardClick(id);
+                        return;
+                    }
+                    if (onNavigate) onNavigate();
+                }}
+                style={{ cursor: (isNavigable || editing) ? 'pointer' : 'default' }}
             >
                 {/* Edit controls bar */}
                 {editing && (
@@ -339,11 +383,13 @@ const Dashboard = () => {
        RENDER WIDGETS
        ═══════════════════════════════════════════════════════ */
     const renderWidget = (id) => {
+        const onNav = widgetRoutes[id] ? () => navigate(widgetRoutes[id]) : null;
+
         switch (id) {
 
             case 'bank':
                 return (
-                    <WidgetCard key={id} id={id}>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle right={<span className="ds-muted-xs">Hoy</span>}>Cuentas Bancarias</SectionTitle>
                         <p className="ds-muted-xs" style={{ marginBottom: 4 }}>Saldo bancario actual</p>
                         <div className="ds-big-num">${(stats.revenue * 0.48).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
@@ -369,8 +415,19 @@ const Dashboard = () => {
 
             case 'invoices':
                 return (
-                    <WidgetCard key={id} id={id}>
-                        <SectionTitle right={<span className="ds-link">Ver todas →</span>}>Facturas</SectionTitle>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
+                        <SectionTitle 
+                            right={
+                                <span 
+                                    className="ds-link" 
+                                    onClick={(e) => { e.stopPropagation(); navigate('/admin/invoices'); }}
+                                >
+                                    Ver todas →
+                                </span>
+                            }
+                        >
+                            Facturas
+                        </SectionTitle>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 8 }}>
                             <div>
                                 <div className="ds-muted-xs">Pendientes</div>
@@ -392,7 +449,7 @@ const Dashboard = () => {
 
             case 'pnl':
                 return (
-                    <WidgetCard key={id} id={id}>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle right={<span className="ds-muted-xs">Este mes</span>}>Pérdidas y Ganancias</SectionTitle>
                         <div className="ds-big-num">${stats.profit > 0 ? stats.profit.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '0'}</div>
                         {stats.profit > 0 && <div className="ds-badge ds-badge--green-bg"><ArrowUpRight size={12} /> Beneficio neto</div>}
@@ -403,7 +460,7 @@ const Dashboard = () => {
 
             case 'payroll':
                 return (
-                    <WidgetCard key={id} id={id}>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle>Nómina</SectionTitle>
                         <div className="ds-payroll-grid">
                             <div className="ds-payroll-box"><div className="ds-muted-xs">Pendiente</div><div className="ds-num">${parseFloat(stats.payrollPending).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></div>
@@ -411,14 +468,23 @@ const Dashboard = () => {
                             <div className="ds-payroll-box"><div className="ds-muted-xs">Per Diem</div><div className="ds-num">${stats.perDiemTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></div>
                         </div>
                         {parseFloat(stats.payrollPending) > 0 && (
-                            <div className="ds-alert"><AlertTriangle size={14} /> <span>Nómina pendiente de aprobación</span><span className="ds-alert__btn">Revisar</span></div>
+                            <div className="ds-alert">
+                                <AlertTriangle size={14} /> 
+                                <span>Nómina pendiente de aprobación</span>
+                                <span 
+                                    className="ds-alert__btn"
+                                    onClick={(e) => { e.stopPropagation(); navigate('/admin/payroll'); }}
+                                >
+                                    Revisar
+                                </span>
+                            </div>
                         )}
                     </WidgetCard>
                 );
 
             case 'workforce':
                 return (
-                    <WidgetCard key={id} id={id}>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle>Equipo de Trabajo</SectionTitle>
                         <div className="ds-wf-stats">
                             <div><span className="ds-num">{stats.totalWorkers}</span> <span className="ds-muted-xs">Activos</span></div>
@@ -427,7 +493,11 @@ const Dashboard = () => {
                         </div>
                         <div className="ds-worker-list">
                             {workers.slice(0, 4).map((w, i) => (
-                                <div key={w.id || i} className="ds-worker">
+                                <div 
+                                    key={w.id || i} 
+                                    className="ds-worker"
+                                    onClick={(e) => { e.stopPropagation(); navigate('/admin/workers'); }}
+                                >
                                     <div className={`ds-worker__av ${i % 2 === 0 ? 'ds-worker__av--teal' : 'ds-worker__av--blue'}`}>
                                         {w.first_name?.charAt(0)}{w.last_name?.charAt(0)}
                                     </div>
@@ -445,7 +515,7 @@ const Dashboard = () => {
 
             case 'cashflow':
                 return (
-                    <WidgetCard key={id} id={id}>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle right={<span className="ds-muted-xs">7 meses</span>}>Flujo de Caja</SectionTitle>
                         <div style={{ marginBottom: 12 }}>
                             <div className="ds-muted-xs">Saldo actual</div>
@@ -471,7 +541,7 @@ const Dashboard = () => {
 
             case 'activity':
                 return (
-                    <WidgetCard key={id} id={id}>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle right={<span className="ds-link">Ver todo →</span>}>Actividad Reciente</SectionTitle>
                         <div className="ds-activity-list">
                             {[
@@ -496,8 +566,19 @@ const Dashboard = () => {
 
             case 'projects':
                 return (
-                    <WidgetCard key={id} id={id}>
-                        <SectionTitle right={<span className="ds-link">Ver todos →</span>}>Proyectos Activos</SectionTitle>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
+                        <SectionTitle 
+                            right={
+                                <span 
+                                    className="ds-link"
+                                    onClick={(e) => { e.stopPropagation(); navigate('/admin/projects'); }}
+                                >
+                                    Ver todos →
+                                </span>
+                            }
+                        >
+                            Proyectos Activos
+                        </SectionTitle>
                         <div className="ds-projects-row">
                             {projects.slice(0, 3).map((p, i) => {
                                 const colors = ['#0D9488', '#2A6C95', '#7C3AED'];
@@ -518,37 +599,96 @@ const Dashboard = () => {
                 );
 
             case 'funnel':
+                const funnelTotal = Math.max(
+                    stats.pendingAmount + stats.paidAmount + stats.deposited,
+                    1
+                );
+                const funnelItems = [
+                    {
+                        icon: '⏳',
+                        label: 'No pagado',
+                        value: stats.pendingAmount,
+                        color: '#F59E0B',
+                        bg: 'rgba(245,158,11,0.08)',
+                    },
+                    {
+                        icon: '✅',
+                        label: 'Remunerado',
+                        value: stats.paidAmount,
+                        color: '#10B981',
+                        bg: 'rgba(16,185,129,0.08)',
+                    },
+                    {
+                        icon: '🏦',
+                        label: 'Depositado',
+                        value: stats.deposited,
+                        color: '#2A6C95',
+                        bg: 'rgba(42,108,149,0.08)',
+                    },
+                ];
                 return (
-                    <WidgetCard key={id} id={id}>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle>Embudo de Cobro</SectionTitle>
-                        <div className="ds-funnel">
-                            {[
-                                { label: 'No pagado', value: stats.pendingAmount, color: '#EA580C' },
-                                { label: 'Remunerado', value: stats.paidAmount, color: '#0D9488' },
-                                { label: 'Depositado', value: stats.deposited, color: '#059669' },
-                            ].map((f, i) => (
-                                <div key={i} className="ds-funnel__item">
-                                    <div className="ds-funnel__bar" style={{ background: f.color, height: Math.max((f.value / Math.max(stats.revenue, 1)) * 80, 8) }} />
-                                    <div className="ds-fw700" style={{ color: f.color, marginTop: 6 }}>${f.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                                    <div className="ds-muted-xs">{f.label}</div>
-                                </div>
-                            ))}
+                        <div className="ds-funnel-v2">
+                            {funnelItems.map((item, i) => {
+                                const pct = Math.round((item.value / funnelTotal) * 100);
+                                return (
+                                    <div key={i} className="ds-funnel-v2__row">
+                                        <div
+                                            className="ds-funnel-v2__icon"
+                                            style={{ background: item.bg, color: item.color }}
+                                        >
+                                            {item.icon}
+                                        </div>
+                                        <div className="ds-funnel-v2__body">
+                                            <div className="ds-funnel-v2__top">
+                                                <span className="ds-funnel-v2__label">
+                                                    {item.label}
+                                                </span>
+                                                <span
+                                                    className="ds-funnel-v2__amount"
+                                                    style={{ color: item.color }}
+                                                >
+                                                    ${item.value.toLocaleString(undefined,
+                                                        { maximumFractionDigits: 0 })}
+                                                </span>
+                                            </div>
+                                            <div className="ds-funnel-v2__bar-wrap">
+                                                <div
+                                                    className="ds-funnel-v2__bar-fill"
+                                                    style={{
+                                                        width: `${pct}%`,
+                                                        background: item.color
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </WidgetCard>
                 );
 
             case 'quickActions':
                 return (
-                    <WidgetCard key={id} id={id}>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle>Acciones Rápidas</SectionTitle>
                         <div className="ds-qa-grid">
                             {[
-                                { label: 'Crear factura', icon: FileText },
-                                { label: 'Registrar horas', icon: Timer },
-                                { label: 'Nueva asignación', icon: FolderKanban },
-                                { label: 'Aprobar nómina', icon: DollarSign },
+                                { label: 'Crear factura', icon: FileText, route: '/admin/invoices' },
+                                { label: 'Registrar horas', icon: Timer, route: '/admin/time-entries' },
+                                { label: 'Nueva asignación', icon: FolderKanban, route: '/admin/assignments' },
+                                { label: 'Aprobar nómina', icon: DollarSign, route: '/admin/payroll' },
                             ].map((a, i) => (
-                                <button key={i} className="ds-qa-btn"><a.icon size={16} /><span>{a.label}</span></button>
+                                <button 
+                                    key={i} 
+                                    className="ds-qa-btn"
+                                    onClick={(e) => { e.stopPropagation(); if(a.route) navigate(a.route); }}
+                                >
+                                    <a.icon size={16} />
+                                    <span>{a.label}</span>
+                                </button>
                             ))}
                         </div>
                     </WidgetCard>
@@ -556,7 +696,7 @@ const Dashboard = () => {
 
             case 'margin':
                 return (
-                    <WidgetCard key={id} id={id}>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle>Margen de Ganancia</SectionTitle>
                         <div className="ds-margin">
                             <div className="ds-margin__chart">
@@ -580,8 +720,19 @@ const Dashboard = () => {
 
             case 'clientSummary':
                 return (
-                    <WidgetCard key={id} id={id}>
-                        <SectionTitle right={<span className="ds-link">Ver todos →</span>}>Resumen por Cliente</SectionTitle>
+                    <WidgetCard key={id} id={id} onNavigate={onNav}>
+                        <SectionTitle 
+                            right={
+                                <span 
+                                    className="ds-link"
+                                    onClick={(e) => { e.stopPropagation(); navigate('/admin/clients'); }}
+                                >
+                                    Ver todos →
+                                </span>
+                            }
+                        >
+                            Resumen por Cliente
+                        </SectionTitle>
                         <div className="ds-client-list">
                             {projects.slice(0, 4).map((p, i) => {
                                 const colors = ['#0D9488', '#2A6C95', '#7C3AED', '#EA580C'];
@@ -640,37 +791,57 @@ const Dashboard = () => {
                 {activeWidgets.map(id => renderWidget(id))}
             </div>
 
-            {/* Modal */}
-            {showModal && (
-                <div className="ds-overlay" onClick={() => setShowModal(false)}>
-                    <div className="ds-modal" onClick={e => e.stopPropagation()}>
-                        <div className="ds-modal__head">
+            {/* Drawer: Personalizar Dashboard — portaled to <body> */}
+            {showModal && createPortal(
+                <div 
+                    className="ds-drawer-overlay"
+                    onClick={() => setShowModal(false)}
+                >
+                    <div 
+                        className="ds-drawer"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header del drawer */}
+                        <div className="ds-drawer__header">
                             <div>
-                                <h2 className="ds-modal__title">Personalizar Dashboard</h2>
-                                <p className="ds-muted-xs">{activeWidgets.length} widgets activos</p>
+                                <h2 className="ds-drawer__title">Personalizar Dashboard</h2>
+                                <p className="ds-drawer__sub">{activeWidgets.length} widgets activos</p>
                             </div>
-                            <button className="ds-modal__x" onClick={() => setShowModal(false)}>×</button>
+                            <button className="ds-drawer__close" onClick={() => setShowModal(false)}>×</button>
                         </div>
-                        <div className="ds-modal__body">
+
+                        {/* Lista de widgets */}
+                        <div className="ds-drawer__body">
                             {WIDGET_CATALOG.map(w => {
                                 const on = activeWidgets.includes(w.id);
                                 return (
-                                    <button key={w.id} className={`ds-modal__row ${on ? 'ds-modal__row--on' : ''}`} onClick={() => toggleWidget(w.id)}>
-                                        <div className={`ds-modal__icon ${on ? 'ds-modal__icon--on' : ''}`}><w.icon size={16} /></div>
-                                        <div style={{ flex: 1 }}>
-                                            <div className="ds-fw600">{w.label}</div>
-                                            <div className="ds-muted-xs">{w.desc}</div>
+                                    <button 
+                                        key={w.id}
+                                        className={`ds-drawer__item ${on ? 'ds-drawer__item--on' : ''}`}
+                                        onClick={() => toggleWidget(w.id)}
+                                    >
+                                        <div className={`ds-drawer__icon ${on ? 'ds-drawer__icon--on' : ''}`}>
+                                            <w.icon size={16} />
                                         </div>
-                                        <div className={`ds-toggle ${on ? 'ds-toggle--on' : ''}`}>
-                                            <div className="ds-toggle__dot" />
+                                        <div className="ds-drawer__info">
+                                            <div className="ds-drawer__name">{w.label}</div>
+                                            <div className="ds-drawer__desc">{w.desc}</div>
                                         </div>
+                                        <div className={`ds-toggle ${on ? 'ds-toggle--on' : ''}`} />
                                     </button>
                                 );
                             })}
                         </div>
-                        <button className="ds-modal__done" onClick={() => setShowModal(false)}>Listo</button>
+
+                        {/* Footer */}
+                        <div className="ds-drawer__footer">
+                            <button className="ds-drawer__save" onClick={() => setShowModal(false)}>
+                                ✓ Guardar cambios
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

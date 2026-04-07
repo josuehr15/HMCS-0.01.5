@@ -383,9 +383,10 @@ const updateClientRate = async (req, res) => {
  */
 const deleteClientRate = async (req, res) => {
     try {
-        const rate = await ClientRate.findOne({ where: { id: req.params.rateId, client_id: req.params.id } });
+        const rate = await ClientRate.findOne({ where: { id: req.params.rateId, client_id: req.params.id, is_active: true } });
         if (!rate) return errorResponse(res, 'Rate not found.', 404);
-        await rate.destroy();
+        // Soft-delete: preserves historical invoice line integrity
+        await rate.update({ is_active: false });
         return successResponse(res, { id: rate.id }, 'Rate deleted.');
     } catch (error) {
         console.error('deleteClientRate error:', error);

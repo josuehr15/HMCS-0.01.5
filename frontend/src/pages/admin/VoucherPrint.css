@@ -1,0 +1,178 @@
+/* VoucherPrint.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f3f4f6;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.voucher-print-container {
+  max-width: 800px;
+  margin: 40px auto;
+  background: white;
+  padding: 50px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  font-family: 'Inter', sans-serif;
+  color: #111827;
+}
+
+/* Print specific styles */
+@media print {
+  body {
+    background-color: white;
+  }
+  .voucher-print-container {
+    margin: 0;
+    padding: 20px;
+    box-shadow: none;
+    max-width: 100%;
+  }
+}
+
+.v-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+
+.v-header-left h1 {
+  margin: 0 0 16px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #08543D; /* HMCS Green */
+  letter-spacing: 1px;
+}
+
+.v-company-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.v-company-lines {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.v-header-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.v-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+
+.v-flex-row {
+  display: flex;
+  gap: 20px;
+}
+
+.v-meta-info {
+  margin-bottom: 30px;
+}
+
+.v-meta-box {
+  flex: 1;
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.vm-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.vm-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.v-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 30px 0;
+}
+
+.v-earnings-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #111827;
+}
+
+.v-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.v-table th {
+  text-align: left;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.v-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 14px;
+  color: #111827;
+}
+
+.v-table .t-right {
+  text-align: right;
+}
+
+.v-per-diem-row {
+  background: #fdfaf5; /* slight differentiator for non-taxable */
+}
+
+.v-totals-section {
+  width: 320px;
+  margin-left: auto;
+}
+
+.v-totals-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  font-size: 14px;
+  color: #4b5563;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.v-net-pay {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 2px solid #e5e7eb;
+  border-bottom: none;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2A6C95; /* HMCS Blue */
+}
+
+.v-footer {
+  margin-top: 60px;
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.6;
+}

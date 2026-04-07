@@ -119,3 +119,79 @@
     font-weight: 600;
     color: var(--text);
 }
+
+/* ─── Project area (H-2 fix) ───────────────────────────────────────── */
+.clock-page__project-area {
+    width: 100%;
+}
+
+.clock-page__project-loading {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 10px 0;
+}
+
+.clock-page__no-assignments {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    background: rgba(245, 158, 11, 0.1);
+    color: #D97706;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.clock-page__project-single {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-full);
+    background: var(--hover);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.clock-page__project-select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.clock-page__project-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.clock-page__project-select {
+    width: 100%;
+    padding: 10px 36px 10px 34px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.88rem;
+    font-weight: 500;
+    appearance: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.clock-page__project-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.clock-page__select-chevron {
+    position: absolute;
+    right: 12px;
+    color: var(--text-muted);
+    pointer-events: none;
+}

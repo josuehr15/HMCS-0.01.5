@@ -81,6 +81,25 @@ const clockOut = async (req, res) => {
         if (!timeEntry) return errorResponse(res, 'Entrada no encontrada.', 404);
         if (timeEntry.clock_out) return errorResponse(res, 'Esta entrada ya tiene clock-out.', 409);
 
+        // M-1: GPS validation on clock-out (same rule as clock-in)
+        const project = await Project.findByPk(timeEntry.project_id);
+        if (project && project.latitude && project.longitude && project.gps_radius_meters) {
+            const distance = calculateDistance(
+                parseFloat(latitude), parseFloat(longitude),
+                parseFloat(project.latitude), parseFloat(project.longitude)
+            );
+            if (!isWithinRadius(
+                parseFloat(latitude), parseFloat(longitude),
+                parseFloat(project.latitude), parseFloat(project.longitude),
+                project.gps_radius_meters
+            )) {
+                return errorResponse(res,
+                    `No estás lo suficientemente cerca del proyecto para marcar salida. Distancia: ${Math.round(distance)}m, Radio: ${project.gps_radius_meters}m.`,
+                    403
+                );
+            }
+        }
+
         const clockOutTime = new Date();
         const totalHours = calcHours(timeEntry.clock_in, clockOutTime);
 

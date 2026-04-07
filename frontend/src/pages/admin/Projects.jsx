@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import {
     Search, Plus, Edit2, X, ChevronDown,
     MapPin, Users, Clock, LayoutGrid, List,
     Pause, Play, Trash2, CheckCircle, Shield,
     EyeOff, FolderOpen, Calendar, Navigation,
     Coffee, BarChart3, Building2, UserPlus,
-    AlertTriangle, ChevronRight
+    AlertTriangle, ChevronRight, Info, FileText
 } from 'lucide-react';
 import useApi from '../../hooks/useApi';
 import DocumentUploader from '../../components/DocumentUploader';
@@ -37,97 +38,121 @@ function workerInitials(w) {
     return `${w.first_name?.[0] || ''}${w.last_name?.[0] || ''}`.toUpperCase();
 }
 
+// Status badge
 function StatusBadge({ status }) {
     const MAP = {
-        active: { label: 'Activo', cls: 'proj-badge--active' },
-        on_hold: { label: 'En Pausa', cls: 'proj-badge--hold' },
-        completed: { label: 'Completado', cls: 'proj-badge--done' },
+        active:    { label: 'Activo',     cls: 'pj-badge--active' },
+        on_hold:   { label: 'En Pausa',   cls: 'pj-badge--paused' },
+        completed: { label: 'Completado', cls: 'pj-badge--completed' },
     };
     const s = MAP[status] || { label: status, cls: '' };
-    return <span className={`proj-badge ${s.cls}`}>{s.label}</span>;
+    return <span className={`pj-badge ${s.cls}`}>{s.label}</span>;
 }
 
-// ─── GPS Parser helper — extract coords from Google Maps URL ───────────────────
+// ─── GPS Parser helper ─────────────────────────────────────────────────────────
 function parseGoogleMapsUrl(url) {
-    // Handles: maps.google.com/?q=LAT,LNG  and maps.google.com/maps?ll=LAT,LNG
-    // and standard share URL: https://maps.app.goo.gl/... (can't resolve without server)
-    const atMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-    const qMatch = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    const llMatch = url.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    const atMatch  = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    const qMatch   = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    const llMatch  = url.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
     const destMatch = url.match(/[?&]destination=(-?\d+\.\d+),(-?\d+\.\d+)/);
     const match = atMatch || qMatch || llMatch || destMatch;
     if (match) return { lat: match[1], lng: match[2] };
     return null;
 }
 
+// ─── Map Embed (iframe reutilizable, sin librería extra) ───────────────────────
+function MapEmbed({ lat, lng, height = 160, zoom = 14, radius = 0 }) {
+    if (!lat || !lng) {
+        return (
+            <div className="pj-map-placeholder" style={{ height }}>
+                <MapPin size={20} />
+                <span>Sin coordenadas</span>
+            </div>
+        );
+    }
+    const src = `https://maps.google.com/maps?q=${lat},${lng}&z=${zoom}&output=embed`;
+    return (
+        <iframe
+            title={`map-${lat}-${lng}`}
+            src={src}
+            width="100%"
+            height={height}
+            style={{ border: 0, display: 'block' }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+        />
+    );
+}
+
 // ─── Project Card ───────────────────────────────────────────────────────────────
 function ProjectCard({ project, onEdit, onToggle, onCardClick }) {
     const assignments = project.assignments || [];
-    const totalHrs = (project.timeEntries || []).reduce((s, t) => s + parseFloat(t.total_hours || 0), 0);
+    const activeAssignments = assignments.filter(a => a.status === 'active');
     const isActive = project.status === 'active';
+    const isOnHold = project.status === 'on_hold';
+
+    const statusLabel = { active: 'Activo', on_hold: 'En Pausa', completed: 'Completado' }[project.status] || project.status;
+    const statusClass = { active: 'pj-card__status-badge--active', on_hold: 'pj-card__status-badge--paused', completed: 'pj-card__status-badge--completed' }[project.status] || '';
 
     return (
         <div
-            className={`proj-card ${!isActive ? 'proj-card--inactive' : ''}`}
+            className={`pj-card ${!isActive ? 'pj-card--inactive' : ''}`}
             onClick={() => onCardClick(project)}
         >
-            {/* Top */}
-            <div className="proj-card__top">
-                <div className="proj-card__icon">
-                    <MapPin size={18} />
-                </div>
-                <div className="proj-card__identity">
-                    <p className="proj-card__name">{project.name}</p>
-                    <p className="proj-card__client">{project.client?.company_name || '—'}</p>
-                </div>
-                <div className="proj-card__actions" onClick={e => e.stopPropagation()}>
-                    <button
-                        className="pc-icon-btn pc-icon-btn--edit"
-                        title="Editar"
-                        onClick={() => onEdit(project)}
-                    ><Edit2 size={13} /></button>
-                    <button
-                        className={`pc-icon-btn ${isActive ? 'pc-icon-btn--pause' : 'pc-icon-btn--play'}`}
-                        title={isActive ? 'Pausar' : 'Reactivar'}
-                        onClick={() => onToggle(project)}
-                    >{isActive ? <Pause size={13} /> : <Play size={13} />}</button>
-                </div>
+            {/* ── Mapa interactivo superior ── */}
+            <div className="pj-card__map">
+                <MapEmbed lat={project.latitude} lng={project.longitude} height={160} zoom={14} />
+                <span className={`pj-card__status-badge ${statusClass}`}>{statusLabel}</span>
             </div>
 
-            {/* Address */}
-            <div className="proj-card__address">
-                <MapPin size={11} className="proj-card__row-icon" />
-                <span>{project.address}</span>
-            </div>
-
-            {/* Status + quick stats */}
-            <div className="proj-card__middle">
-                <StatusBadge status={project.status} />
-                <div className="proj-card__stats">
-                    <span title="Workers asignados"><Users size={11} /> {assignments.length}</span>
-                    {totalHrs > 0 && <span title="Horas totales"><Clock size={11} /> {totalHrs.toFixed(0)}h</span>}
+            {/* ── Cuerpo ── */}
+            <div className="pj-card__body">
+                <div className="pj-card__head">
+                    <div>
+                        <p className="pj-card__name">{project.name}</p>
+                        <p className="pj-card__client">{project.client?.company_name || '—'}</p>
+                    </div>
+                    <div className="pj-card__actions" onClick={e => e.stopPropagation()}>
+                        <button
+                            className="pj-card__action-btn"
+                            title="Editar"
+                            onClick={() => onEdit(project)}
+                        >
+                            <Edit2 size={13} />
+                        </button>
+                        <button
+                            className={`pj-card__action-btn ${!isActive ? '' : 'pj-card__action-btn--pause'}`}
+                            title={isActive ? 'Pausar' : 'Reactivar'}
+                            onClick={() => onToggle(project)}
+                        >
+                            {isActive ? <Pause size={13} /> : <Play size={13} />}
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            {/* Dates */}
-            <div className="proj-card__dates">
-                <Calendar size={11} />
-                <span>{fmtDate(project.start_date)}</span>
-                {project.end_date && <><ChevronRight size={10} /><span>{fmtDate(project.end_date)}</span></>}
-            </div>
-
-            {/* GPS + rules footer */}
-            <div className="proj-card__footer">
-                <div className="proj-card__gps">
-                    <Navigation size={11} />
-                    <span>{parseFloat(project.latitude).toFixed(4)}, {parseFloat(project.longitude).toFixed(4)}</span>
-                    <span className="proj-card__radius">R:{project.gps_radius_meters}m</span>
+                {/* Info rows */}
+                <div className="pj-card__info">
+                    <div className="pj-card__info-row">
+                        <MapPin size={11} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {project.address}
+                        </span>
+                    </div>
+                    <div className="pj-card__info-row">
+                        <Calendar size={11} />
+                        <span>{fmtDate(project.start_date)}</span>
+                        {project.end_date && <><ChevronRight size={10} /><span>{fmtDate(project.end_date)}</span></>}
+                    </div>
                 </div>
-                <div className="proj-card__lunch">
-                    <Coffee size={11} />
-                    <span>{project.lunch_rule === 'paid' ? 'Almuerzo pagado' : 'Almuerzo no pagado'}</span>
-                    <span>·</span>
-                    <span>{parseFloat(project.work_hours_per_day || 9).toFixed(0)}h/{parseFloat(project.paid_hours_per_day || 10).toFixed(0)}h</span>
+
+                {/* Footer */}
+                <div className="pj-card__footer">
+                    <span className="pj-card__gps-chip">
+                        <Navigation size={10} /> {project.gps_radius_meters}m
+                    </span>
+                    <span className="pj-card__workers">
+                        <Users size={11} /> {activeAssignments.length} worker{activeAssignments.length !== 1 ? 's' : ''}
+                    </span>
                 </div>
             </div>
         </div>
@@ -162,14 +187,14 @@ function AssignModal({ project, workers, api, showToast, onAssigned, onClose }) 
         }
     };
 
-    return (
-        <div className="workers-modal-overlay" style={{ zIndex: 1300 }} onClick={onClose}>
-            <div className="workers-modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
-                <div className="workers-modal__header">
-                    <h2>Asignar Trabajador</h2>
-                    <button className="workers-modal__close" onClick={onClose}><X size={18} /></button>
+    return ReactDOM.createPortal(
+        <div className="pj-overlay" style={{ zIndex: 700 }} onClick={onClose}>
+            <div className="pj-modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+                <div className="pj-modal__header">
+                    <h2 className="pj-modal__title">Asignar Trabajador</h2>
+                    <button className="pj-modal__close" onClick={onClose}><X size={18} /></button>
                 </div>
-                <div className="workers-modal__body">
+                <div className="pj-modal__body">
                     {error && <div className="wf-error">{error}</div>}
 
                     <div className="wf-field">
@@ -212,20 +237,21 @@ function AssignModal({ project, workers, api, showToast, onAssigned, onClose }) 
                         </div>
                     </div>
                 </div>
-                <div className="workers-modal__footer">
-                    <button className="workers-btn-outline" onClick={onClose}>Cancelar</button>
-                    <button className="workers-btn-primary" onClick={handleAssign} disabled={saving}>
+                <div className="pj-modal__footer">
+                    <button className="pj-btn-cancel" onClick={onClose}>Cancelar</button>
+                    <button className="pj-btn-primary" onClick={handleAssign} disabled={saving}>
                         <UserPlus size={15} /> {saving ? 'Asignando...' : 'Asignar'}
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
-// ─── Project Drawer ─────────────────────────────────────────────────────────────
-function ProjectDrawer({ project, api, showToast, onClose, onEdit, onDeleted, onToggle, token }) {
-    const { put, del, get, patch } = api;
+// ─── Project Detail Panel (65% mini-página) ─────────────────────────────────────
+function ProjectDetailPanel({ project, api, showToast, onClose, onEdit, onDeleted, onToggle, token }) {
+    const { put, del, get } = api;
     const [assignments, setAssignments] = useState(project.assignments || []);
     const [showAssign, setShowAssign] = useState(false);
     const [activeWorkers, setActiveWorkers] = useState([]);
@@ -234,28 +260,27 @@ function ProjectDrawer({ project, api, showToast, onClose, onEdit, onDeleted, on
     const [confirmId, setConfirmId] = useState('');
     const [deleteLoading, setDeleteLoading] = useState(false);
 
+    // ESC key
     useEffect(() => {
         const handler = e => { if (e.key === 'Escape') onClose(); };
         window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
     }, [onClose]);
 
-    // Load active workers for the assign modal
+    // Load workers for assign modal
     const loadWorkers = useCallback(async () => {
         try {
             const res = await get('/workers');
             setActiveWorkers(res.data || res);
         } catch { /* no-op */ }
     }, [get]);
-
     useEffect(() => { loadWorkers(); }, [loadWorkers]);
 
     if (!project) return null;
     const isActive = project.status === 'active';
-    const mapsUrl = `https://maps.google.com/maps?q=${project.latitude},${project.longitude}&z=15&output=embed`;
     const totalHrs = (project.timeEntries || []).reduce((s, t) => s + parseFloat(t.total_hours || 0), 0);
 
-    // Complete an assignment
+    // Complete assignment
     const handleCompleteAssignment = async (asgn) => {
         try {
             const today = new Date().toISOString().split('T')[0];
@@ -299,231 +324,310 @@ function ProjectDrawer({ project, api, showToast, onClose, onEdit, onDeleted, on
         }
     };
 
-    return (
+    const statusMap = {
+        active:    'Activo',
+        on_hold:   'En Pausa',
+        completed: 'Completado',
+    };
+
+    return ReactDOM.createPortal(
         <>
-            <div className="drawer-overlay" onClick={onClose} />
-            <aside className="project-drawer" role="dialog" aria-label="Detalle del proyecto">
-                <button className="drawer-close" onClick={onClose} title="Cerrar"><X size={20} /></button>
+            {/* Overlay */}
+            <div className="pj-detail-overlay" onClick={onClose} />
 
-                {/* Hero */}
-                <div className="drawer-hero">
-                    <div className="proj-drawer-icon"><MapPin size={22} /></div>
-                    <div className="drawer-hero__info">
-                        <h2 className="drawer-hero__name">{project.name}</h2>
-                        <span className="drawer-hero__sub">{project.client?.company_name}</span>
-                        <div className="drawer-hero__badges">
-                            <StatusBadge status={project.status} />
-                            {totalHrs > 0 && <span className="proj-hrs-badge">{totalHrs.toFixed(0)}h totales</span>}
+            {/* Panel */}
+            <div className="pj-detail-panel">
+
+                {/* ── HEADER ── */}
+                <div className="pj-detail__header">
+                    <div className="pj-detail__header-left">
+                        <div className="pj-detail__icon">
+                            <MapPin size={22} />
+                        </div>
+                        <div>
+                            <h2 className="pj-detail__name">{project.name}</h2>
+                            <p className="pj-detail__client">{project.client?.company_name || '—'}</p>
                         </div>
                     </div>
-                </div>
-
-                <div className="drawer-body">
-                    {/* Info */}
-                    <div className="drawer-section">
-                        <p className="drawer-section__title"><FolderOpen size={13} /> Información</p>
-                        <div className="drawer-field"><MapPin size={13} /><span className="drawer-field__label">Dirección:</span><span>{project.address}</span></div>
-                        <div className="drawer-field"><Calendar size={13} /><span className="drawer-field__label">Inicio:</span><span>{fmtDate(project.start_date)}</span></div>
-                        <div className="drawer-field"><Calendar size={13} /><span className="drawer-field__label">Fin:</span><span>{fmtDate(project.end_date)}</span></div>
-                        {project.notes && <div className="drawer-field" style={{ alignItems: 'flex-start' }}><span className="drawer-field__label">Notas:</span><span style={{ color: '#6B7280' }}>{project.notes}</span></div>}
-                    </div>
-
-                    {/* GPS */}
-                    <div className="drawer-section">
-                        <p className="drawer-section__title"><Navigation size={13} /> Configuración GPS</p>
-                        <div className="drawer-field">
-                            <span className="drawer-field__label">Coordenadas:</span>
-                            <span>{parseFloat(project.latitude).toFixed(6)}, {parseFloat(project.longitude).toFixed(6)}</span>
-                            <a
-                                href={`https://maps.google.com/?q=${project.latitude},${project.longitude}`}
-                                target="_blank" rel="noopener noreferrer"
-                                className="proj-map-link"
-                                onClick={e => e.stopPropagation()}
-                            >↗</a>
-                        </div>
-                        <div className="drawer-field">
-                            <span className="drawer-field__label">Radio GPS:</span>
-                            <span>{project.gps_radius_meters} metros</span>
-                        </div>
-                        {/* Embedded map */}
-                        <div className="proj-map-container">
-                            <iframe
-                                title="project-map"
-                                src={mapsUrl}
-                                width="100%"
-                                height="200"
-                                style={{ border: 0, borderRadius: 8 }}
-                                loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Lunch rules */}
-                    <div className="drawer-section">
-                        <p className="drawer-section__title"><Coffee size={13} /> Reglas de Jornada</p>
-                        <div className="drawer-field"><span className="drawer-field__label">Almuerzo:</span><span>{project.lunch_rule === 'paid' ? `Pagado (${project.lunch_duration_minutes} min)` : `No pagado (${project.lunch_duration_minutes} min)`}</span></div>
-                        <div className="drawer-field"><span className="drawer-field__label">Horas trabajo/día:</span><span>{parseFloat(project.work_hours_per_day).toFixed(2)} h</span></div>
-                        <div className="drawer-field"><span className="drawer-field__label">Horas pagadas/día:</span><span>{parseFloat(project.paid_hours_per_day).toFixed(2)} h</span></div>
-                    </div>
-
-                    {/* Assignments */}
-                    <div className="drawer-section">
-                        <div className="proj-section-header">
-                            <p className="drawer-section__title" style={{ margin: 0 }}><Users size={13} /> Workers Asignados ({assignments.filter(a => a.status === 'active').length})</p>
-                            <button className="proj-assign-btn" onClick={() => setShowAssign(true)}>
-                                <UserPlus size={13} /> Asignar
-                            </button>
-                        </div>
-                        {assignments.length === 0 ? (
-                            <p className="drawer-empty-note">Sin workers asignados</p>
-                        ) : (
-                            <div className="proj-assignments-list">
-                                {assignments.map(a => (
-                                    <div key={a.id} className={`proj-assignment-row ${a.status !== 'active' ? 'proj-assignment-row--done' : ''}`}>
-                                        <div className="workers-avatar-sm">{workerInitials(a.worker)}</div>
-                                        <div className="proj-assignment-info">
-                                            <span className="proj-assignment-name">
-                                                {a.worker?.first_name} {a.worker?.last_name}
-                                            </span>
-                                            <span className="proj-assignment-meta">
-                                                {a.worker?.trade?.name_es || a.worker?.trade?.name || '—'} · Desde {fmtDate(a.start_date)}
-                                            </span>
-                                        </div>
-                                        <div className="proj-assignment-right">
-                                            <span className={`proj-asgn-badge proj-asgn-badge--${a.status}`}>
-                                                {a.status === 'active' ? 'Activo' : a.status === 'completed' ? 'Finalizado' : 'Cancelado'}
-                                            </span>
-                                            {a.status === 'active' && (
-                                                <button
-                                                    className="proj-end-btn"
-                                                    onClick={() => handleCompleteAssignment(a)}
-                                                    title="Finalizar asignación"
-                                                >
-                                                    <CheckCircle size={13} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                    <div className="pj-detail__header-right">
+                        <StatusBadge status={project.status} />
+                        {totalHrs > 0 && (
+                            <span className="pj-detail__hrs-badge">{totalHrs.toFixed(0)}h</span>
                         )}
-                    </div>
-
-                    {/* Documents */}
-                    <div className="drawer-section">
-                        <p className="drawer-section__title"><FolderOpen size={13} /> Documentos</p>
-                        <DocumentUploader ownerType="company" ownerId={project.id} token={token} />
-                    </div>
-
-                    {/* Actions */}
-                    <div className="drawer-section drawer-section--actions">
-                        <p className="drawer-section__title">Acciones</p>
-                        <button className="drawer-action-btn" onClick={() => onEdit(project)}>
-                            <Edit2 size={14} /> Editar Proyecto
-                        </button>
-                        <button className="drawer-action-btn" onClick={() => onToggle(project)}>
-                            {isActive ? <Pause size={14} /> : <Play size={14} />}
-                            {isActive ? 'Pausar Proyecto' : 'Reactivar Proyecto'}
-                        </button>
-                        <button className="drawer-action-btn drawer-action-btn--danger" onClick={startDelete}>
-                            <Trash2 size={14} /> Eliminar Proyecto
-                        </button>
+                        <button className="pj-detail__close" onClick={onClose}>×</button>
                     </div>
                 </div>
 
-                {/* Assign Modal */}
-                {showAssign && (
-                    <AssignModal
-                        project={project}
-                        workers={activeWorkers}
-                        api={api}
-                        showToast={showToast}
-                        onAssigned={newAsgn => setAssignments(prev => [newAsgn, ...prev])}
-                        onClose={() => setShowAssign(false)}
-                    />
-                )}
+                {/* ── QUICK ACTIONS ── */}
+                <div className="pj-detail__quick-actions">
+                    <button
+                        className="pj-detail__qa-btn pj-detail__qa-btn--primary"
+                        onClick={() => { onEdit(project); onClose(); }}
+                    >
+                        <Edit2 size={14} /> Editar
+                    </button>
+                    <button
+                        className="pj-detail__qa-btn"
+                        onClick={() => onToggle(project)}
+                    >
+                        {isActive ? <Pause size={14} /> : <Play size={14} />}
+                        {isActive ? 'Pausar' : 'Reanudar'}
+                    </button>
+                    <button
+                        className="pj-detail__qa-btn pj-detail__qa-btn--danger"
+                        onClick={startDelete}
+                    >
+                        <Trash2 size={14} /> Eliminar
+                    </button>
+                </div>
 
-                {/* Delete Step 1 */}
-                {deleteStep === 1 && linkedData && (() => {
-                    const canHard = linkedData.can_hard_delete ?? (linkedData.total === 0);
-                    return (
-                        <div className="workers-modal-overlay" style={{ zIndex: 1200 }} onClick={() => setDeleteStep(0)}>
-                            <div className="workers-confirm-modal" onClick={e => e.stopPropagation()}>
-                                <div className="workers-confirm-modal__icon" style={{ background: '#FEE2E2', color: '#DC2626' }}>
-                                    {canHard ? <Trash2 size={28} /> : <EyeOff size={28} />}
+                {/* ── CONTENT: 2 columnas ── */}
+                <div className="pj-detail__content">
+
+                    {/* COLUMNA IZQUIERDA */}
+                    <div className="pj-detail__left">
+
+                        {/* Información general */}
+                        <div className="pj-detail__section">
+                            <h3 className="pj-detail__section-title">
+                                <Info size={13} /> INFORMACIÓN
+                            </h3>
+                            <div className="pj-detail__rows">
+                                <div className="pj-detail__row">
+                                    <span className="pj-detail__row-label">Dirección</span>
+                                    <span className="pj-detail__row-value">{project.address}</span>
                                 </div>
-                                {canHard ? (
-                                    <>
-                                        <h3>Eliminar Proyecto Permanentemente</h3>
-                                        <p>Este proyecto <strong>no tiene datos vinculados</strong>.</p>
-                                        <div className="delete-linked-data" style={{ background: '#F0FDF4', borderColor: '#BBF7D0' }}>
-                                            <p className="delete-linked-data__title" style={{ color: '#065F46' }}>✓ Sin datos vinculados</p>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <h3>Ocultar Proyecto Permanentemente</h3>
-                                        <p>Este proyecto tiene <strong>datos vinculados</strong>.</p>
-                                        <div className="delete-linked-data">
-                                            <ul>
-                                                {linkedData.assignments > 0 && <li>• {linkedData.assignments} asignación(es)</li>}
-                                                {linkedData.time_entries > 0 && <li>• {linkedData.time_entries} entrada(s) de tiempo</li>}
-                                            </ul>
-                                            <p className="delete-linked-data__warning">Los datos históricos se conservan.</p>
-                                        </div>
-                                    </>
+                                <div className="pj-detail__row">
+                                    <span className="pj-detail__row-label">Inicio</span>
+                                    <span className="pj-detail__row-value">{fmtDate(project.start_date)}</span>
+                                </div>
+                                <div className="pj-detail__row">
+                                    <span className="pj-detail__row-label">Fin</span>
+                                    <span className="pj-detail__row-value">{fmtDate(project.end_date)}</span>
+                                </div>
+                                {project.notes && (
+                                    <div className="pj-detail__row">
+                                        <span className="pj-detail__row-label">Notas</span>
+                                        <span className="pj-detail__row-value" style={{ color: 'var(--text-muted)' }}>
+                                            {project.notes}
+                                        </span>
+                                    </div>
                                 )}
-                                <div className="workers-confirm-modal__actions">
-                                    <button className="workers-btn-outline" onClick={() => setDeleteStep(0)}>Cancelar</button>
-                                    <button className="workers-btn-danger" onClick={() => setDeleteStep(2)}>Sí, continuar →</button>
-                                </div>
                             </div>
                         </div>
-                    );
-                })()}
 
-                {/* Delete Step 2 */}
-                {deleteStep === 2 && (() => {
-                    const canHard = linkedData?.can_hard_delete ?? (linkedData?.total === 0);
-                    return (
-                        <div className="workers-modal-overlay" style={{ zIndex: 1200 }} onClick={() => { setDeleteStep(0); setConfirmId(''); }}>
-                            <div className="workers-confirm-modal" onClick={e => e.stopPropagation()}>
-                                <div className="workers-confirm-modal__icon" style={{ background: '#FEE2E2', color: '#DC2626' }}>
-                                    <Shield size={28} />
+                        {/* GPS */}
+                        <div className="pj-detail__section">
+                            <h3 className="pj-detail__section-title">
+                                <Navigation size={13} /> CONFIGURACIÓN GPS
+                            </h3>
+                            <div className="pj-detail__gps-info">
+                                <div className="pj-detail__gps-coords">
+                                    {parseFloat(project.latitude).toFixed(6)}, {parseFloat(project.longitude).toFixed(6)}
+                                    <a
+                                        href={`https://maps.google.com/?q=${project.latitude},${project.longitude}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="pj-detail__map-link"
+                                        onClick={e => e.stopPropagation()}
+                                    >↗</a>
                                 </div>
-                                <h3>Confirmación Final</h3>
-                                <p>Escribe el ID del proyecto para confirmar:</p>
-                                <div className="delete-code-confirm">
-                                    <code className="delete-code-target">{project.id}</code>
-                                    <input
-                                        className="delete-code-input wf-input"
-                                        value={confirmId}
-                                        onChange={e => setConfirmId(e.target.value)}
-                                        placeholder="Escribe el ID aquí"
-                                        autoFocus
-                                        type="number"
-                                    />
-                                </div>
-                                <div className="workers-confirm-modal__actions">
-                                    <button className="workers-btn-outline" onClick={() => { setDeleteStep(0); setConfirmId(''); }}>Cancelar</button>
-                                    <button
-                                        className="workers-btn-danger"
-                                        onClick={confirmDelete}
-                                        disabled={String(confirmId).trim() !== String(project.id) || deleteLoading}
-                                    >
-                                        {canHard
-                                            ? <><Trash2 size={15} /> {deleteLoading ? 'Eliminando...' : 'Eliminar Definitivamente'}</>
-                                            : <><EyeOff size={15} /> {deleteLoading ? 'Ocultando...' : 'Ocultar Permanentemente'}</>
-                                        }
-                                    </button>
+                                <div className="pj-detail__gps-radius">
+                                    Radio: {project.gps_radius_meters}m
                                 </div>
                             </div>
                         </div>
-                    );
-                })()}
-            </aside>
-        </>
+
+                        {/* Reglas de jornada */}
+                        <div className="pj-detail__section">
+                            <h3 className="pj-detail__section-title">
+                                <Coffee size={13} /> REGLAS DE JORNADA
+                            </h3>
+                            <div className="pj-detail__rules">
+                                <div className="pj-detail__rule-chip">
+                                    Almuerzo: {project.lunch_rule === 'paid' ? 'Pagado' : 'No pagado'} ({project.lunch_duration_minutes} min)
+                                </div>
+                                <div className="pj-detail__rule-chip">
+                                    {parseFloat(project.work_hours_per_day).toFixed(1)}h trabajo / día
+                                </div>
+                                <div className="pj-detail__rule-chip">
+                                    {parseFloat(project.paid_hours_per_day).toFixed(1)}h pagadas / día
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Workers asignados */}
+                        <div className="pj-detail__section">
+                            <div className="pj-detail__section-header">
+                                <h3 className="pj-detail__section-title" style={{ margin: 0 }}>
+                                    <Users size={13} /> WORKERS ASIGNADOS ({assignments.filter(a => a.status === 'active').length})
+                                </h3>
+                                <button
+                                    className="pj-detail__assign-btn"
+                                    onClick={() => setShowAssign(true)}
+                                >
+                                    + Asignar
+                                </button>
+                            </div>
+                            <div className="pj-detail__workers-list">
+                                {assignments.length === 0 ? (
+                                    <p className="pj-detail__empty">Sin workers asignados</p>
+                                ) : (
+                                    assignments.map(a => (
+                                        <div key={a.id} className={`pj-detail__worker-row ${a.status !== 'active' ? 'pj-detail__worker-row--done' : ''}`}>
+                                            <div className="pj-detail__worker-avatar">
+                                                {workerInitials(a.worker)}
+                                            </div>
+                                            <div className="pj-detail__worker-info">
+                                                <div className="pj-detail__worker-name">
+                                                    {a.worker?.first_name} {a.worker?.last_name}
+                                                </div>
+                                                <div className="pj-detail__worker-meta">
+                                                    {a.worker?.trade?.name_es || a.worker?.trade?.name || '—'} · Desde {fmtDate(a.start_date)}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                <span className={`pj-detail__worker-status pj-detail__worker-status--${a.status}`}>
+                                                    {a.status === 'active' ? 'Activo' : a.status === 'completed' ? 'Finalizado' : 'Cancelado'}
+                                                </span>
+                                                {a.status === 'active' && (
+                                                    <button
+                                                        className="pj-detail__end-btn"
+                                                        onClick={() => handleCompleteAssignment(a)}
+                                                        title="Finalizar asignación"
+                                                    >
+                                                        <CheckCircle size={13} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Documentos */}
+                        <div className="pj-detail__section">
+                            <h3 className="pj-detail__section-title">
+                                <FolderOpen size={13} /> DOCUMENTOS
+                            </h3>
+                            <DocumentUploader ownerType="company" ownerId={project.id} token={token} />
+                        </div>
+
+                    </div>
+
+                    {/* COLUMNA DERECHA — Mapa grande */}
+                    <div className="pj-detail__right">
+                        <div className="pj-detail__map-container">
+                            <MapEmbed
+                                lat={project.latitude}
+                                lng={project.longitude}
+                                height="100%"
+                                zoom={15}
+                            />
+                            <div className="pj-detail__map-label">
+                                Radio GPS: {project.gps_radius_meters}m
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            {/* ── Assign Modal (via portal independiente) ── */}
+            {showAssign && (
+                <AssignModal
+                    project={project}
+                    workers={activeWorkers}
+                    api={api}
+                    showToast={showToast}
+                    onAssigned={newAsgn => setAssignments(prev => [newAsgn, ...prev])}
+                    onClose={() => setShowAssign(false)}
+                />
+            )}
+
+            {/* ── Delete Step 1 ── */}
+            {deleteStep === 1 && linkedData && (() => {
+                const canHard = linkedData.can_hard_delete ?? (linkedData.total === 0);
+                return ReactDOM.createPortal(
+                    <div className="pj-overlay" style={{ zIndex: 702 }} onClick={() => setDeleteStep(0)}>
+                        <div className="pj-confirm-modal" onClick={e => e.stopPropagation()}>
+                            <div className="pj-confirm-modal__icon" style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                                {canHard ? <Trash2 size={28} /> : <EyeOff size={28} />}
+                            </div>
+                            {canHard ? (
+                                <>
+                                    <h3>Eliminar Proyecto Permanentemente</h3>
+                                    <p>Este proyecto <strong>no tiene datos vinculados</strong>.</p>
+                                    <div className="pj-linked-data" style={{ background: '#F0FDF4', borderColor: '#BBF7D0' }}>
+                                        <p style={{ color: '#065F46', fontWeight: 600, margin: 0 }}>✓ Sin datos vinculados</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h3>Ocultar Proyecto Permanentemente</h3>
+                                    <p>Este proyecto tiene <strong>datos vinculados</strong>.</p>
+                                    <div className="pj-linked-data">
+                                        <ul>
+                                            {linkedData.assignments > 0 && <li>• {linkedData.assignments} asignación(es)</li>}
+                                            {linkedData.time_entries > 0 && <li>• {linkedData.time_entries} entrada(s) de tiempo</li>}
+                                        </ul>
+                                        <p className="pj-linked-data__warning">Los datos históricos se conservan.</p>
+                                    </div>
+                                </>
+                            )}
+                            <div className="pj-confirm-modal__actions">
+                                <button className="pj-btn-cancel" onClick={() => setDeleteStep(0)}>Cancelar</button>
+                                <button className="pj-btn-danger" onClick={() => setDeleteStep(2)}>Sí, continuar →</button>
+                            </div>
+                        </div>
+                    </div>,
+                    document.body
+                );
+            })()}
+
+            {/* ── Delete Step 2 ── */}
+            {deleteStep === 2 && (() => {
+                const canHard = linkedData?.can_hard_delete ?? (linkedData?.total === 0);
+                return ReactDOM.createPortal(
+                    <div className="pj-overlay" style={{ zIndex: 702 }} onClick={() => { setDeleteStep(0); setConfirmId(''); }}>
+                        <div className="pj-confirm-modal" onClick={e => e.stopPropagation()}>
+                            <div className="pj-confirm-modal__icon" style={{ background: '#FEE2E2', color: '#DC2626' }}>
+                                <Shield size={28} />
+                            </div>
+                            <h3>Confirmación Final</h3>
+                            <p>Escribe el ID del proyecto para confirmar:</p>
+                            <div className="pj-confirm-id">
+                                <code className="pj-confirm-id__code">{project.id}</code>
+                                <input
+                                    className="wf-input"
+                                    value={confirmId}
+                                    onChange={e => setConfirmId(e.target.value)}
+                                    placeholder="Escribe el ID aquí"
+                                    autoFocus
+                                    type="number"
+                                />
+                            </div>
+                            <div className="pj-confirm-modal__actions">
+                                <button className="pj-btn-cancel" onClick={() => { setDeleteStep(0); setConfirmId(''); }}>Cancelar</button>
+                                <button
+                                    className="pj-btn-danger"
+                                    onClick={confirmDelete}
+                                    disabled={String(confirmId).trim() !== String(project.id) || deleteLoading}
+                                >
+                                    {canHard
+                                        ? <><Trash2 size={15} /> {deleteLoading ? 'Eliminando...' : 'Eliminar Definitivamente'}</>
+                                        : <><EyeOff size={15} /> {deleteLoading ? 'Ocultando...' : 'Ocultar Permanentemente'}</>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>,
+                    document.body
+                );
+            })()}
+        </>,
+        document.body
     );
 }
 
@@ -550,13 +654,11 @@ export default function Projects() {
     const [filterStatus, setFilterStatus] = useState('active');
     const [mapsInput, setMapsInput] = useState('');
     const [mapsError, setMapsError] = useState('');
-
-    // Stats
     const [stats, setStats] = useState({ total: 0, active: 0, onHold: 0, workersAssigned: 0 });
 
     const changeView = m => { setViewMode(m); localStorage.setItem('projects_view', m); };
 
-    // ── Fetch ──────────────────────────────────────────────────────
+    // ── Fetch ───────────────────────────────────────────────────────────────────
     const fetchProjects = useCallback(async () => {
         try {
             let url = '/projects?include_all=true';
@@ -589,7 +691,7 @@ export default function Projects() {
 
     useEffect(() => { fetchProjects(); fetchClients(); fetchStats(); }, [fetchProjects, fetchClients, fetchStats]);
 
-    // ── Client-side search filter ──────────────────────────────────
+    // ── Client-side search filter ───────────────────────────────────────────────
     useEffect(() => {
         let list = [...projects];
         if (searchTerm.trim()) {
@@ -603,13 +705,13 @@ export default function Projects() {
         setFiltered(list);
     }, [projects, searchTerm]);
 
-    // ── Toast ──────────────────────────────────────────────────────
+    // ── Toast ───────────────────────────────────────────────────────────────────
     const showToast = (msg, type = 'success') => {
         setToastMsg({ msg, type });
         setTimeout(() => setToastMsg(null), 3800);
     };
 
-    // ── CRUD ───────────────────────────────────────────────────────
+    // ── CRUD ────────────────────────────────────────────────────────────────────
     const openCreate = () => {
         setFormData(EMPTY_FORM); setMapsInput(''); setMapsError('');
         setFormError(''); setEditingId(null); setModalMode('create'); setModalOpen(true);
@@ -635,7 +737,6 @@ export default function Projects() {
         setFormError(''); setEditingId(p.id); setModalMode('edit'); setModalOpen(true);
     };
 
-    // Parse Google Maps URL
     const parseMapsUrl = () => {
         if (!mapsInput.trim()) return;
         const coords = parseGoogleMapsUrl(mapsInput);
@@ -650,7 +751,7 @@ export default function Projects() {
     const handleSave = async () => {
         const { client_id, name, address, latitude, longitude } = formData;
         if (!client_id || !name || !address) return setFormError('Cliente, nombre y dirección son requeridos.');
-        if (!latitude || !longitude) return setFormError('Coordenadas GPS requeridas. Usa el extracto de URL o ingresa manualmente.');
+        if (!latitude || !longitude) return setFormError('Coordenadas GPS requeridas.');
         setSubmitting(true); setFormError('');
         try {
             const payload = {
@@ -700,15 +801,17 @@ export default function Projects() {
         fetchStats();
     };
 
-    const STAT_CARDS = [
-        { label: 'Total Proyectos', value: stats.total, icon: <FolderOpen size={18} />, color: '#2A6C95' },
-        { label: 'Activos', value: stats.active, icon: <CheckCircle size={18} />, color: '#10B981' },
-        { label: 'En Pausa', value: stats.onHold, icon: <Pause size={18} />, color: '#F59E0B' },
-        { label: 'Workers Asignados', value: stats.workersAssigned, icon: <Users size={18} />, color: '#8B5CF6' },
+    // ── KPI cards data ──────────────────────────────────────────────────────────
+    const KPI_CARDS = [
+        { label: 'Total',          value: stats.total,           icon: <FolderOpen size={18} />,  color: '#2A6C95' },
+        { label: 'Activos',        value: stats.active,          icon: <CheckCircle size={18} />, color: '#10B981' },
+        { label: 'En Pausa',       value: stats.onHold,          icon: <Pause size={18} />,       color: '#F59E0B' },
+        { label: 'Workers Asig.', value: stats.workersAssigned,  icon: <Users size={18} />,       color: '#8B5CF6' },
     ];
 
     return (
         <div className="projects-page fade-in">
+
             {/* Toast */}
             {toastMsg && (
                 <div className={`workers-toast workers-toast--${toastMsg.type}`}>
@@ -717,39 +820,39 @@ export default function Projects() {
                 </div>
             )}
 
-            {/* Header */}
-            <div className="projects-header">
+            {/* ── Header ── */}
+            <div className="pj-header">
                 <div>
-                    <h1 className="projects-title">Gestión de Proyectos</h1>
-                    <p className="projects-subtitle">Administra proyectos, GPS y asignaciones de workers</p>
+                    <h1 className="pj-header__title">Gestión de Proyectos</h1>
+                    <p className="pj-header__subtitle">Administra proyectos, GPS y asignaciones de workers</p>
                 </div>
-                <button className="workers-btn-primary" onClick={openCreate}>
+                <button className="pj-btn-new" onClick={openCreate}>
                     <Plus size={16} /> Nuevo Proyecto
                 </button>
             </div>
 
-            {/* Stat cards */}
-            <div className="projects-stats-grid">
-                {STAT_CARDS.map((s, i) => (
-                    <div key={i} className="projects-stat-card">
-                        <div className="projects-stat-card__icon" style={{ background: `${s.color}15`, color: s.color }}>
-                            {s.icon}
+            {/* ── KPI Cards ── */}
+            <div className="pj-kpis">
+                {KPI_CARDS.map((k, i) => (
+                    <div key={i} className="pj-kpi">
+                        <div className="pj-kpi__icon" style={{ background: `${k.color}15`, color: k.color }}>
+                            {k.icon}
                         </div>
-                        <div>
-                            <p className="projects-stat-card__value">{s.value}</p>
-                            <p className="projects-stat-card__label">{s.label}</p>
+                        <div className="pj-kpi__body">
+                            <p className="pj-kpi__value">{k.value}</p>
+                            <p className="pj-kpi__label">{k.label}</p>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* Filters toolbar */}
-            <div className="workers-toolbar">
-                <div className="workers-search-box">
-                    <Search size={15} className="workers-search-icon" />
+            {/* ── Toolbar ── */}
+            <div className="pj-toolbar">
+                <div className="pj-search">
+                    <Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                     <input
-                        className="workers-search-input"
-                        placeholder="Buscar por nombre, dirección..."
+                        className="pj-search__input"
+                        placeholder="Buscar por nombre, dirección o cliente..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />
@@ -770,24 +873,30 @@ export default function Projects() {
                     </select>
                     <ChevronDown size={13} className="workers-select__arrow" />
                 </div>
-                <span className="workers-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
+                <span className="pj-results">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
                 <div className="workers-view-toggle">
                     <button className={`workers-view-btn ${viewMode === 'cards' ? 'workers-view-btn--active' : ''}`} onClick={() => changeView('cards')}><LayoutGrid size={15} /></button>
                     <button className={`workers-view-btn ${viewMode === 'table' ? 'workers-view-btn--active' : ''}`} onClick={() => changeView('table')}><List size={15} /></button>
                 </div>
             </div>
 
-            {/* Content */}
+            {/* ── Content ── */}
             {filtered.length === 0 ? (
                 <div className="workers-empty">
                     <MapPin size={48} />
                     <p>No se encontraron proyectos</p>
-                    <button className="workers-btn-primary" onClick={openCreate}><Plus size={16} /> Crear el primero</button>
+                    <button className="pj-btn-new" onClick={openCreate}><Plus size={16} /> Crear el primero</button>
                 </div>
             ) : viewMode === 'cards' ? (
-                <div className="projects-cards-grid">
+                <div className="pj-grid">
                     {filtered.map(p => (
-                        <ProjectCard key={p.id} project={p} onEdit={openEdit} onToggle={handleToggle} onCardClick={setDrawerProject} />
+                        <ProjectCard
+                            key={p.id}
+                            project={p}
+                            onEdit={openEdit}
+                            onToggle={handleToggle}
+                            onCardClick={setDrawerProject}
+                        />
                     ))}
                 </div>
             ) : (
@@ -815,8 +924,8 @@ export default function Projects() {
                                     <td>{p.gps_radius_meters}m</td>
                                     <td onClick={e => e.stopPropagation()}>
                                         <div className="workers-table__actions">
-                                            <button className="pc-icon-btn pc-icon-btn--edit" onClick={() => openEdit(p)}><Edit2 size={13} /></button>
-                                            <button className={`pc-icon-btn ${p.status === 'active' ? 'pc-icon-btn--pause' : 'pc-icon-btn--play'}`} onClick={() => handleToggle(p)}>
+                                            <button className="pj-card__action-btn" onClick={() => openEdit(p)}><Edit2 size={13} /></button>
+                                            <button className="pj-card__action-btn" onClick={() => handleToggle(p)}>
                                                 {p.status === 'active' ? <Pause size={13} /> : <Play size={13} />}
                                             </button>
                                         </div>
@@ -828,9 +937,9 @@ export default function Projects() {
                 </div>
             )}
 
-            {/* Drawer */}
+            {/* ── Detail Panel (portal) ── */}
             {drawerProject && (
-                <ProjectDrawer
+                <ProjectDetailPanel
                     project={drawerProject}
                     api={api}
                     showToast={showToast}
@@ -842,18 +951,20 @@ export default function Projects() {
                 />
             )}
 
-            {/* Modal */}
-            {modalOpen && (
-                <div className="workers-modal-overlay" onClick={() => setModalOpen(false)}>
-                    <div className="workers-modal workers-modal--wide" onClick={e => e.stopPropagation()}>
-                        <div className="workers-modal__header">
-                            <h2>{modalMode === 'create' ? 'Nuevo Proyecto' : 'Editar Proyecto'}</h2>
-                            <button className="workers-modal__close" onClick={() => setModalOpen(false)}><X size={18} /></button>
+            {/* ── New/Edit Modal (portal) ── */}
+            {modalOpen && ReactDOM.createPortal(
+                <div className="pj-overlay" onClick={() => setModalOpen(false)}>
+                    <div className="pj-modal pj-modal--wide" onClick={e => e.stopPropagation()}>
+                        <div className="pj-modal__header">
+                            <h2 className="pj-modal__title">
+                                {modalMode === 'create' ? 'Nuevo Proyecto' : 'Editar Proyecto'}
+                            </h2>
+                            <button className="pj-modal__close" onClick={() => setModalOpen(false)}><X size={18} /></button>
                         </div>
-                        <div className="workers-modal__body">
+                        <div className="pj-modal__body">
                             {formError && <div className="wf-error">{formError}</div>}
 
-                            {/* Basic data */}
+                            {/* Datos básicos */}
                             <div className="wf-section-title"><FolderOpen size={14} /> Datos del Proyecto</div>
                             <div className="wf-grid-2">
                                 <div className="wf-field">
@@ -885,13 +996,11 @@ export default function Projects() {
                                     onChange={e => setMapsInput(e.target.value)}
                                     placeholder="Pega un enlace de Google Maps o introduce manualmente..."
                                 />
-                                <button type="button" className="proj-extract-btn" onClick={parseMapsUrl}>
-                                    Extraer
-                                </button>
+                                <button type="button" className="proj-extract-btn" onClick={parseMapsUrl}>Extraer</button>
                             </div>
                             {mapsError && <p className="proj-maps-error">{mapsError}</p>}
                             <p className="proj-maps-hint">
-                                💡 Abre Google Maps, busca la dirección, haz click derecho → "¿Qué hay aquí?" y copia el enlace que aparece. Pégalo arriba para auto-extraer coordenadas.
+                                💡 Abre Google Maps, busca la dirección, haz click derecho → "¿Qué hay aquí?" y copia el enlace. Pégalo arriba para auto-extraer coordenadas.
                             </p>
                             <div className="wf-grid-3">
                                 <div className="wf-field">
@@ -907,8 +1016,6 @@ export default function Projects() {
                                     <input className="wf-input" type="number" value={formData.gps_radius_meters} onChange={e => setFormData(p => ({ ...p, gps_radius_meters: e.target.value }))} placeholder="500" />
                                 </div>
                             </div>
-
-                            {/* Preview map if coords exist */}
                             {formData.latitude && formData.longitude && (
                                 <div className="proj-preview-map">
                                     <a
@@ -921,7 +1028,7 @@ export default function Projects() {
                                 </div>
                             )}
 
-                            {/* Lunch rules */}
+                            {/* Reglas de jornada */}
                             <div className="wf-section-title"><Coffee size={14} /> Reglas de Jornada</div>
                             <div className="wf-grid-2">
                                 <div className="wf-field">
@@ -948,7 +1055,7 @@ export default function Projects() {
                                 </div>
                             </div>
 
-                            {/* Dates + Status */}
+                            {/* Fechas y estado */}
                             <div className="wf-section-title"><Calendar size={14} /> Fechas y Estado</div>
                             <div className="wf-grid-3">
                                 <div className="wf-field">
@@ -971,20 +1078,20 @@ export default function Projects() {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="wf-field">
                                 <label className="wf-label">Notas internas</label>
                                 <textarea className="wf-input wf-textarea" value={formData.notes} onChange={e => setFormData(p => ({ ...p, notes: e.target.value }))} rows={2} placeholder="Notas opcionales..." />
                             </div>
                         </div>
-                        <div className="workers-modal__footer">
-                            <button className="workers-btn-outline" onClick={() => setModalOpen(false)}>Cancelar</button>
-                            <button className="workers-btn-primary" onClick={handleSave} disabled={submitting}>
+                        <div className="pj-modal__footer">
+                            <button className="pj-btn-cancel" onClick={() => setModalOpen(false)}>Cancelar</button>
+                            <button className="pj-btn-primary" onClick={handleSave} disabled={submitting}>
                                 {submitting ? 'Guardando...' : (modalMode === 'create' ? 'Crear Proyecto' : 'Guardar Cambios')}
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

@@ -1,7 +1,7 @@
 const { Op, literal } = require('sequelize');
 const { sequelize } = require('../config/database');
 const {
-    Payroll, PayrollLine, TimeEntry, Worker, Trade, Project, User, PerDiemEntry,
+    Payroll, PayrollLine, TimeEntry, Worker, Trade, Project, User, PerDiemEntry, Transaction
 } = require('../models');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 
@@ -11,8 +11,7 @@ const LINE_INCLUDES = [
         model: Worker, as: 'worker',
         attributes: ['id', 'worker_code', 'first_name', 'last_name', 'hourly_rate', 'phone'],
         include: [{ model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] }],
-    },
-    { model: Project, as: 'project', attributes: ['id', 'name'] },
+    }
 ];
 
 const PAYROLL_INCLUDES = [
@@ -158,7 +157,18 @@ const getPayrollById = async (req, res) => {
     try {
         const payroll = await Payroll.findOne({
             where: { id: req.params.id, is_active: true },
-            include: PAYROLL_INCLUDES,
+            include: [{
+                model: PayrollLine,
+                as: 'lines',
+                where: { is_active: true },
+                required: false,
+                include: [{
+                    model: Worker,
+                    as: 'worker',
+                    attributes: ['id', 'worker_code', 'first_name', 'last_name', 'hourly_rate'],
+                    include: [{ model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] }]
+                }]
+            }]
         });
         if (!payroll) return errorResponse(res, 'Payroll not found.', 404);
         return successResponse(res, payroll, 'Payroll retrieved.');
@@ -354,6 +364,23 @@ const markWorkerPaid = async (req, res) => {
                 status: allPaid ? 'paid' : somePaid ? 'partial' : 'approved',
                 paid_at: allPaid ? new Date() : null,
             });
+
+            // Create Transaction Record for the payment
+            try {
+                await Transaction.create({
+                    date: new Date(),
+                    amount: parseFloat(line.gross_pay),
+                    type: 'expense',
+                    category: (payment_method || 'zelle').toLowerCase().includes('cash') ? 'payroll_cash' : 'payroll_zelle',
+                    description: `Nómina semana ${payroll.week_start_date}`,
+                    worker_id: line.worker_id,
+                    payroll_id: line.payroll_id,
+                    status: 'cleared',
+                    notes: notes || '',
+                });
+            } catch (txErr) {
+                console.error('Error creating transaction for payroll line:', txErr);
+            }
         }
 
         const updatedLine = await PayrollLine.findByPk(line.id, { include: LINE_INCLUDES });
@@ -409,9 +436,25 @@ const updatePayrollLine = async (req, res) => {
 const approvePayroll = (req, res) => { req.body = { status: 'approved' }; return updatePayrollStatus(req, res); };
 const getPayrollReview = getAllPayrolls;
 
+const getPayrollLineById = async (req, res) => {
+    try {
+        const line = await PayrollLine.findByPk(req.params.id, {
+            include: [
+                ...LINE_INCLUDES,
+                { model: Payroll, as: 'payroll', attributes: ['week_start_date', 'week_end_date'] }
+            ]
+        });
+        if (!line) return errorResponse(res, 'Line not found', 404);
+        return successResponse(res, line);
+    } catch (error) {
+        console.error('getPayrollLineById Error:', error);
+        return errorResponse(res, 'Failed to fetch payroll line.', 500);
+    }
+};
+
 module.exports = {
     getAllPayrolls, getPayrollStats, getPendingWeeks, getPayrollById,
     generatePayroll, updatePayrollStatus, deletePayroll,
-    markWorkerPaid, updatePayrollLine,
+    markWorkerPaid, updatePayrollLine, getPayrollLineById,
     approvePayroll, getPayrollReview,
 };

@@ -1,792 +1,847 @@
 /* ═══════════════════════════════════════════════════════════════════
-   Timesheets.css — Admin Timesheets (Calendar view)
+   Timesheets.css — Admin Timesheets (Weekly Grid View)
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── Page ─────────────────────────────────────────────────────────── */
+/* ── Page Layout ──────────────────────────────────────────────────── */
 .ts-page {
-    padding: 24px 28px;
+    padding: 28px 32px;
     max-width: 1800px;
 }
 
 /* ── Header ───────────────────────────────────────────────────────── */
 .ts-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    margin-bottom: 22px;
+    margin-bottom: 24px;
     gap: 16px;
     flex-wrap: wrap;
+}
+
+.ts-header-info {
+    display: flex;
+    flex-direction: column;
 }
 
 .ts-title {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 800;
-    color: #111827;
+    color: var(--text-primary);
     margin: 0;
-    letter-spacing: -0.3px;
+    letter-spacing: -0.5px;
 }
 
 .ts-subtitle {
-    font-size: 13px;
-    color: #6B7280;
+    font-size: 14px;
+    color: var(--text-muted);
     margin: 4px 0 0;
 }
 
-/* ── Stat cards ───────────────────────────────────────────────────── */
+.te-week-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.te-week-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  font-family: 'Montserrat', sans-serif;
+  min-width: 200px;
+  text-align: center;
+}
+
+.te-nav-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: var(--hover);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.15s;
+}
+
+.te-nav-btn:hover {
+  background: rgba(42,108,149,0.1);
+  color: #2A6C95;
+}
+
+
+/* ── KPI Cards ────────────────────────────────────────────────────── */
 .ts-stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 20px;
-}
-
-@media (max-width: 1100px) {
-    .ts-stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 600px) {
-    .ts-stats-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.ts-stat-card {
-    background: #fff;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    padding: 16px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
-    transition: box-shadow 0.18s;
-}
-
-.ts-stat-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
-}
-
-.ts-stat-card__icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.ts-stat-card__value {
-    font-size: 22px;
-    font-weight: 800;
-    color: #111827;
-    margin: 0;
-}
-
-.ts-stat-card__label {
-    font-size: 11px;
-    color: #6B7280;
-    margin: 2px 0 0;
-    font-weight: 500;
-}
-
-/* ── Month navigation ─────────────────────────────────────────────── */
-.ts-month-nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     gap: 16px;
+    margin-bottom: 24px;
+}
+
+.te-kpi {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04),
+              0 4px 12px rgba(0,0,0,0.04);
+  transition: all 0.2s;
+}
+
+.te-kpi:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.te-kpi__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.te-kpi__value {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+}
+
+.te-kpi__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Colors for KPI */
+.ts-kpi-icon--blue { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+.ts-kpi-icon--yellow { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.ts-kpi-icon--green { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.ts-kpi-icon--red { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+
+/* ── Toolbar ──────────────────────────────────────────────────────── */
+.ts-toolbar {
+    display: flex;
     margin-bottom: 16px;
 }
 
-.ts-month-title {
-    font-size: 20px;
-    font-weight: 800;
-    color: #111827;
-    margin: 0;
-    min-width: 200px;
-    text-align: center;
-}
-
-.ts-month-btn {
-    width: 36px;
-    height: 36px;
-    border: 1px solid #E5E7EB;
-    border-radius: 8px;
-    background: #fff;
-    color: #374151;
+.ts-filter-box {
     display: flex;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-
-.ts-month-btn:hover {
-    background: #F3F4F6;
-    border-color: #2A6C95;
-    color: #2A6C95;
-}
-
-/* ── Bulk actions ─────────────────────────────────────────────────── */
-.ts-bulk-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.ts-bulk-count {
-    font-size: 12px;
-    font-weight: 700;
-    color: #2A6C95;
-    background: #EFF6FF;
+    gap: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
     border-radius: 10px;
-    padding: 3px 10px;
+    color: var(--text-muted);
 }
 
-.ts-bulk-btn {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
+.ts-select {
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+}
+
+/* ── Weekly Table Grid ────────────────────────────────────────────── */
+.ts-grid-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow-x: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.ts-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 1100px;
+}
+
+.ts-table th {
+    background: var(--bg-main);
+    padding: 16px 14px;
     font-weight: 600;
-    border-radius: 6px;
-    padding: 5px 10px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: all 0.15s;
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.ts-bulk-btn--approve {
-    background: #D1FAE5;
-    color: #065F46;
-    border-color: #A7F3D0;
+.ts-table td {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
 }
 
-.ts-bulk-btn--approve:hover {
-    background: #A7F3D0;
-}
-
-.ts-bulk-btn--reject {
-    background: #FEE2E2;
-    color: #991B1B;
-    border-color: #FCA5A5;
-}
-
-.ts-bulk-btn--reject:hover {
-    background: #FCA5A5;
-}
-
-.ts-bulk-btn--clear {
-    background: #F3F4F6;
-    color: #6B7280;
-    border-color: #E5E7EB;
-}
-
-.ts-bulk-btn--clear:hover {
-    background: #E5E7EB;
-}
-
-.ts-select-all-btn {
-    font-size: 11px;
-    color: #6B7280;
-    background: none;
-    border: 1px solid #E5E7EB;
-    border-radius: 6px;
-    padding: 5px 10px;
-    cursor: pointer;
-}
-
-.ts-select-all-btn:hover {
-    border-color: #2A6C95;
-    color: #2A6C95;
-}
-
-/* ── Calendar grid ────────────────────────────────────────────────── */
-.ts-calendar {
-    background: #fff;
-    border: 1px solid #E5E7EB;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
-}
-
-/* Header row */
-.ts-cal-header {
-    display: grid;
-    grid-template-columns: 36px repeat(7, 1fr) 110px;
-    background: #F9FAFB;
-    border-bottom: 2px solid #E5E7EB;
-}
-
-.ts-cal-day-header {
-    font-size: 11px;
-    font-weight: 700;
-    color: #6B7280;
-    text-align: center;
-    padding: 8px 4px;
-    border-left: 1px solid #E5E7EB;
-}
-
-.ts-cal-week-label,
-.ts-cal-week-summary-header {
-    font-size: 10px;
-    font-weight: 700;
-    color: #9CA3AF;
-    padding: 8px 4px;
-    text-align: center;
-}
-
-.ts-cal-week-summary-header {
-    border-left: 2px solid #E5E7EB;
-}
-
-/* Week row */
-.ts-cal-row {
-    display: grid;
-    grid-template-columns: 36px repeat(7, 1fr) 110px;
-    border-bottom: 1px solid #E5E7EB;
-    min-height: 90px;
-}
-
-.ts-cal-row:last-child {
+.ts-table tr:last-child td {
     border-bottom: none;
 }
 
-.ts-cal-week-label {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 8px;
-    background: #F9FAFB;
-    border-right: 1px solid #E5E7EB;
-    font-size: 10px;
-    font-weight: 700;
-    color: #9CA3AF;
+.ts-table tr:hover td {
+    background: var(--bg-hover) !important;
 }
 
-/* Day cell */
-.ts-cal-cell {
-    border-left: 1px solid #E5E7EB;
-    padding: 4px;
-    min-height: 90px;
-    vertical-align: top;
-    background: #fff;
-    overflow: hidden;
+/* Column Sizing */
+.ts-col-worker {
+    width: 260px;
+    min-width: 220px;
+    background: var(--bg-card);
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    border-right: 1px solid var(--border);
 }
 
-.ts-cal-cell--other {
-    background: #FAFAFA;
+.ts-col-day {
+    width: 110px;
+    min-width: 90px;
+    border-right: 1px dashed var(--border);
 }
 
-.ts-cal-cell--today {
-    background: #EFF6FF;
-}
-
-.ts-cal-cell--today .ts-cal-cell__date {
-    color: #2A6C95;
-    font-weight: 800;
-}
-
-.ts-cal-cell__date {
-    font-size: 11px;
-    font-weight: 600;
-    color: #374151;
+.ts-col-total {
+    width: 60px;
     text-align: right;
-    margin-bottom: 3px;
+    border-right: 1px solid var(--border);
 }
 
-.ts-cal-cell__entries {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+.ts-col-actions {
+    width: 120px;
+    text-align: center;
 }
 
-/* ── Cell Entry chip ──────────────────────────────────────────────── */
-.ts-cell-entry {
-    border-radius: 6px;
-    padding: 4px 5px;
-    cursor: pointer;
-    border: 1px solid #E5E7EB;
-    background: #F9FAFB;
-    transition: all 0.15s;
-    font-size: 10px;
-}
-
-.ts-cell-entry:hover {
-    border-color: #2A6C95;
-    background: #EFF6FF;
-}
-
-.ts-cell-entry--sel {
-    background: #DBEAFE;
-    border-color: #93C5FD;
-}
-
-.ts-cell-entry--manual {
-    border-left: 3px solid #8B5CF6;
-}
-
-.ts-cell-entry--live {
-    border-left: 3px solid #EF4444;
-    animation: ts-live-pulse 2s ease-in-out infinite;
-}
-
-@keyframes ts-live-pulse {
-
-    0%,
-    100% {
-        background: #F9FAFB;
-    }
-
-    50% {
-        background: #FEF2F2;
-    }
-}
-
-.ts-cell-entry__top {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    margin-bottom: 2px;
-}
-
-.ts-cell-entry__check {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-.ts-cell-entry__check input {
-    width: 11px;
-    height: 11px;
-    cursor: pointer;
-}
-
-.ts-cell-entry__initials {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    background: linear-gradient(135deg, #2A6C95, #1E5270);
-    color: white;
-    font-size: 8px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    text-transform: uppercase;
-}
-
-.ts-cell-entry__time {
-    color: #6B7280;
-    font-size: 9px;
-    line-height: 1.2;
-}
-
-.ts-cell-entry__hrs {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    font-weight: 700;
-    color: #374151;
-    font-size: 10px;
-}
-
-.ts-cell-entry__proj {
-    color: #9CA3AF;
-    font-size: 9px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.ts-manual-dot {
-    font-size: 8px;
-    font-weight: 800;
-    background: #EDE9FE;
-    color: #7C3AED;
-    border-radius: 3px;
-    padding: 1px 3px;
-}
-
-/* ── Status badges ────────────────────────────────────────────────── */
-.ts-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    padding: 2px 6px;
-    border-radius: 20px;
-    font-size: 10px;
+/* Day Header specific */
+.te-th-day-label {
     font-weight: 600;
 }
-
-.ts-badge--sm {
-    font-size: 9px;
-    padding: 1px 4px;
-}
-
-.ts-badge--live {
-    background: #FEE2E2;
-    color: #B91C1C;
-}
-
-.ts-badge--pending {
-    background: #FEF3C7;
-    color: #92400E;
-}
-
-.ts-badge--approved {
-    background: #D1FAE5;
-    color: #065F46;
-}
-
-.ts-badge--flagged {
-    background: #FEE2E2;
-    color: #991B1B;
-}
-
-.ts-badge--rejected {
-    background: #F3F4F6;
-    color: #6B7280;
-}
-
-.ts-badge--manual {
-    background: #EDE9FE;
-    color: #7C3AED;
-}
-
-.ts-pulse {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #EF4444;
-    animation: pulseAnim 1.4s ease-in-out infinite;
-}
-
-@keyframes pulseAnim {
-
-    0%,
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    50% {
-        opacity: 0.4;
-        transform: scale(1.4);
-    }
-}
-
-/* ── Week Summary ─────────────────────────────────────────────────── */
-.ts-week-summary {
-    border-left: 2px solid #E5E7EB;
-    padding: 6px 6px;
-    background: #F9FAFB;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-height: 90px;
-}
-
-.ts-week-summary__title {
-    font-size: 10px;
-    font-weight: 700;
-    color: #6B7280;
-    margin: 0 0 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-
-.ts-week-summary__empty {
-    font-size: 10px;
-    color: #D1D5DB;
-}
-
-.ts-week-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-wrap: wrap;
-}
-
-.ts-week-row__initials {
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    background: linear-gradient(135deg, #2A6C95, #1E5270);
-    color: white;
-    font-size: 8px;
-    font-weight: 700;
+.te-th-day-num {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-primary);
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    text-transform: uppercase;
+    margin: 2px auto 0;
+}
+.te-th--today {
+  background: rgba(42,108,149,0.06);
 }
 
-.ts-week-row__hrs {
-    font-size: 10px;
-    font-weight: 700;
-    color: #374151;
+.te-th--today .te-th-day-label {
+  color: #2A6C95;
 }
 
-.ts-week-row__ot {
-    font-size: 9px;
-    background: #FEF3C7;
-    color: #92400E;
-    border-radius: 4px;
-    padding: 1px 4px;
-    font-weight: 700;
+.te-th--today .te-th-day-num {
+  color: #2A6C95;
+  font-size: 1.1rem;
 }
 
-.ts-week-summary__total {
-    border-top: 1px solid #E5E7EB;
-    padding-top: 4px;
-    margin-top: 2px;
-    font-size: 10px;
-    font-weight: 700;
-    color: #374151;
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
+/* Círculo detrás del número de hoy */
+.te-th-day-num--today {
+  width: 28px;
+  height: 28px;
+  background: #2A6C95;
+  color: white !important;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px auto 0;
+  font-size: 0.85rem !important;
 }
 
-.ts-week-summary__pending {
-    color: #F59E0B;
-}
-
-.ts-approve-week-btn {
+/* Worker Cell */
+.te-worker {
     display: flex;
     align-items: center;
-    gap: 3px;
-    font-size: 9px;
+    gap: 12px;
+}
+
+.te-td--worker {
+    width: 260px;
+    min-width: 220px;
+    background: var(--bg-card);
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    border-right: 1px solid var(--border);
+}
+
+.te-worker__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.te-worker__name {
+    margin: 0;
+    font-size: 14px;
     font-weight: 700;
-    background: #D1FAE5;
-    color: #065F46;
-    border: 1px solid #A7F3D0;
-    border-radius: 5px;
-    padding: 3px 6px;
-    cursor: pointer;
-    margin-top: 2px;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.te-worker__trade {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Cells */
+.ts-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 48px;
+    position: relative;
+    border-radius: 8px;
     transition: background 0.15s;
 }
 
-.ts-approve-week-btn:hover {
-    background: #A7F3D0;
+.ts-cell:hover .ts-add-btn {
+    opacity: 1;
 }
 
-/* ── Drawer ───────────────────────────────────────────────────────── */
-.ts-drawer {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 440px;
-    max-width: 96vw;
-    background: #fff;
-    box-shadow: -8px 0 40px rgba(0, 0, 0, .12);
-    z-index: 1000;
+.ts-cell-chips {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    animation: slideInRight 0.25s ease;
+    gap: 6px;
+    width: 100%;
+    align-items: center;
 }
 
-.ts-drawer-avatar {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #2A6C95, #1E5270);
-    color: white;
-    font-size: 18px;
-    font-weight: 800;
+.ts-add-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px dashed #D1D5DB;
+    background: transparent;
+    color: #9CA3AF;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    text-transform: uppercase;
-}
-
-.ts-hours-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 18px;
-    font-weight: 800;
-    color: #111827;
-    margin-top: 6px;
-}
-
-.ts-gps-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11px;
-    color: #6B7280;
-    padding: 4px 6px;
-    border-radius: 6px;
-    margin-bottom: 4px;
-}
-
-.ts-gps-row--ok {
-    background: #F0FDF4;
-}
-
-.ts-gps-row--warn {
-    background: #FEF3C7;
-}
-
-.ts-gps-dist {
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.ts-manual-box {
-    background: #EDE9FE;
-    border: 1px solid #C4B5FD;
-    border-radius: 8px;
-    padding: 10px 12px;
-}
-
-.ts-manual-box__label {
-    font-size: 11px;
-    font-weight: 700;
-    color: #7C3AED;
-    margin-bottom: 4px;
-}
-
-.ts-manual-box__text {
-    font-size: 12px;
-    color: #4C1D95;
-}
-
-/* Status action buttons */
-.ts-status-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.ts-action-btn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 7px 14px;
-    border-radius: 8px;
     cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s;
+}
+
+.ts-add-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(42, 108, 149, 0.05);
+}
+
+/* Chips */
+.ts-chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
     border: 1px solid transparent;
-    transition: all 0.15s;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    width: 100%;
+    justify-content: center;
+    position: relative;
 }
 
-.ts-action-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.ts-chip:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.06);
 }
 
-.ts-action-btn--approve {
-    background: #D1FAE5;
-    color: #065F46;
-    border-color: #A7F3D0;
-}
-
-.ts-action-btn--approve:hover:not(:disabled) {
-    background: #A7F3D0;
-}
-
-.ts-action-btn--flag {
+.ts-chip--pending {
     background: #FEF3C7;
     color: #92400E;
     border-color: #FDE68A;
 }
 
-.ts-action-btn--flag:hover:not(:disabled) {
-    background: #FDE68A;
+.ts-chip--approved {
+    background: #D1FAE5;
+    color: #065F46;
+    border-color: #A7F3D0;
 }
 
-.ts-action-btn--reject {
+.ts-chip--flagged {
     background: #FEE2E2;
     color: #991B1B;
-    border-color: #FCA5A5;
+    border-color: #FECACA;
 }
 
-.ts-action-btn--reject:hover:not(:disabled) {
-    background: #FCA5A5;
+.ts-chip--rejected {
+    background: #F3F4F6;
+    color: #6B7280;
+    border-color: #E5E7EB;
 }
 
-/* ── Modal extras ─────────────────────────────────────────────────── */
-.ts-manual-warning {
+.ts-chip--live {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border-color: #FECACA;
+    animation: ts-bg-pulse 2s infinite;
+}
+
+.ts-chip-manual-dot {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    background: #8B5CF6;
+    border-radius: 50%;
+    border: 1.5px solid #fff;
+}
+
+@keyframes ts-bg-pulse {
+    0%, 100% { background: #FEF2F2; }
+    50% { background: #FEE2E2; }
+}
+
+.ts-pulse {
+    width: 6px;
+    height: 6px;
+    background: #EF4444;
+    border-radius: 50%;
+    animation: pulseAlert 1.5s infinite;
+}
+
+@keyframes pulseAlert {
+    0% { transform: scale(0.9); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.3; }
+    100% { transform: scale(0.9); opacity: 1; }
+}
+
+/* Total */
+.ts-total-hours {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+/* Empty day placeholder */
+.te-empty-day {
+  color: var(--border);
+  font-size: 1.2rem;
+  font-weight: 300;
+  user-select: none;
+}
+
+/* Actions */
+.te-approve-week {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.te-approve-week:hover:not(:disabled) {
+  background: rgba(42,108,149,0.06);
+  border-color: #2A6C95;
+  color: #2A6C95;
+  transform: translateY(-1px);
+}
+
+.te-approve-week--done {
+  background: rgba(16,185,129,0.08);
+  border-color: rgba(16,185,129,0.25);
+  color: #059669 !important;
+  cursor: default;
+}
+
+.te-approve-week:disabled {
+  cursor: default;
+  transform: none;
+}
+
+/* ── Portal Drawer (Inline Edit) ──────────────────────────────────── */
+.ts-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 999;
+}
+
+.ts-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 440px;
+    max-width: 100vw;
+    background: var(--bg-card);
+    z-index: 1000;
     display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    background: #FFFBEB;
-    border: 1px solid #FDE68A;
-    color: #92400E;
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 12px;
-    margin-bottom: 14px;
-    line-height: 1.5;
+    flex-direction: column;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1);
 }
 
-.ts-calc-hrs {
+.ts-drawer-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--bg-hover);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: #2A6C95;
-    background: #EFF6FF;
-    border: 1px solid #BAE6FD;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    z-index: 10;
+}
+
+.ts-drawer-close:hover {
+    background: var(--bg-separator);
+    color: var(--text-primary);
+}
+
+.ts-drawer-hero {
+    padding: 32px 28px 24px;
+    background: var(--bg-main);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.ts-drawer-hero-info h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.ts-drawer-hero-info span {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.ts-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.ts-drawer-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ts-badge {
+    padding: 4px 10px;
     border-radius: 6px;
-    padding: 6px 10px;
-    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
 }
 
-/* ── Dark mode ────────────────────────────────────────────────────── */
-[data-theme="dark"] .ts-title,
-[data-theme="dark"] .ts-month-title,
-[data-theme="dark"] .ts-stat-card__value,
-[data-theme="dark"] .ts-cal-cell__date {
-    color: #F9FAFB;
+/* Re-use chip colors for badges */
+.ts-badge--pending { background: #FEF3C7; color: #B45309; }
+.ts-badge--approved { background: #D1FAE5; color: #047857; }
+.ts-badge--flagged { background: #FEE2E2; color: #B91C1C; }
+.ts-badge--rejected { background: #F3F4F6; color: #4B5563; }
+.ts-badge--manual { background: #EDE9FE; color: #6D28D9; }
+
+.ts-drawer-section h3 {
+    margin: 0 0 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-[data-theme="dark"] .ts-stat-card,
-[data-theme="dark"] .ts-calendar,
-[data-theme="dark"] .ts-drawer {
-    background: #1F2937;
-    border-color: #374151;
+.ts-field {
+    margin-bottom: 16px;
 }
 
-[data-theme="dark"] .ts-cal-header,
-[data-theme="dark"] .ts-cal-week-label,
-[data-theme="dark"] .ts-week-summary {
-    background: #111827;
+.ts-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
 }
 
-[data-theme="dark"] .ts-cal-cell {
-    background: #1F2937;
-    border-color: #374151;
+.ts-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.2s;
+    font-family: inherit;
 }
 
-[data-theme="dark"] .ts-cal-cell--other {
-    background: #111827;
+.ts-input:focus {
+    border-color: var(--primary);
+    background: var(--bg-card);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.1);
 }
 
-[data-theme="dark"] .ts-cal-cell--today {
-    background: #1E3A5F;
+.ts-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
 }
 
-[data-theme="dark"] .ts-cell-entry {
-    background: #374151;
-    border-color: #4B5563;
+.ts-calc-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(42, 108, 149, 0.05);
+    border: 1px solid rgba(42, 108, 149, 0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--primary-dark);
+    font-size: 13px;
 }
 
-[data-theme="dark"] .ts-stat-card__label {
-    color: #9CA3AF;
+.ts-status-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ts-btn-approve, .ts-btn-reject, .ts-btn-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.ts-btn-approve { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
+.ts-btn-reject { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+.ts-btn-flag { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
+
+.ts-btn-approve:hover:not(:disabled) { background: #10B981; color: white; }
+.ts-btn-reject:hover:not(:disabled) { background: #EF4444; color: white; }
+.ts-btn-flag:hover:not(:disabled) { background: #F59E0B; color: white; }
+
+.ts-btn-approve:disabled, .ts-btn-reject:disabled, .ts-btn-flag:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ts-drawer-footer {
+    padding: 20px 28px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-main);
+}
+
+.ts-btn-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid #FECACA;
+    background: #FEF2F2;
+    color: #EF4444;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ts-btn-delete:hover:not(:disabled) {
+    background: #EF4444;
+    color: white;
+}
+
+.ts-btn-ghost {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ts-btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.ts-btn-primary {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ts-btn-primary:hover:not(:disabled) {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+.ts-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Generic ──────────────────────────────────────────────────────── */
+.ts-loading-state {
+    padding: 60px;
+    text-align: center;
+    color: var(--text-muted);
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.ts-pulse-loader {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.ts-empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* ── Toast ────────────────────────────────────────────────────────── */
+.ts-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--bg-card);
+    padding: 14px 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    z-index: 2000;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+}
+
+.ts-toast--success { border-left: 4px solid #10B981; color: #047857; }
+.ts-toast--error { border-left: 4px solid #EF4444; color: #B91C1C; }
+
+/* Animations */
+.slide-in-right {
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Dark Mode Tweaks ─────────────────────────────────────────────── */
+[data-theme="dark"] .ts-day-num.ts-day-today {
+    background: rgba(42, 108, 149, 0.2);
+}
+[data-theme="dark"] .ts-btn-delete {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+[data-theme="dark"] .ts-col-worker {
+    background: var(--bg-card); /* Ensure sticky header matches card bg */
 }

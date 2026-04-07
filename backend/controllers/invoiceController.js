@@ -2,13 +2,13 @@ const { Op } = require('sequelize');
 const { sequelize } = require('../config/database');
 const {
     Invoice, InvoiceLine, TimeEntry, Worker, Trade,
-    Client, Project, ClientRate, User, PerDiemEntry, CompanySettings,
+    Client, Project, ClientRate, User, PerDiemEntry, CompanySettings, Assignment,
 } = require('../models');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 
 // ─── Full includes for fetching invoices ────────────────────────────────────────
 const INVOICE_INCLUDES = [
-    { model: Client, as: 'client', attributes: ['id', 'company_name', 'address', 'city', 'state', 'zip', 'contact_email', 'contact_name'] },
+    { model: Client, as: 'client', attributes: ['id', 'company_name', 'address', 'contact_email', 'contact_name'] },
     { model: Project, as: 'project', attributes: ['id', 'name', 'address'] },
     {
         model: InvoiceLine, as: 'lines',
@@ -54,6 +54,30 @@ const generateInvoice = async (req, res) => {
         if (!client_id || !project_id || !week_start_date || !week_end_date) {
             await t.rollback();
             return errorResponse(res, 'Required: client_id, project_id, week_start_date, week_end_date.', 400);
+        }
+
+        // H-3: Guard against duplicate invoicing for the same week/project
+        const existingInvoice = await Invoice.findOne({
+            where: {
+                project_id,
+                week_start_date,
+                week_end_date,
+                is_active: true,
+                status: { [Op.ne]: 'draft' },
+            },
+            transaction: t,
+        });
+        if (existingInvoice) {
+            await t.rollback();
+            return res.status(409).json({
+                success: false,
+                message: `Ya existe una factura activa para este período. Factura #${existingInvoice.invoice_number}`,
+                existingInvoice: {
+                    id: existingInvoice.id,
+                    invoice_number: existingInvoice.invoice_number,
+                    status: existingInvoice.status,
+                },
+            });
         }
 
         // Fetch approved time entries for the week
@@ -258,7 +282,6 @@ const getUnbilledWeeks = async (req, res) => {
             const key = `${e.project_id}__${mon.toISOString().split('T')[0]}`;
             if (!weekSet.has(key)) {
                 weekSet.add(key);
-                // Check this week isn't already billed
                 weeks.push({
                     project_id: e.project_id,
                     project_name: e.project?.name,
@@ -269,7 +292,19 @@ const getUnbilledWeeks = async (req, res) => {
             }
         });
 
-        return successResponse(res, weeks, 'Unbilled weeks retrieved.');
+        // L-2: Filter weeks that already have an active non-draft invoice
+        const billedInvoices = await Invoice.findAll({
+            where: { project_id: project_id ? project_id : { [Op.ne]: null }, is_active: true, status: { [Op.ne]: 'draft' } },
+            attributes: ['project_id', 'week_start_date', 'week_end_date'],
+        });
+        const billedKeys = new Set(
+            billedInvoices.map(inv => `${inv.project_id}__${inv.week_start_date}__${inv.week_end_date}`)
+        );
+        const unbilledWeeks = weeks.filter(w =>
+            !billedKeys.has(`${w.project_id}__${w.week_start_date}__${w.week_end_date}`)
+        );
+
+        return successResponse(res, unbilledWeeks, 'Unbilled weeks retrieved.');
     } catch (error) {
         console.error('getUnbilledWeeks error:', error);
         return errorResponse(res, 'Failed to get unbilled weeks.', 500);
@@ -281,7 +316,21 @@ const getInvoiceById = async (req, res) => {
     try {
         const invoice = await Invoice.findOne({ where: { id: req.params.id, is_active: true }, include: INVOICE_INCLUDES });
         if (!invoice) return errorResponse(res, 'Invoice not found.', 404);
-        return successResponse(res, invoice, 'Invoice retrieved.');
+        
+        const perDiemLines = await PerDiemEntry.findAll({
+            where: {
+                week_start_date: invoice.week_start_date
+            },
+            include: [
+                { model: Worker, as: 'worker', attributes: ['id', 'first_name', 'last_name'] },
+                { model: Assignment, as: 'assignment', where: { project_id: invoice.project_id }, attributes: [] }
+            ]
+        });
+        
+        const invoiceData = invoice.toJSON();
+        invoiceData.perDiemLines = perDiemLines.map(pd => pd.toJSON());
+
+        return successResponse(res, invoiceData, 'Invoice retrieved.');
     } catch (error) {
         console.error('getInvoiceById error:', error);
         return errorResponse(res, 'Failed to retrieve invoice.', 500);
@@ -291,26 +340,59 @@ const getInvoiceById = async (req, res) => {
 // ─── PUT /api/invoices/:id ───────────────────────────────────────────────────────
 const updateInvoice = async (req, res) => {
     try {
-        const invoice = await Invoice.findOne({ where: { id: req.params.id, is_active: true } });
-        if (!invoice) return errorResponse(res, 'Invoice not found.', 404);
-        if (!['draft', 'pending_approval'].includes(invoice.status)) {
-            return errorResponse(res, 'Solo se puede editar facturas en borrador o pendiente de aprobación.', 400);
-        }
-
-        const { invoice_number, notes, adjustments, due_date } = req.body;
-        const adj = parseFloat(adjustments ?? invoice.adjustments);
-        const newTotal = parseFloat(invoice.subtotal) + parseFloat(invoice.per_diem_total) + adj;
-
-        await invoice.update({
-            invoice_number: invoice_number || invoice.invoice_number,
-            notes: notes !== undefined ? notes : invoice.notes,
-            adjustments: adj,
-            total: parseFloat(newTotal.toFixed(2)),
-            due_date: due_date || invoice.due_date,
+        const invoice = await Invoice.findOne({
+            where: { id: req.params.id, is_active: true },
         });
 
-        const full = await Invoice.findByPk(invoice.id, { include: INVOICE_INCLUDES });
-        return successResponse(res, full, 'Factura actualizada.');
+        if (!invoice) {
+            return errorResponse(res, 'Invoice not found.', 404);
+        }
+
+        const {
+            client_id,
+            project_id,
+            notes,
+            adjustments,
+            per_diem_total,
+            payment_terms,
+            week_start_date,
+            week_end_date,
+            invoice_date,
+            due_date,
+        } = req.body;
+
+        // Actualizar campos permitidos
+        const updateData = {};
+        if (client_id !== undefined) updateData.client_id = client_id;
+        if (project_id !== undefined) updateData.project_id = project_id;
+        if (notes !== undefined) updateData.notes = notes;
+
+        // Recalcular total si cambian montos
+        const adj = adjustments !== undefined ? parseFloat(adjustments) : parseFloat(invoice.adjustments || 0);
+        const pd = per_diem_total !== undefined ? parseFloat(per_diem_total) : parseFloat(invoice.per_diem_total || 0);
+
+        if (adjustments !== undefined || per_diem_total !== undefined) {
+            updateData.adjustments = adj;
+            updateData.per_diem_total = pd;
+            updateData.total = parseFloat(
+                (parseFloat(invoice.subtotal) + adj + pd).toFixed(2)
+            );
+        }
+
+        if (payment_terms !== undefined) updateData.payment_terms = payment_terms;
+        if (week_start_date !== undefined) updateData.week_start_date = week_start_date;
+        if (week_end_date !== undefined) updateData.week_end_date = week_end_date;
+        if (invoice_date !== undefined) updateData.invoice_date = invoice_date;
+        if (due_date !== undefined) updateData.due_date = due_date;
+
+        await invoice.update(updateData);
+
+        // Retornar factura actualizada completa
+        const updated = await Invoice.findByPk(invoice.id, {
+            include: INVOICE_INCLUDES,
+        });
+
+        return successResponse(res, updated, 'Invoice updated successfully.');
     } catch (error) {
         console.error('updateInvoice error:', error);
         return errorResponse(res, 'Failed to update invoice.', 500);
@@ -536,39 +618,49 @@ const getInvoiceHtml = async (req, res) => {
     }
 };
 
-// ─── POST /api/invoices/:id/send-email ── (stub — mark as sent, email via SMTP if configured)
+// ─── POST /api/invoices/:id/send-email ── (L-4 fix: only mark 'sent' if email succeeds)
 const sendInvoiceEmail = async (req, res) => {
     try {
         const invoice = await Invoice.findOne({ where: { id: req.params.id, is_active: true }, include: INVOICE_INCLUDES });
         if (!invoice) return errorResponse(res, 'Invoice not found.', 404);
 
-        // Mark as sent
-        await invoice.update({ status: 'sent', sent_at: new Date() });
-
-        // Nodemailer send — only if EMAIL_PASSWORD is configured
-        if (process.env.EMAIL_PASSWORD) {
-            try {
-                const nodemailer = require('nodemailer');
-                const settings = await getCompanySettings();
-                const transporter = nodemailer.createTransport({
-                    service: 'gmail',
-                    auth: { user: settings.email, pass: process.env.EMAIL_PASSWORD },
-                });
-                const client = invoice.client || {};
-                await transporter.sendMail({
-                    from: `"${settings.company_name}" <${settings.email}>`,
-                    to: client.contact_email || 'client@example.com',
-                    subject: `Invoice #${invoice.invoice_number} — ${settings.company_name}`,
-                    text: `Please find attached invoice #${invoice.invoice_number}.\n\nWeek: ${invoice.week_start_date} to ${invoice.week_end_date}\nTotal: $${invoice.total}\n\n${settings.payment_instructions || ''}`,
-                });
-            } catch (emailErr) {
-                console.warn('Email send warning:', emailErr.message);
-                // Don't fail the request — invoice is already marked sent
-            }
+        // If EMAIL_PASSWORD is not configured, don't mark as sent — warn instead
+        if (!process.env.EMAIL_PASSWORD) {
+            return res.status(503).json({
+                success: false,
+                message: 'No hay configuración de email (EMAIL_PASSWORD). La factura NO fue marcada como enviada.',
+                invoice_status: invoice.status,
+            });
         }
 
+        try {
+            const nodemailer = require('nodemailer');
+            const settings = await getCompanySettings();
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: settings.email, pass: process.env.EMAIL_PASSWORD },
+            });
+            const client = invoice.client || {};
+            await transporter.sendMail({
+                from: `"${settings.company_name}" <${settings.email}>`,
+                to: client.contact_email || 'client@example.com',
+                subject: `Invoice #${invoice.invoice_number} — ${settings.company_name}`,
+                text: `Please find attached invoice #${invoice.invoice_number}.\n\nWeek: ${invoice.week_start_date} to ${invoice.week_end_date}\nTotal: $${invoice.total}\n\n${settings.payment_instructions || ''}`,
+            });
+        } catch (emailErr) {
+            console.error('Email send error:', emailErr.message);
+            // L-4: Email failed — do NOT mark as sent, return error
+            return res.status(502).json({
+                success: false,
+                message: `La factura está aprobada pero el email no pudo enviarse: ${emailErr.message}. Verifica la configuración SMTP.`,
+                invoice_status: invoice.status,
+            });
+        }
+
+        // Only mark as 'sent' after confirmed email delivery
+        await invoice.update({ status: 'sent', sent_at: new Date() });
         const full = await Invoice.findByPk(invoice.id, { include: INVOICE_INCLUDES });
-        return successResponse(res, full, 'Factura marcada como enviada.');
+        return successResponse(res, full, 'Factura enviada y marcada como enviada.');
     } catch (error) {
         console.error('sendInvoiceEmail error:', error);
         return errorResponse(res, 'Failed to send invoice.', 500);
