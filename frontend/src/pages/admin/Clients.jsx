@@ -67,7 +67,7 @@ function ClientCard({ client, onEdit, onToggle, onCardClick, selected }) {
                         {initials(client.company_name)}
                     </div>
                     <div style={{ minWidth: 0 }}>
-                        <p className="cl-card__name">{client.company_name}</p>
+                        <p className="cl-card__name" title={client.company_name}>{client.company_name}</p>
                         <p className="cl-card__contact">{client.contact_name}</p>
                     </div>
                 </div>
@@ -103,8 +103,8 @@ function ClientCard({ client, onEdit, onToggle, onCardClick, selected }) {
             <div className="cl-card__footer">
                 <StatusBadge status={client.status} />
                 <div className="cl-card__stats">
-                    <span><FolderOpen size={10} style={{ marginRight: 3 }} />{projectCount}p</span>
-                    <span><DollarSign size={10} style={{ marginRight: 3 }} />{rates.length}t</span>
+                    <span title={`${projectCount} proyecto${projectCount !== 1 ? 's' : ''}`}><FolderOpen size={10} style={{ marginRight: 3 }} />{projectCount} proy.</span>
+                    <span title={`${rates.length} tarifa${rates.length !== 1 ? 's' : ''}`}><DollarSign size={10} style={{ marginRight: 3 }} />{rates.length} tar.</span>
                 </div>
             </div>
 
@@ -538,7 +538,7 @@ export default function Clients() {
             const all = res.data || res;
             const list = Array.isArray(all) ? all : [];
             const actv = list.filter(c => c.status === 'active');
-            const withP = actv.filter(c => (c.projects || []).length > 0);
+            const withP = actv.filter(c => (c.projects || []).some(p => p.status === 'active'));
             setStats({ total: list.length, active: actv.length, withProjects: withP.length });
         } catch { /* no-op */ }
     }, [get]);

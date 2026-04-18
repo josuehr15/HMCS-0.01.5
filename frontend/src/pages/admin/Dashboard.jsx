@@ -160,24 +160,30 @@ const Dashboard = () => {
                 const pendingAmt = pendingInv.reduce((s, i) => s + parseFloat(i.total || 0), 0);
                 const perDiem = te.reduce((s, e) => s + parseFloat(e.per_diem_amount || 0), 0);
                 const activeProj = proj.filter(x => x.status === 'active' || x.is_active);
-                const laborCost = totalHrs * 35;
-                const profit = revenue - laborCost;
-                const margin = revenue > 0 ? ((profit / revenue) * 100) : 0;
+
+                // LOGICA-001/002: Do NOT estimate labor cost or payroll from hardcoded rates.
+                // Revenue and expenses come from real invoice/payroll data only.
+                // LOGICA-003/BASURA-004: Do NOT use arbitrary multipliers (0.48, *2).
+                // These values will be driven by real payroll/accounting data in later phases.
+                const approvedInv = inv.filter(x => x.status === 'approved' || x.status === 'paid');
+                const margin = revenue > 0 ? ((paidAmt / revenue) * 100) : 0;
 
                 setStats({
                     totalWorkers: activeW.length,
-                    clockedIn: Math.min(activeW.length, 3),
+                    clockedIn: activeW.filter(x => x.availability === 'assigned').length,
                     totalHours: totalHrs,
                     overtimeHours: overtimeHrs,
-                    revenue, expenses: laborCost, profit,
+                    revenue,
+                    expenses: 0,   // real expenses come from accounting module (Phase 4)
+                    profit: 0,     // real P&L comes from accounting module (Phase 4)
                     pendingInvoices: pendingInv.length,
                     paidInvoices: paidInv.length,
                     pendingAmount: pendingAmt, paidAmount: paidAmt,
                     overdueAmount: 0,
-                    payrollPending: (totalHrs * 25).toFixed(2),
+                    payrollPending: 0, // real pending payroll comes from payroll stats endpoint
                     perDiemTotal: perDiem,
                     activeProjects: activeProj.length,
-                    activeAssignments: activeProj.length * 2,
+                    activeAssignments: activeProj.length, // actual count from assignments endpoint in future
                     profitMargin: margin.toFixed(1),
                     deposited: paidAmt,
                 });
@@ -392,17 +398,17 @@ const Dashboard = () => {
                     <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle right={<span className="ds-muted-xs">Hoy</span>}>Cuentas Bancarias</SectionTitle>
                         <p className="ds-muted-xs" style={{ marginBottom: 4 }}>Saldo bancario actual</p>
-                        <div className="ds-big-num">${(stats.revenue * 0.48).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                        <div className="ds-big-num ds-muted-xs">Disponible en Fase 4</div>
                         <div className="ds-divider" />
                         <div className="ds-bank-row">
                             <div className="ds-bank-icon">🏦</div>
                             <div style={{ flex: 1 }}>
                                 <div className="ds-fw600">Cuenta Principal</div>
-                                <div className="ds-muted-xs">Saldo bancario</div>
+                                <div className="ds-muted-xs">Conectar en módulo de Contabilidad</div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                                <div className="ds-fw700">${(stats.revenue * 0.48).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</div>
-                                <span className="ds-badge ds-badge--green"><CheckCircle2 size={10} /> Revisado</span>
+                                <div className="ds-fw700">—</div>
+                                <span className="ds-badge ds-badge--green"><CheckCircle2 size={10} /> Pendiente</span>
                             </div>
                         </div>
                         <div className="ds-bank-row">
@@ -451,10 +457,10 @@ const Dashboard = () => {
                 return (
                     <WidgetCard key={id} id={id} onNavigate={onNav}>
                         <SectionTitle right={<span className="ds-muted-xs">Este mes</span>}>Pérdidas y Ganancias</SectionTitle>
-                        <div className="ds-big-num">${stats.profit > 0 ? stats.profit.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '0'}</div>
-                        {stats.profit > 0 && <div className="ds-badge ds-badge--green-bg"><ArrowUpRight size={12} /> Beneficio neto</div>}
-                        <ProgressBar value={stats.revenue} max={Math.max(stats.revenue, 1)} color="#059669" label="Ingresos" />
-                        <ProgressBar value={stats.expenses} max={Math.max(stats.revenue, 1)} color="#DC2626" label="Gastos" />
+                        <div className="ds-big-num ds-muted-xs">Disponible en Fase 4</div>
+                        <p className="ds-muted-xs" style={{ marginBottom: 8 }}>Los datos de gastos reales se conectarán en el módulo de Contabilidad.</p>
+                        <ProgressBar value={stats.revenue} max={Math.max(stats.revenue, 1)} color="#059669" label="Ingresos facturados" />
+                        <ProgressBar value={0} max={Math.max(stats.revenue, 1)} color="#DC2626" label="Gastos (pendiente)" />
                     </WidgetCard>
                 );
 
@@ -464,7 +470,7 @@ const Dashboard = () => {
                         <SectionTitle>Nómina</SectionTitle>
                         <div className="ds-payroll-grid">
                             <div className="ds-payroll-box"><div className="ds-muted-xs">Pendiente</div><div className="ds-num">${parseFloat(stats.payrollPending).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></div>
-                            <div className="ds-payroll-box"><div className="ds-muted-xs">Overtime</div><div className="ds-num ds-num--orange">{stats.overtimeHours.toFixed(1)}h</div></div>
+                            <div className="ds-payroll-box"><div className="ds-muted-xs">Overtime</div><div className={`ds-num${stats.overtimeHours > 0 ? ' ds-num--orange' : ''}`}>{stats.overtimeHours.toFixed(1)}h</div></div>
                             <div className="ds-payroll-box"><div className="ds-muted-xs">Per Diem</div><div className="ds-num">${stats.perDiemTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></div>
                         </div>
                         {parseFloat(stats.payrollPending) > 0 && (
@@ -519,7 +525,7 @@ const Dashboard = () => {
                         <SectionTitle right={<span className="ds-muted-xs">7 meses</span>}>Flujo de Caja</SectionTitle>
                         <div style={{ marginBottom: 12 }}>
                             <div className="ds-muted-xs">Saldo actual</div>
-                            <div className="ds-big-num">${(stats.revenue * 0.48).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                            <div className="ds-big-num ds-muted-xs">Disponible en Fase 4</div>
                         </div>
                         <ResponsiveContainer width="100%" height={200}>
                             <AreaChart data={cashflowData}>
@@ -530,7 +536,7 @@ const Dashboard = () => {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
+                                <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} interval={0} />
                                 <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${(v / 1000).toFixed(0)}K`} />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Area type="monotone" dataKey="value" stroke="#059669" strokeWidth={2.5} fill="url(#cashGrad)" dot={{ r: 4, fill: '#059669', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 6 }} />
@@ -586,7 +592,7 @@ const Dashboard = () => {
                                 return (
                                     <div key={p.id || i} className="ds-project">
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                                            <div><div className="ds-fw700" style={{ fontSize: '0.85rem' }}>{p.name || `Proyecto ${i + 1}`}</div><div className="ds-muted-xs">{p.client_name || 'Cliente'}</div></div>
+                                            <div><div className="ds-fw700" style={{ fontSize: '0.85rem' }}>{p.name || `Proyecto ${i + 1}`}</div><div className="ds-muted-xs">{p.client?.company_name || 'Cliente'}</div></div>
                                             <span className="ds-pct" style={{ color: colors[i], background: `${colors[i]}15` }}>{pct[i]}%</span>
                                         </div>
                                         <div className="ds-project__bar"><div style={{ width: `${pct[i]}%`, background: colors[i] }} /></div>
@@ -739,7 +745,7 @@ const Dashboard = () => {
                                 return (
                                     <div key={i} className="ds-client-row">
                                         <div className="ds-client-dot" style={{ background: colors[i % 4] }} />
-                                        <div style={{ flex: 1 }}><div className="ds-fw600">{p.client_name || p.name || `Cliente ${i + 1}`}</div><div className="ds-muted-xs">{p.name}</div></div>
+                                        <div style={{ flex: 1 }}><div className="ds-fw600">{p.client?.company_name || p.name || `Cliente ${i + 1}`}</div><div className="ds-muted-xs">{p.name}</div></div>
                                         <div className="ds-fw700">${(stats.revenue / Math.max(projects.length, 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
                                     </div>
                                 );

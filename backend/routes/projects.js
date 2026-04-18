@@ -5,12 +5,13 @@ const checkRole = require('../middleware/checkRole');
 const {
     getAllProjects, getProjectById, getProjectLinkedData,
     createProject, updateProject, deleteProject,
-    toggleProjectStatus, forceDeleteProject,
+    toggleProjectStatus, forceDeleteProject, resolveMapUrl,
 } = require('../controllers/projectController');
 
 router.use(auth);
 
 // ── Sub-resource routes BEFORE /:id ────────────────────────────────
+router.get('/utils/resolve-map-url', checkRole('admin'), resolveMapUrl);
 router.get('/:id/linked-data', checkRole('admin'), getProjectLinkedData);
 router.patch('/:id/toggle-status', checkRole('admin'), toggleProjectStatus);
 router.delete('/:id/force', checkRole('admin'), forceDeleteProject);

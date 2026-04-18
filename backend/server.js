@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -34,7 +35,21 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // ─── Middleware ──────────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors());
+
+// BUG-005: CORS with explicit whitelist instead of wildcard
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'];
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (e.g., mobile apps, curl)
+        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true, // SEC-001: required for httpOnly cookie exchange
+}));
+
+app.use(cookieParser()); // SEC-001: parse httpOnly auth cookie
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -86,8 +101,6 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
     try {
         console.log('⏳ Connecting to database...');
-        console.log(`   Host: ${process.env.DB_HOST}:${process.env.DB_PORT}`);
-        console.log(`   DB:   ${process.env.DB_NAME} (user: ${process.env.DB_USER})`);
 
         // Test database connection
         const connected = await testConnection();

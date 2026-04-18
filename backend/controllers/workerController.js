@@ -12,41 +12,54 @@ const bcrypt = require('bcryptjs');
  *   ?include_inactive=true         → include inactive (but never deleted_at workers)
  *   ?trade_id=N                    → filter by trade
  *   ?availability=...              → filter by availability
+ *   ?page=1&limit=50               → DEUDA-002: pagination (default: no limit for backward compat)
  *
  * DEFAULT: only workers with is_active=true AND deleted_at IS NULL
  * Workers with deleted_at set are NEVER returned — permanently hidden.
  */
 const getAllWorkers = async (req, res) => {
     try {
-        const { status, trade_id, availability, include_inactive } = req.query;
+        const { status, trade_id, availability, include_inactive, page, limit } = req.query;
 
         // Base condition: never show permanently-deleted workers
         const where = { deleted_at: null };
 
         if (status === 'inactive') {
-            // Explicitly requested inactive list
             where.is_active = false;
         } else if (include_inactive === 'true') {
             // Show all (active + inactive) — but still not deleted
-            // No is_active filter
         } else {
-            // Default: only active
             where.is_active = true;
         }
 
         if (trade_id) where.trade_id = trade_id;
         if (availability) where.availability = availability;
 
-        const workers = await Worker.findAll({
+        // DEUDA-002: optional pagination
+        const pageNum = parseInt(page, 10) || null;
+        const limitNum = Math.min(parseInt(limit, 10) || 500, 500); // hard cap at 500
+        const offset = pageNum ? (pageNum - 1) * limitNum : 0;
+        const paginationOpts = pageNum ? { limit: limitNum, offset } : {};
+
+        const { count, rows: workers } = await Worker.findAndCountAll({
             where,
             include: [
                 { model: User, as: 'user', attributes: ['id', 'email', 'preferred_language', 'is_active'] },
                 { model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] },
             ],
             order: [['first_name', 'ASC'], ['last_name', 'ASC']],
+            ...paginationOpts,
+            distinct: true,
         });
 
-        return successResponse(res, workers, 'Workers retrieved successfully.');
+        return res.json({
+            success: true,
+            data: workers,
+            total: count,
+            page: pageNum || 1,
+            limit: limitNum,
+            message: 'Workers retrieved successfully.',
+        });
     } catch (error) {
         console.error('getAllWorkers error:', error);
         return errorResponse(res, 'Failed to retrieve workers.', 500);

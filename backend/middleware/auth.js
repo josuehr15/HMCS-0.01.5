@@ -1,22 +1,28 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { User, Worker } = require('../models');
 
 /**
  * JWT authentication middleware.
- * Verifies the token from Authorization header and attaches user to req.user.
+ * SEC-001: Reads token from httpOnly cookie (preferred) or Authorization header (fallback).
+ * BUG-007: If user is a contractor, also verifies that worker.status === 'active'.
  */
 const auth = async (req, res, next) => {
     try {
-        const authHeader = req.headers.authorization;
+        // SEC-001: prefer httpOnly cookie, fall back to Authorization header
+        let token = req.cookies?.hmcs_token;
+        if (!token) {
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                token = authHeader.split(' ')[1];
+            }
+        }
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        if (!token) {
             return res.status(401).json({
                 success: false,
                 message: 'Access denied. No token provided.',
             });
         }
-
-        const token = authHeader.split(' ')[1];
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -36,6 +42,21 @@ const auth = async (req, res, next) => {
                 success: false,
                 message: 'Tu acceso está suspendido.',
             });
+        }
+
+        // BUG-007: For contractors, verify worker.status === 'active' on every request.
+        // This catches cases where a worker is deactivated after login while their token is still valid.
+        if (user.role === 'contractor') {
+            const worker = await Worker.findOne({
+                where: { user_id: user.id },
+                attributes: ['id', 'status'],
+            });
+            if (worker && worker.status === 'inactive') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Tu acceso está suspendido.',
+                });
+            }
         }
 
         req.user = user;

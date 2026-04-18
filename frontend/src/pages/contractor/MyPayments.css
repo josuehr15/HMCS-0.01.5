@@ -1,0 +1,252 @@
+.mp-loading, .mp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--text-muted, #6b7280);
+  font-size: 14px;
+  gap: 12px;
+  text-align: center;
+}
+
+.mp-empty-icon { font-size: 40px; }
+
+.mp-page {
+  padding: 16px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.mp-page-header {
+  margin-bottom: 20px;
+}
+
+.mp-page-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin-bottom: 4px;
+}
+
+.mp-page-header p {
+  font-size: 13px;
+  color: var(--text-muted, #6b7280);
+}
+
+.mp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mp-card {
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.mp-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.mp-period-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted, #9ca3af);
+  margin-bottom: 3px;
+}
+
+.mp-period-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+
+.mp-project {
+  font-size: 11px;
+  color: var(--text-muted, #9ca3af);
+  margin-top: 2px;
+}
+
+.mp-card-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.mp-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mp-badge-zelle { background: #6D1ED4; color: #fff; }
+.mp-badge-cash  { background: #08543D; color: #fff; }
+.mp-badge-check { background: #2A6C95; color: #fff; }
+
+.mp-status {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mp-status-paid  { color: #10b981; }
+.mp-status-pending { color: #f59e0b; }
+
+.mp-card-body {
+  padding: 12px 16px;
+}
+
+.mp-money-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.mp-money-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mp-money-net { margin-left: auto; }
+
+.mp-money-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted, #9ca3af);
+  letter-spacing: 0.6px;
+}
+
+.mp-money-val {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+
+.mp-deduction { color: #ef4444; }
+
+.mp-net {
+  font-size: 20px;
+  font-weight: 700;
+  color: #08543D;
+}
+
+.mp-paid-at {
+  font-size: 11px;
+  color: var(--text-muted, #9ca3af);
+  margin-top: 8px;
+}
+
+.mp-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-secondary, #f9fafb);
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.mp-voucher-num {
+  font-size: 11px;
+  color: var(--text-muted, #6b7280);
+  font-weight: 500;
+}
+
+.mp-btn-voucher {
+  background: #08543D;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mp-btn-voucher:hover { background: #065f46; }
+
+/* ── Modal ────────────────────────────────────────────────────────────── */
+.mp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.mp-modal {
+  background: #1f2937;
+  border-radius: 12px;
+  width: 92vw;
+  max-width: 980px;
+  height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+}
+
+.mp-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #374151;
+}
+
+.mp-modal-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f9fafb;
+}
+
+.mp-modal-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.mp-modal-close:hover { color: #f9fafb; }
+
+.mp-modal-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.mp-modal-loading,
+.mp-modal-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.mp-modal-error { color: #ef4444; }
+
+.mp-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ClockButton from '../../components/contractor/ClockButton';
 import useApi from '../../hooks/useApi';
 import { MapPin, CheckCircle, XCircle, Clock, AlertTriangle, ChevronDown } from 'lucide-react';
+import { formatTime } from '../../utils/formatters';
 import './ClockPage.css';
 
 const ClockPage = () => {
@@ -122,7 +123,7 @@ const ClockPage = () => {
         .filter((e) => e.total_hours && new Date(e.clock_in).toDateString() === new Date().toDateString())
         .reduce((sum, e) => sum + parseFloat(e.total_hours), 0);
 
-    const formatTime = (date) => date.toLocaleTimeString('es-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const formatCurrentTime = (date) => date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
     // Determine if clock-in button should be disabled
     const clockInDisabled = !selectedProjectId || loadingAssignments;
@@ -130,7 +131,7 @@ const ClockPage = () => {
     return (
         <div className="clock-page fade-in">
             <div className="clock-page__time-display">
-                <div className="clock-page__time">{formatTime(currentTime)}</div>
+                <div className="clock-page__time">{formatCurrentTime(currentTime)}</div>
                 <div className="clock-page__date">
                     {currentTime.toLocaleDateString('es-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </div>
@@ -140,7 +141,7 @@ const ClockPage = () => {
                 {openEntry ? (
                     <div className="clock-page__status-badge clock-page__status-badge--active">
                         <Clock size={14} />
-                        Trabajando desde {new Date(openEntry.clock_in).toLocaleTimeString('es-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                        Trabajando desde {formatTime(openEntry.clock_in)}
                     </div>
                 ) : (
                     <div className="clock-page__status-badge">Sin marcar</div>
@@ -220,8 +221,8 @@ const ClockPage = () => {
                         <div key={e.id} className="clock-page__entry">
                             <div className="clock-page__entry-time">
                                 <MapPin size={12} />
-                                {new Date(e.clock_in).toLocaleTimeString('es-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                                {e.clock_out && ` → ${new Date(e.clock_out).toLocaleTimeString('es-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`}
+                                {formatTime(e.clock_in)}
+                                {e.clock_out && ` → ${formatTime(e.clock_out)}`}
                             </div>
                             <span className="clock-page__entry-hours">
                                 {e.total_hours ? `${e.total_hours}h` : 'Abierto'}

@@ -1,178 +1,426 @@
-/* VoucherPrint.css */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #f3f4f6;
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
-}
-
-.voucher-print-container {
-  max-width: 800px;
-  margin: 40px auto;
-  background: white;
-  padding: 50px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+/* ── Page Wrapper ─────────────────────────────────────────────────────── */
+.vp-page-wrapper {
+  min-height: 100vh;
+  background: #f3f4f6;
+  padding: 0 0 48px;
   font-family: 'Inter', sans-serif;
+}
+
+.vp-loading {
+  padding: 48px;
+  text-align: center;
+  color: #6b7280;
+}
+
+/* ── Action Bar ───────────────────────────────────────────────────────── */
+.vp-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 32px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.vp-actions-right {
+  display: flex;
+  gap: 10px;
+}
+
+.vp-btn-back {
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+  font-family: 'Inter', sans-serif;
+}
+
+.vp-btn-back:hover { background: #f9fafb; }
+
+.vp-btn-print {
+  background: #08543D;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+
+.vp-btn-print:hover { background: #065f46; }
+
+.vp-btn-upload {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+}
+
+.vp-btn-upload:hover { background: #f9fafb; }
+
+/* ── Voucher Card ─────────────────────────────────────────────────────── */
+.vp-voucher {
+  max-width: 960px;
+  margin: 28px auto;
+  background: #ffffff;
   color: #111827;
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 28px 32px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
 }
 
-/* Print specific styles */
-@media print {
-  body {
-    background-color: white;
-  }
-  .voucher-print-container {
-    margin: 0;
-    padding: 20px;
-    box-shadow: none;
-    max-width: 100%;
-  }
-}
-
-.v-header {
+/* ── Header ───────────────────────────────────────────────────────────── */
+.vp-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 40px;
+  align-items: flex-start;
+  margin-bottom: 24px;
 }
 
-.v-header-left h1 {
-  margin: 0 0 16px 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: #08543D; /* HMCS Green */
-  letter-spacing: 1px;
-}
-
-.v-company-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 4px;
-}
-
-.v-company-lines {
-  font-size: 13px;
-  line-height: 1.5;
-  color: #4b5563;
-}
-
-.v-header-right {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.v-logo {
-  width: 100px;
-  height: 100px;
-  object-fit: contain;
-}
-
-.v-flex-row {
-  display: flex;
-  gap: 20px;
-}
-
-.v-meta-info {
-  margin-bottom: 30px;
-}
-
-.v-meta-box {
-  flex: 1;
-  background: #f9fafb;
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-
-.vm-label {
-  font-size: 11px;
+.vp-label-sm {
+  font-size: 10px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: #6b7280;
+  margin-bottom: 5px;
+}
+
+.vp-company {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 22px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  color: #111827;
+  margin-bottom: 5px;
+}
+
+.vp-addr {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.vp-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.vp-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.vp-header-meta {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.vp-meta-block { text-align: right; }
+
+.vp-meta-val {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-top: 3px;
+}
+
+.vp-meta-sep {
+  width: 1px;
+  background: #e5e7eb;
+  align-self: stretch;
+}
+
+/* ── Info Row ─────────────────────────────────────────────────────────── */
+.vp-info-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+  background: #f9fafb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.vp-info-cell {
+  padding: 14px 16px;
+  border-right: 1px solid #e5e7eb;
+}
+
+.vp-info-cell:last-child { border-right: none; }
+
+.vp-cell-label {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: #9ca3af;
+  text-transform: uppercase;
   margin-bottom: 6px;
 }
 
-.vm-value {
-  font-size: 14px;
-  font-weight: 500;
+.vp-cell-val {
+  font-size: 13px;
+  font-weight: 600;
   color: #111827;
+  line-height: 1.4;
 }
 
-.v-divider {
-  height: 1px;
-  background: #e5e7eb;
-  margin: 30px 0;
+.vp-cell-sub {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 3px;
 }
 
-.v-earnings-section h3 {
-  margin: 0 0 16px 0;
-  font-size: 16px;
-  color: #111827;
+/* ── Two-column grid ──────────────────────────────────────────────────── */
+.vp-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
 }
 
-.v-table {
+.vp-col {
+  padding: 16px 20px;
+}
+
+.vp-col-right {
+  border-left: 1px solid #e5e7eb;
+}
+
+.vp-col-title {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+/* ── Tables ───────────────────────────────────────────────────────────── */
+.vp-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.v-table th {
+.vp-table thead tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.vp-table th {
+  font-size: 10px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 4px 6px;
   text-align: left;
-  padding: 12px 16px;
-  background: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
+  font-weight: 500;
+}
+
+.vp-table th.r,
+.vp-table td.r { text-align: right; }
+
+.vp-table td {
+  padding: 8px 6px;
+  color: #374151;
   font-size: 13px;
-  font-weight: 600;
-  color: #4b5563;
-}
-
-.v-table td {
-  padding: 14px 16px;
   border-bottom: 1px solid #f3f4f6;
-  font-size: 14px;
+}
+
+.vp-table tbody tr:last-child td { border-bottom: none; }
+
+.vp-table tfoot td {
+  border-top: 1px solid #e5e7eb;
+  font-weight: 600;
   color: #111827;
+  padding-top: 12px;
+  border-bottom: none;
 }
 
-.v-table .t-right {
-  text-align: right;
+.vp-empty-row {
+  color: #9ca3af;
+  font-size: 12px;
+  padding: 12px 6px !important;
+  font-style: italic;
 }
 
-.v-per-diem-row {
-  background: #fdfaf5; /* slight differentiator for non-taxable */
+.vp-ded { color: #A32D2D; }
+.vp-ytd { color: #9ca3af; font-size: 12px; }
+
+/* ── Payment Panel ────────────────────────────────────────────────────── */
+.vp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  letter-spacing: 0.5px;
 }
 
-.v-totals-section {
-  width: 320px;
-  margin-left: auto;
-}
+.vp-badge-zelle { background: #6D1ED4; color: #fff; }
+.vp-badge-cash  { background: #08543D; color: #fff; }
+.vp-badge-check { background: #2A6C95; color: #fff; }
 
-.v-totals-row {
+.vp-pay-row {
   display: flex;
   justify-content: space-between;
-  padding: 12px 0;
-  font-size: 14px;
-  color: #4b5563;
+  padding: 6px 0;
   border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+  color: #374151;
 }
 
-.v-net-pay {
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 2px solid #e5e7eb;
-  border-bottom: none;
-  font-size: 18px;
+.vp-pay-label { color: #6b7280; }
+
+.vp-pay-divider {
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.vp-pay-divider-zelle { border-top: 2px solid #08543D; }
+.vp-pay-divider-cash  { border-top: 2px solid #08543D; }
+.vp-pay-divider-check { border-top: 2px solid #2A6C95; }
+
+.vp-net-label {
+  font-size: 11px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.vp-net-amt {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 28px;
   font-weight: 700;
-  color: #2A6C95; /* HMCS Blue */
 }
 
-.v-footer {
-  margin-top: 60px;
-  text-align: center;
+.vp-net-zelle { color: #10b981; }
+.vp-net-cash  { color: #10b981; }
+.vp-net-check { color: #60a5fa; }
+
+.vp-no-payment {
+  color: #6b7280;
+  font-size: 13px;
+  padding-top: 8px;
+  font-style: italic;
+}
+
+/* ── Screenshot area ──────────────────────────────────────────────────── */
+.vp-screenshot-empty {
+  border: 1.5px dashed #d1d5db;
+  border-radius: 8px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
   font-size: 12px;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  text-align: center;
+  padding: 20px;
+  background: #f9fafb;
+}
+
+.vp-screenshot-empty:hover { border-color: #08543D; color: #08543D; }
+
+.vp-screenshot-sub {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.vp-screenshot-filled { position: relative; }
+
+.vp-screenshot-img {
+  width: 100%;
+  border-radius: 6px;
+  object-fit: cover;
+  max-height: 280px;
+}
+
+.vp-screenshot-tag {
+  display: inline-block;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: 6px;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+.vp-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.vp-footer-left {
+  font-size: 11px;
   color: #9ca3af;
   line-height: 1.6;
+}
+
+.vp-paid-badge {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #08543D;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Print ────────────────────────────────────────────────────────────── */
+@media print {
+  /* Override InvoicePrint.css "body * { visibility: hidden }" that bleeds into this page */
+  .vp-page-wrapper, .vp-page-wrapper * { visibility: visible !important; }
+  .no-print { display: none !important; visibility: hidden !important; }
+  .vp-page-wrapper { position: absolute; left: 0; top: 0; width: 100%; padding: 0; background: #fff; }
+  .vp-voucher {
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding: 20px 24px;
+    max-width: 100%;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .vp-badge-zelle { background: #6D1ED4 !important; -webkit-print-color-adjust: exact; }
+  .vp-badge-cash  { background: #08543D !important; -webkit-print-color-adjust: exact; }
+  .vp-badge-check { background: #2A6C95 !important; -webkit-print-color-adjust: exact; }
+  .vp-info-row { background: #f9fafb !important; -webkit-print-color-adjust: exact; }
 }

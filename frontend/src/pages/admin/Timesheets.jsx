@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import {
-    ChevronLeft, ChevronRight, Plus, X, CheckCircle, Check,
-    Flag, XCircle, Clock, AlertCircle, Edit2, Trash2,
-    Calendar, Navigation, Shield, User, Building2,
-    Save, Filter
+    ChevronLeft, ChevronRight, CheckCircle, Check,
+    Flag, XCircle, Clock, AlertCircle, Trash2,
+    Navigation, Save, Filter
 } from 'lucide-react';
 import useApi from '../../hooks/useApi';
 import { useAuth } from '../../context/AuthContext';
@@ -29,7 +28,7 @@ const DAYS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 function fmt12(date) {
     if (!date) return '—';
-    return new Date(date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    return new Date(date).toLocaleTimeString('es-ES', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 function fmtDate(date) {
@@ -55,6 +54,29 @@ function getMonday(d) {
     return new Date(dt.setDate(diff));
 }
 
+// ─── AM/PM Time helpers ───────────────────────────────────────────────────────
+function fromTime24(timeStr) {
+    if (!timeStr) return { hour: '', minute: '00', period: '' };
+    const parts = timeStr.split(':');
+    let h = parseInt(parts[0], 10);
+    const mRaw = parseInt(parts[1] || '0', 10);
+    const period = h >= 12 ? 'PM' : 'AM';
+    if (h === 0) h = 12;
+    if (h > 12) h -= 12;
+    // Round to nearest 15-minute slot
+    const opts = [0, 15, 30, 45];
+    const minute = String(opts.reduce((a, b) => Math.abs(b - mRaw) < Math.abs(a - mRaw) ? b : a)).padStart(2, '0');
+    return { hour: String(h), minute, period };
+}
+
+function toTime24(hour, minute, period) {
+    if (!hour || minute === undefined || minute === '' || !period) return null;
+    let h = parseInt(hour, 10);
+    if (period === 'PM' && h !== 12) h += 12;
+    if (period === 'AM' && h === 12) h = 0;
+    return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+}
+
 // ─── Component: Status Chip ─────────────────────────────────────────────────────
 function StatusChip({ entry, onClick }) {
     let cls = 'ts-chip--live';
@@ -65,21 +87,32 @@ function StatusChip({ entry, onClick }) {
         if (entry.status === 'pending') {
             cls = 'ts-chip--pending';
             icon = null;
+            text = 'Pendiente';
         } else if (entry.status === 'approved') {
             cls = 'ts-chip--approved';
             icon = null;
+            text = 'Aprobada';
         } else if (entry.status === 'flagged') {
             cls = 'ts-chip--flagged';
             icon = <Flag size={10} />;
+            text = 'Marcada';
         } else if (entry.status === 'rejected') {
             cls = 'ts-chip--rejected';
             icon = <XCircle size={10} />;
+            text = 'Rechazada';
         }
-        text = entry.total_hours ? `${parseFloat(entry.total_hours).toFixed(1)}h` : '—';
+        // Overwrite text with hours if available
+        if (entry.total_hours) {
+            text = `${parseFloat(entry.total_hours).toFixed(1)}h`;
+        }
     }
 
     return (
-        <button className={`ts-chip ${cls}`} onClick={(e) => { e.stopPropagation(); onClick(entry); }} title={`${fmt12(entry.clock_in)} - ${entry.clock_out ? fmt12(entry.clock_out) : '...'}`}>
+        <button 
+            className={`ts-chip ${cls}`} 
+            onClick={(e) => { e.stopPropagation(); onClick(entry); }} 
+            title={`${fmt12(entry.clock_in)} - ${entry.clock_out ? fmt12(entry.clock_out) : '...'}`}
+        >
             {icon}
             <span>{text}</span>
             {entry.is_manual_entry && <span className="ts-chip-manual-dot" title="Entrada manual" />}
@@ -87,47 +120,82 @@ function StatusChip({ entry, onClick }) {
     );
 }
 
-// ─── Component: Drawer (Edit / Details) ─────────────────────────────────────────
+// ─── Component: Entry Modal (Create / Edit) ──────────────────────────────────
 function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToast, onClose, onRefresh }) {
     const { post, put, del, patch } = api;
-
     const isCreate = mode === 'create';
+
+    const initParsed = (hmStr, fallback) => fromTime24(hmStr || fallback);
+
+    const timeInStr  = entry?.clock_in  ? new Date(entry.clock_in).toTimeString().slice(0, 5)  : '';
+    const timeOutStr = entry?.clock_out ? new Date(entry.clock_out).toTimeString().slice(0, 5) : '';
+    const parsedIn   = initParsed(timeInStr,  isCreate ? '08:00' : '');
+    const parsedOut  = initParsed(timeOutStr, isCreate ? '17:00' : '');
+
     const [form, setForm] = useState({
-        project_id: entry?.project_id || '',
-        date: entry?.clock_in ? toYMD(entry.clock_in) : (defaultDate || toYMD(new Date())),
-        time_in: entry?.clock_in ? new Date(entry.clock_in).toTimeString().slice(0, 5) : '08:00',
-        time_out: entry?.clock_out ? new Date(entry.clock_out).toTimeString().slice(0, 5) : '17:00',
-        manual_entry_reason: entry?.manual_entry_reason || '',
-        notes: entry?.notes || '',
+        project_id:           entry?.project_id || '',
+        date:                 entry?.clock_in ? toYMD(entry.clock_in) : (defaultDate || toYMD(new Date())),
+        inHour:               parsedIn.hour,
+        inMin:                parsedIn.minute,
+        inPeriod:             parsedIn.period,
+        outHour:              parsedOut.hour,
+        outMin:               parsedOut.minute,
+        outPeriod:            parsedOut.period,
+        manual_entry_reason:  entry?.manual_entry_reason || '',
+        notes:                entry?.notes || '',
     });
-    const [calcHrs, setCalcHrs] = useState('');
+    const [clockInSuggested,  setClockInSuggested]  = useState(false);
+    const [clockOutSuggested, setClockOutSuggested] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (form.time_in && form.time_out && form.date) {
-            try {
-                const ci = new Date(`${form.date}T${form.time_in}`);
-                const co = new Date(`${form.date}T${form.time_out}`);
-                if (co > ci) setCalcHrs(((co - ci) / 3600000).toFixed(2));
-                else setCalcHrs('');
-            } catch { setCalcHrs(''); }
-        } else {
-            setCalcHrs('');
+    const handleProjectChange = (projectId) => {
+        const project = projects.find(p => String(p.id) === String(projectId));
+        let next = { ...form, project_id: projectId };
+        let sugIn = false, sugOut = false;
+        if (isCreate && project) {
+            if (project.shift_start_time) {
+                const p = fromTime24(project.shift_start_time);
+                next = { ...next, inHour: p.hour, inMin: p.minute, inPeriod: p.period };
+                sugIn = true;
+            }
+            if (project.shift_end_time) {
+                const p = fromTime24(project.shift_end_time);
+                next = { ...next, outHour: p.hour, outMin: p.minute, outPeriod: p.period };
+                sugOut = true;
+            }
         }
-    }, [form.date, form.time_in, form.time_out]);
+        setForm(next);
+        setClockInSuggested(sugIn);
+        setClockOutSuggested(sugOut);
+    };
+
+    const calculatedHours = useMemo(() => {
+        const ci = toTime24(form.inHour,  form.inMin,  form.inPeriod);
+        const co = toTime24(form.outHour, form.outMin, form.outPeriod);
+        if (!ci || !co) return '0.00';
+        const [ih, im] = ci.split(':').map(Number);
+        const [oh, om] = co.split(':').map(Number);
+        const mins = (oh * 60 + om) - (ih * 60 + im);
+        return mins > 0 ? (mins / 60).toFixed(2) : '0.00';
+    }, [form.inHour, form.inMin, form.inPeriod, form.outHour, form.outMin, form.outPeriod]);
 
     const handleSave = async () => {
-        if (!form.project_id || !form.date || !form.time_in || !form.time_out) {
+        const ciTime = toTime24(form.inHour,  form.inMin,  form.inPeriod);
+        const coTime = toTime24(form.outHour, form.outMin, form.outPeriod);
+        if (!form.project_id || !form.date || !ciTime || !coTime) {
             return showToast('Faltan campos requeridos.', 'error');
         }
         if (!form.manual_entry_reason && !isCreate) {
             return showToast('Debe proporcionar una razón para la edición.', 'error');
         }
-
         setLoading(true);
         try {
-            const clock_in = `${form.date}T${form.time_in}:00`;
-            const clock_out = `${form.date}T${form.time_out}:00`;
+            const ciDate = new Date(`${form.date}T${ciTime}`);
+            let coDate   = new Date(`${form.date}T${coTime}`);
+            if (coDate <= ciDate) coDate.setDate(coDate.getDate() + 1);
+            const pad = n => String(n).padStart(2, '0');
+            const clock_in  = `${ciDate.getFullYear()}-${pad(ciDate.getMonth()+1)}-${pad(ciDate.getDate())}T${pad(ciDate.getHours())}:${pad(ciDate.getMinutes())}:00`;
+            const clock_out = `${coDate.getFullYear()}-${pad(coDate.getMonth()+1)}-${pad(coDate.getDate())}T${pad(coDate.getHours())}:${pad(coDate.getMinutes())}:00`;
 
             if (isCreate) {
                 await post('/time-entries', {
@@ -135,16 +203,16 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
                     project_id: parseInt(form.project_id),
                     clock_in, clock_out,
                     manual_entry_reason: form.manual_entry_reason.trim() || 'Entrada agregada manualmente',
-                    notes: form.notes || null,
+                    notes: form.notes?.trim() || null,
                 });
-                showToast('Entrada manual creada.');
+                showToast('Entrada manual creada.', 'success');
             } else {
                 await put(`/time-entries/${entry.id}`, {
                     clock_in, clock_out,
                     manual_entry_reason: form.manual_entry_reason.trim(),
-                    notes: form.notes || null,
+                    notes: form.notes?.trim() || null,
                 });
-                showToast('Entrada editada.');
+                showToast('Entrada editada.', 'success');
             }
             onRefresh();
             onClose();
@@ -159,8 +227,8 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
         if (!entry) return;
         setLoading(true);
         try {
-            await patch(`/time-entries/${entry.id}/status`, { status });
-            showToast(`Estado cambiado a ${status}.`);
+            const res = await patch(`/time-entries/${entry.id}/status`, { status });
+            showToast(`Estado cambiado a ${res.data?.data?.status || status}.`, 'success');
             onRefresh();
         } catch {
             showToast('Error al cambiar estado.', 'error');
@@ -175,7 +243,7 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
         setLoading(true);
         try {
             await del(`/time-entries/${entry.id}`);
-            showToast('Entrada eliminada.');
+            showToast('Entrada eliminada.', 'success');
             onRefresh();
             onClose();
         } catch {
@@ -184,121 +252,191 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
         }
     };
 
-    return ReactDOM.createPortal(
-        <>
-            <div className="ts-overlay fade-in" onClick={onClose} />
-            <div className="ts-drawer slide-in-right">
-                <button className="ts-drawer-close" onClick={onClose}><X size={20} /></button>
+    const HOURS   = [1,2,3,4,5,6,7,8,9,10,11,12];
+    const MINUTES = ['00','15','30','45'];
 
-                <div className="ts-drawer-hero">
-                    <div className="ts-drawer-avatar">{workerInitials(worker)}</div>
-                    <div className="ts-drawer-hero-info">
-                        <h2>{worker?.first_name} {worker?.last_name}</h2>
-                        <span>{worker?.worker_code} · {worker?.trade?.name_es || '—'}</span>
+    const modal = (
+        <div className="te-modal-overlay" onClick={onClose}>
+            <div className="te-modal" onClick={e => e.stopPropagation()}>
+
+                {/* ── HEADER ── */}
+                <div className="te-modal__header">
+                    <div className="te-modal__worker-info">
+                        <div className="te-modal__avatar-wrap">
+                            <div className="te-modal__avatar">{workerInitials(worker)}</div>
+                            <div className="te-modal__verified">✓</div>
+                        </div>
+                        <div>
+                            <h2 className="te-modal__name">{worker?.first_name} {worker?.last_name}</h2>
+                            <div className="te-modal__meta">
+                                <span className="te-modal__code">{worker?.worker_code}</span>
+                                <span className="te-modal__dot">•</span>
+                                <span className="te-modal__trade">{worker?.trade?.name_es || worker?.trade?.name || '—'}</span>
+                            </div>
+                        </div>
                     </div>
+                    <button className="te-modal__close" onClick={onClose}>✕</button>
                 </div>
 
-                <div className="ts-drawer-body">
+                {/* ── BODY ── */}
+                <div className="te-modal__body">
+
+                    {/* Edit mode: status badges */}
                     {!isCreate && entry && (
                         <div className="ts-drawer-badges">
-                            <span className={`ts-badge ts-badge--${entry.status}`}>
-                                {entry.status.toUpperCase()}
-                            </span>
+                            <span className={`ts-badge ts-badge--${entry.status}`}>{entry.status.toUpperCase()}</span>
                             {entry.is_manual_entry && <span className="ts-badge ts-badge--manual">ENTRADA MANUAL</span>}
                         </div>
                     )}
 
-                    <div className="ts-drawer-section">
-                        <h3>Detalles de la Entrada</h3>
-                        <div className="ts-field">
-                            <label>Proyecto *</label>
-                            <select className="ts-input" value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })}>
-                                <option value="">Seleccionar...</option>
-                                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
-                        </div>
-
-                        <div className="ts-field">
-                            <label>Fecha *</label>
-                            <input type="date" className="ts-input" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
-                        </div>
-
-                        <div className="ts-grid-2">
-                            <div className="ts-field">
-                                <label>Entrada *</label>
-                                <input type="time" className="ts-input" value={form.time_in} onChange={e => setForm({ ...form, time_in: e.target.value })} />
-                            </div>
-                            <div className="ts-field">
-                                <label>Salida *</label>
-                                <input type="time" className="ts-input" value={form.time_out} onChange={e => setForm({ ...form, time_out: e.target.value })} />
+                    {/* Proyecto + Fecha */}
+                    <div className="te-modal__row-2col">
+                        <div className="te-modal__field">
+                            <label className="te-modal__label">Proyecto *</label>
+                            <div className="te-modal__select-wrap">
+                                <select
+                                    className="te-modal__select"
+                                    value={form.project_id}
+                                    onChange={e => handleProjectChange(e.target.value)}
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                                <span className="te-modal__select-arrow">▾</span>
                             </div>
                         </div>
+                        <div className="te-modal__field">
+                            <label className="te-modal__label">Fecha *</label>
+                            <div className="te-modal__input-icon-wrap">
+                                <input
+                                    type="date"
+                                    className="te-modal__input"
+                                    value={form.date}
+                                    onChange={e => setForm({ ...form, date: e.target.value })}
+                                />
+                                <span className="te-modal__input-icon">📅</span>
+                            </div>
+                        </div>
+                    </div>
 
-                        {calcHrs && (
-                            <div className="ts-calc-box">
-                                <Clock size={14} /> Total calculado: <strong>{calcHrs}h</strong>
+                    {/* ── Bloque de tiempo ── */}
+                    <div className="te-modal__time-block">
+                        {(clockInSuggested || clockOutSuggested) && (
+                            <div className="te-modal__suggested-badge">
+                                💡 Horario sugerido por el proyecto
                             </div>
                         )}
+                        <div className="te-modal__time-row">
+                            {/* ENTRADA */}
+                            <div className="te-modal__time-field">
+                                <label className="te-modal__label">Entrada *</label>
+                                <div className="te-modal__time-selects">
+                                    <select className="te-modal__time-select" value={form.inHour} onChange={e => { setForm({...form, inHour: e.target.value}); setClockInSuggested(false); }}>
+                                        <option value="">--</option>
+                                        {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+                                    </select>
+                                    <span className="te-modal__time-sep">:</span>
+                                    <select className="te-modal__time-select" value={form.inMin} onChange={e => { setForm({...form, inMin: e.target.value}); setClockInSuggested(false); }}>
+                                        <option value="">--</option>
+                                        {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
+                                    </select>
+                                    <select className="te-modal__time-select te-modal__time-select--period" value={form.inPeriod} onChange={e => { setForm({...form, inPeriod: e.target.value}); setClockInSuggested(false); }}>
+                                        <option value="">--</option>
+                                        <option value="AM">AM</option>
+                                        <option value="PM">PM</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {/* SALIDA */}
+                            <div className="te-modal__time-field">
+                                <label className="te-modal__label">Salida *</label>
+                                <div className="te-modal__time-selects">
+                                    <select className="te-modal__time-select" value={form.outHour} onChange={e => { setForm({...form, outHour: e.target.value}); setClockOutSuggested(false); }}>
+                                        <option value="">--</option>
+                                        {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+                                    </select>
+                                    <span className="te-modal__time-sep">:</span>
+                                    <select className="te-modal__time-select" value={form.outMin} onChange={e => { setForm({...form, outMin: e.target.value}); setClockOutSuggested(false); }}>
+                                        <option value="">--</option>
+                                        {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
+                                    </select>
+                                    <select className="te-modal__time-select te-modal__time-select--period" value={form.outPeriod} onChange={e => { setForm({...form, outPeriod: e.target.value}); setClockOutSuggested(false); }}>
+                                        <option value="">--</option>
+                                        <option value="AM">AM</option>
+                                        <option value="PM">PM</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Barra total */}
+                        <div className="te-modal__total-bar">
+                            <div className="te-modal__total-left">
+                                <span className="te-modal__total-icon">🕐</span>
+                                <span className="te-modal__total-label">Tiempo total de labor</span>
+                            </div>
+                            <span className="te-modal__total-value">{calculatedHours}h</span>
+                        </div>
                     </div>
 
-                    <div className="ts-drawer-section">
-                        <h3>Motivo y Notas</h3>
-                        <div className="ts-field">
-                            <label>Razón del ajuste {(!isCreate) && '*'}</label>
-                            <textarea
-                                className="ts-input"
-                                rows={2}
-                                placeholder="Requerido al editar horas..."
-                                value={form.manual_entry_reason}
-                                onChange={e => setForm({ ...form, manual_entry_reason: e.target.value })}
-                            />
-                        </div>
-                        <div className="ts-field">
-                            <label>Notas Privadas</label>
-                            <textarea
-                                className="ts-input"
-                                rows={2}
+                    {/* Razón del ajuste */}
+                    <div className="te-modal__field">
+                        <label className="te-modal__label">Razón del ajuste{!isCreate && ' *'}</label>
+                        <textarea
+                            className="te-modal__textarea"
+                            placeholder={isCreate ? 'Opcional: describa el motivo...' : 'Requerido al editar horas...'}
+                            rows={2}
+                            value={form.manual_entry_reason}
+                            onChange={e => setForm({...form, manual_entry_reason: e.target.value})}
+                        />
+                    </div>
+
+                    {/* Notas privadas */}
+                    <div className="te-modal__field">
+                        <label className="te-modal__label">Notas Privadas</label>
+                        <div className="te-modal__input-icon-wrap">
+                            <input
+                                type="text"
+                                className="te-modal__input"
+                                placeholder="Solo visible para administración"
                                 value={form.notes}
-                                onChange={e => setForm({ ...form, notes: e.target.value })}
+                                onChange={e => setForm({...form, notes: e.target.value})}
                             />
+                            <span className="te-modal__input-icon">🔒</span>
                         </div>
                     </div>
 
-                    {/* Quick status actions if not create */}
+                    {/* Edit mode: quick approval */}
                     {!isCreate && entry && entry.clock_out && (
-                        <div className="ts-drawer-section">
-                            <h3>Aprobación Rápida</h3>
+                        <div>
+                            <p className="te-modal__label" style={{marginBottom: 10}}>Aprobación Rápida</p>
                             <div className="ts-status-buttons">
-                                <button className="ts-btn-approve" onClick={() => doStatus('approved')} disabled={loading || entry.status === 'approved'}>
-                                    <CheckCircle size={14} /> Aprobar
-                                </button>
-                                <button className="ts-btn-reject" onClick={() => doStatus('rejected')} disabled={loading || entry.status === 'rejected'}>
-                                    <XCircle size={14} /> Rechazar
-                                </button>
-                                <button className="ts-btn-flag" onClick={() => doStatus('flagged')} disabled={loading || entry.status === 'flagged'}>
-                                    <Flag size={14} /> Flag
-                                </button>
+                                <button className="ts-btn-approve" onClick={() => doStatus('approved')} disabled={loading || entry.status === 'approved'}><CheckCircle size={14} /> Aprobar</button>
+                                <button className="ts-btn-reject"  onClick={() => doStatus('rejected')} disabled={loading || entry.status === 'rejected'}><XCircle   size={14} /> Rechazar</button>
+                                <button className="ts-btn-flag"    onClick={() => doStatus('flagged')}  disabled={loading || entry.status === 'flagged'}><Flag       size={14} /> Marcar</button>
                             </div>
                         </div>
                     )}
                 </div>
 
-                <div className="ts-drawer-footer">
+                {/* ── FOOTER ── */}
+                <div className="te-modal__footer">
                     {!isCreate && entry && (
-                        <button className="ts-btn-delete" onClick={doDelete} disabled={loading}>
+                        <button className="ts-btn-delete" onClick={doDelete} disabled={loading} title="Eliminar entrada" style={{marginRight: 'auto'}}>
                             <Trash2 size={16} />
                         </button>
                     )}
-                    <div style={{ flex: 1 }} />
-                    <button className="ts-btn-ghost" onClick={onClose}>Cancelar</button>
-                    <button className="ts-btn-primary" onClick={handleSave} disabled={loading}>
-                        <Save size={16} /> {isCreate ? 'Crear Entrada' : 'Guardar Cambios'}
+                    <button className="te-modal__btn-cancel" onClick={onClose}>Cancelar</button>
+                    <button className="te-modal__btn-save" onClick={handleSave} disabled={loading}>
+                        <Save size={16} />
+                        {loading ? 'Guardando...' : (isCreate ? 'Crear Entrada' : 'Guardar Cambios')}
                     </button>
                 </div>
+
             </div>
-        </>,
-        document.body
+        </div>
     );
+
+    return ReactDOM.createPortal(modal, document.body);
 }
 
 // ─── Main Page Component ────────────────────────────────────────────────────────
@@ -380,7 +518,6 @@ export default function Timesheets() {
     // Group entries by worker
     const workersMap = useMemo(() => {
         const map = {};
-        // Only include active workers, or workers who have entries in this week
         workers.forEach(w => {
             map[w.id] = { worker: w, days: {}, totalHours: 0, pendingIds: [] };
             weekDays.forEach(d => { map[w.id].days[toYMD(d)] = []; });
@@ -389,8 +526,7 @@ export default function Timesheets() {
         entries.forEach(e => {
             const wId = e.worker_id;
             if (!map[wId]) {
-                // Failsafe if worker is missing from list but has entry
-                map[wId] = { worker: e.worker || { id: wId, first_name: 'Desconocido' }, days: {}, totalHours: 0, pendingIds: [] };
+                map[wId] = { worker: e.worker || { id: wId, first_name: 'Desconocido', last_name: '' }, days: {}, totalHours: 0, pendingIds: [] };
                 weekDays.forEach(d => { map[wId].days[toYMD(d)] = []; });
             }
             const dateStr = toYMD(e.clock_in);
@@ -403,9 +539,6 @@ export default function Timesheets() {
             }
         });
 
-        // Filter out workers with 0 hours IF they don't match active filter, to keep UI clean,
-        // BUT usually we want to see all workers to add hours. Let's just show all for now, 
-        // sorting by those who have hours first.
         return Object.values(map).sort((a, b) => b.totalHours - a.totalHours);
     }, [entries, workers, weekDays]);
 
@@ -415,8 +548,8 @@ export default function Timesheets() {
         if (pendingIds.length === 0) return;
         setBulkLoading(true);
         try {
-            await patch('/time-entries/bulk-status', { ids: pendingIds, status: 'approved' });
-            showToast(`${pendingIds.length} entrada(s) aprobadas para ${workerRow.worker.first_name}.`);
+            const res = await patch('/time-entries/bulk-status', { ids: pendingIds, status: 'approved' });
+            showToast(`${res.data?.data?.updated || pendingIds.length} entrada(s) aprobadas para ${workerRow.worker.first_name}.`, 'success');
             fetchWeekData();
         } catch {
             showToast('Error al aprobar semana.', 'error');
@@ -572,7 +705,15 @@ export default function Timesheets() {
                                         const dayEntries = row.days[dateStr];
                                         return (
                                             <td key={dateStr} className="ts-col-day" style={{padding: '0'}}>
-                                                <div className="ts-cell" style={{height: '100%', padding: '14px'}} onClick={() => { if (dayEntries.length === 0) setDrawerState({ open: true, mode: 'create', entry: null, worker: row.worker, defaultDate: dateStr }); }}>
+                                                <div 
+                                                    className="ts-cell" 
+                                                    style={{height: '100%', padding: '14px', cursor: 'pointer'}} 
+                                                    onClick={() => { 
+                                                        if (dayEntries.length === 0) {
+                                                            setDrawerState({ open: true, mode: 'create', entry: null, worker: row.worker, defaultDate: dateStr }); 
+                                                        }
+                                                    }}
+                                                >
                                                     {dayEntries.length > 0 ? (
                                                         <div className="ts-cell-chips">
                                                             {dayEntries.map(e => (
@@ -584,7 +725,7 @@ export default function Timesheets() {
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        <div className="te-empty-day" style={{cursor: 'pointer', textAlign: 'center'}} title="Añadir entrada">—</div>
+                                                        <div className="te-empty-day" title="Añadir entrada">—</div>
                                                     )}
                                                 </div>
                                             </td>

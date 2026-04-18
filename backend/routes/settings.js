@@ -1,18 +1,19 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
 const auth = require('../middleware/auth');
 const checkRole = require('../middleware/checkRole');
+const uploadLogo = require('../middleware/uploadLogo');
 const CompanySettings = require('../models/CompanySettings');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 
-// GET /api/settings — admin only
+// ── GET /api/settings — admin only ──────────────────────────────────────────
 router.get('/', auth, checkRole('admin'), async (req, res) => {
     try {
         let settings = await CompanySettings.findOne({ where: { id: 1 } });
         if (!settings) {
-            // Create default record if not exists
             settings = await CompanySettings.create({ id: 1 });
         }
         return successResponse(res, settings);
@@ -22,13 +23,18 @@ router.get('/', auth, checkRole('admin'), async (req, res) => {
     }
 });
 
-// PUT /api/settings — admin only
+// ── PUT /api/settings — admin only ──────────────────────────────────────────
 router.put('/', auth, checkRole('admin'), async (req, res) => {
     try {
         const allowed = [
             'company_name', 'address', 'city', 'state', 'zip',
             'email', 'phone', 'logo_url',
+            'logo_horizontal_url', 'logo_square_url',
             'invoice_prefix', 'payment_terms_days', 'payment_instructions',
+            'invoice_footer_note',
+            'standard_hours_per_week', 'default_ot_multiplier',
+            'default_payment_method', 'week_start_day',
+            'notification_preferences',
         ];
         const updates = {};
         allowed.forEach(key => {
@@ -48,7 +54,73 @@ router.put('/', auth, checkRole('admin'), async (req, res) => {
     }
 });
 
-// PUT /api/settings/change-password — admin only
+// ── POST /api/settings/logo/horizontal — upload horizontal logo ──────────────
+router.post(
+    '/logo/horizontal',
+    auth,
+    checkRole('admin'),
+    (req, res, next) => {
+        uploadLogo.single('logo')(req, res, (err) => {
+            if (err) {
+                return errorResponse(res, err.message || 'Error al subir imagen.', 400);
+            }
+            next();
+        });
+    },
+    async (req, res) => {
+        try {
+            if (!req.file) {
+                return errorResponse(res, 'No se recibió ningún archivo.', 400);
+            }
+            const url = `/uploads/logos/${req.file.filename}`;
+            let settings = await CompanySettings.findOne({ where: { id: 1 } });
+            if (!settings) {
+                settings = await CompanySettings.create({ id: 1, logo_horizontal_url: url });
+            } else {
+                await settings.update({ logo_horizontal_url: url });
+            }
+            return successResponse(res, { url }, 'Logo horizontal actualizado.');
+        } catch (err) {
+            console.error('POST /settings/logo/horizontal error:', err);
+            return errorResponse(res, 'Error al guardar logo.', 500);
+        }
+    },
+);
+
+// ── POST /api/settings/logo/square — upload square logo ─────────────────────
+router.post(
+    '/logo/square',
+    auth,
+    checkRole('admin'),
+    (req, res, next) => {
+        uploadLogo.single('logo')(req, res, (err) => {
+            if (err) {
+                return errorResponse(res, err.message || 'Error al subir imagen.', 400);
+            }
+            next();
+        });
+    },
+    async (req, res) => {
+        try {
+            if (!req.file) {
+                return errorResponse(res, 'No se recibió ningún archivo.', 400);
+            }
+            const url = `/uploads/logos/${req.file.filename}`;
+            let settings = await CompanySettings.findOne({ where: { id: 1 } });
+            if (!settings) {
+                settings = await CompanySettings.create({ id: 1, logo_square_url: url });
+            } else {
+                await settings.update({ logo_square_url: url });
+            }
+            return successResponse(res, { url }, 'Logo cuadrado actualizado.');
+        } catch (err) {
+            console.error('POST /settings/logo/square error:', err);
+            return errorResponse(res, 'Error al guardar logo.', 500);
+        }
+    },
+);
+
+// ── PUT /api/settings/change-password — admin only ──────────────────────────
 router.put('/change-password', auth, checkRole('admin'), async (req, res) => {
     const { current_password, new_password } = req.body;
     if (!current_password || !new_password) {

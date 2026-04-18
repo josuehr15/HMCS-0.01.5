@@ -1,9 +1,9 @@
-const { Trade } = require('../models');
+const { Trade, Worker } = require('../models');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 
 /**
  * GET /api/trades
- * List all active trades.
+ * List trades. Admin gets all (including inactive) with ?include_inactive=true.
  */
 const getAllTrades = async (req, res) => {
     try {
@@ -49,25 +49,25 @@ const createTrade = async (req, res) => {
 
 /**
  * PUT /api/trades/:id
- * Update a trade.
+ * Update a trade (name, name_es, or is_active for reactivation).
+ * Finds by ID regardless of active status so inactive trades can be reactivated.
  */
 const updateTrade = async (req, res) => {
     try {
-        const trade = await Trade.findOne({
-            where: { id: req.params.id, is_active: true },
-        });
+        const trade = await Trade.findByPk(req.params.id);
 
         if (!trade) {
             return errorResponse(res, 'Trade not found.', 404);
         }
 
-        const { name, name_es } = req.body;
+        const { name, name_es, is_active } = req.body;
 
-        await trade.update({
-            name: name || trade.name,
-            name_es: name_es || trade.name_es,
-        });
+        const updates = {};
+        if (name !== undefined) updates.name = name;
+        if (name_es !== undefined) updates.name_es = name_es;
+        if (is_active !== undefined) updates.is_active = is_active;
 
+        await trade.update(updates);
         return successResponse(res, trade, 'Trade updated successfully.');
     } catch (error) {
         console.error('updateTrade error:', error);
@@ -77,7 +77,8 @@ const updateTrade = async (req, res) => {
 
 /**
  * DELETE /api/trades/:id
- * Soft delete a trade.
+ * Soft delete: sets is_active = false.
+ * Returns 409 if trade has active workers assigned.
  */
 const deleteTrade = async (req, res) => {
     try {
@@ -87,6 +88,19 @@ const deleteTrade = async (req, res) => {
 
         if (!trade) {
             return errorResponse(res, 'Trade not found.', 404);
+        }
+
+        // Block deactivation if active workers are assigned to this trade
+        const activeWorkersCount = await Worker.count({
+            where: { trade_id: req.params.id, is_active: true },
+        });
+
+        if (activeWorkersCount > 0) {
+            return errorResponse(
+                res,
+                'Este oficio tiene trabajadores activos asignados. Reasígnalos antes de desactivarlo.',
+                409,
+            );
         }
 
         await trade.update({ is_active: false });

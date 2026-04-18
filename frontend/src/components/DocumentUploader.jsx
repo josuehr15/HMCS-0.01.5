@@ -4,6 +4,19 @@ import './DocumentUploader.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// Helper: fetch with Authorization header + credentials (cookies)
+const authFetch = (url, options = {}) => {
+    const token = localStorage.getItem('hmcs_token');
+    return fetch(url, {
+        ...options,
+        credentials: 'include', // SEC-001: send httpOnly cookie
+        headers: {
+            ...(options.headers || {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+};
+
 const DOC_TYPE_LABELS = {
     id_photo: 'Foto de ID',
     ssn_photo: 'Foto de SSN',
@@ -42,9 +55,10 @@ export default function DocumentUploader({ ownerType, ownerId, token }) {
     const [error, setError] = useState('');
     const inputRef = useRef();
 
-    const authHeaders = () => ({
-        Authorization: `Bearer ${token || localStorage.getItem('hmcs_token') || ''}`,
-    });
+    const authHeaders = () => {
+        const t = token || localStorage.getItem('hmcs_token') || '';
+        return t ? { Authorization: `Bearer ${t}` } : {};
+    };
 
     // ── Load existing docs ─────────────────────────────────────────
     const loadDocs = async () => {
@@ -52,7 +66,7 @@ export default function DocumentUploader({ ownerType, ownerId, token }) {
         try {
             const params = new URLSearchParams({ owner_type: ownerType });
             if (ownerId) params.set('owner_id', ownerId);
-            const res = await fetch(`${API_BASE}/documents?${params}`, { headers: authHeaders() });
+            const res = await authFetch(`${API_BASE}/documents?${params}`);
             const json = await res.json();
             setDocs(json.data || json || []);
         } catch { setDocs([]); }
@@ -82,7 +96,7 @@ export default function DocumentUploader({ ownerType, ownerId, token }) {
             fd.append('document_type', docType);
             fd.append('document_name', file.name);
 
-            const res = await fetch(`${API_BASE}/documents/upload`, {
+            const res = await authFetch(`${API_BASE}/documents/upload`, {
                 method: 'POST',
                 headers: authHeaders(),
                 body: fd,
@@ -98,25 +112,28 @@ export default function DocumentUploader({ ownerType, ownerId, token }) {
     const handleDelete = async (docId) => {
         if (!confirm('¿Eliminar este documento?')) return;
         try {
-            await fetch(`${API_BASE}/documents/${docId}`, {
-                method: 'DELETE',
-                headers: authHeaders(),
-            });
+            await authFetch(`${API_BASE}/documents/${docId}`, { method: 'DELETE' });
             setDocs(prev => prev.filter(d => d.id !== docId));
         } catch { setError('Error al eliminar.'); }
     };
 
     // ── Download ───────────────────────────────────────────────────
-    const handleDownload = (doc) => {
-        const url = `${API_BASE}/documents/${doc.id}/download`;
-        const a = document.createElement('a');
-        a.href = url;
-        a.setAttribute('download', doc.document_name);
-        // Add token as query param for download
-        a.href = `${url}?token=${token || localStorage.getItem('hmcs_token') || ''}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+    // BUG-002: fetch file with Authorization header, create local Blob URL.
+    // Never put the JWT token in a URL query parameter (browser history, Referer leakage).
+    const handleDownload = async (doc) => {
+        try {
+            const res = await authFetch(`${API_BASE}/documents/${doc.id}/download`);
+            if (!res.ok) { setError('Error al descargar.'); return; }
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.setAttribute('download', doc.document_name);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+        } catch { setError('Error al descargar.'); }
     };
 
     return (

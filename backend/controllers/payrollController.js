@@ -1,9 +1,15 @@
-const { Op, literal } = require('sequelize');
+const { Op } = require('sequelize');
 const { sequelize } = require('../config/database');
+const Decimal = require('decimal.js'); // DEUDA-003: precise financial arithmetic
+const fs = require('fs');
+const path = require('path');
 const {
-    Payroll, PayrollLine, TimeEntry, Worker, Trade, Project, User, PerDiemEntry, Transaction
+    Payroll, PayrollLine, TimeEntry, Worker, Trade, Project, Client, User, PerDiemEntry, Transaction, CompanySettings
 } = require('../models');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
+const { extractPaymentData } = require('../utils/claudeVision');
+const { getNextVoucherNumber } = require('../utils/voucherNumber');
+const { DEFAULT_OT_MULTIPLIER } = require('../config/businessConstants');
 
 // ─── Full includes ────────────────────────────────────────────────────────────
 const LINE_INCLUDES = [
@@ -22,16 +28,19 @@ const PAYROLL_INCLUDES = [
 // ─── GET /api/payroll ─────────────────────────────────────────────────────────
 const getAllPayrolls = async (req, res) => {
     try {
-        const { status, start_date, end_date } = req.query;
+        // Accept both start_date/end_date and from/to (reports page uses from/to)
+        const { status, start_date, end_date, from, to } = req.query;
+        const startDate = start_date || from;
+        const endDate = end_date || to;
         const where = { is_active: true };
         if (status && status !== 'all') where.status = status;
-        if (start_date && end_date) {
-            where.week_start_date = { [Op.between]: [start_date, end_date] };
+        if (startDate && endDate) {
+            where.week_start_date = { [Op.between]: [startDate, endDate] };
         }
 
         const payrolls = await Payroll.findAll({
             where,
-            include: [{ model: PayrollLine, as: 'lines', attributes: ['id', 'status', 'total_to_transfer'] }],
+            include: PAYROLL_INCLUDES,
             order: [['week_start_date', 'DESC']],
         });
 
@@ -230,54 +239,64 @@ const generatePayroll = async (req, res) => {
         const perDiemMap = {};
         perDiems.forEach(pd => { perDiemMap[pd.worker_id] = parseFloat(pd.amount || 0); });
 
+        // LOGICA-004: read OT threshold from company_settings
+        const settings = await CompanySettings.findOne();
+        const OT_THRESHOLD = new Decimal(settings?.standard_hours_per_week || 40);
+        // LOGICA-005: read default OT multiplier from company_settings (client rates override per invoice)
+        const OT_MULT = new Decimal(settings?.default_ot_multiplier || DEFAULT_OT_MULTIPLIER);
+
         // Create payroll header
         const payroll = await Payroll.create({ week_start_date, week_end_date }, { transaction: t });
 
-        let totalGross = 0, totalNet = 0, totalPerDiem = 0;
+        // DEUDA-003: use Decimal.js for all financial arithmetic
+        let totalGross = new Decimal(0);
+        let totalNet = new Decimal(0);
+        let totalPerDiem = new Decimal(0);
 
         for (const wId of Object.keys(workerMap)) {
             const { worker, totalHours, projectId } = workerMap[wId];
-            const regularRate = parseFloat(worker.hourly_rate || 0);
-            const overtimeRate = parseFloat((regularRate * 1.5).toFixed(2));
-            const regularHours = parseFloat(Math.min(totalHours, 40).toFixed(2));
-            const otHours = parseFloat(Math.max(totalHours - 40, 0).toFixed(2));
-            const regularPay = parseFloat((regularHours * regularRate).toFixed(2));
-            const otPay = parseFloat((otHours * overtimeRate).toFixed(2));
-            const grossPay = parseFloat((regularPay + otPay).toFixed(2));
+            const regularRate = new Decimal(worker.hourly_rate || 0);
+            const overtimeRate = regularRate.times(OT_MULT).toDecimalPlaces(2);
+            const totalHoursDec = new Decimal(totalHours);
+            const regularHours = Decimal.min(totalHoursDec, OT_THRESHOLD).toDecimalPlaces(2);
+            const otHours = Decimal.max(totalHoursDec.minus(OT_THRESHOLD), 0).toDecimalPlaces(2);
+            const regularPay = regularHours.times(regularRate).toDecimalPlaces(2);
+            const otPay = otHours.times(overtimeRate).toDecimalPlaces(2);
+            const grossPay = regularPay.plus(otPay).toDecimalPlaces(2);
             const netPay = grossPay; // deductions start at 0
-            const perDiem = parseFloat((perDiemMap[parseInt(wId)] || 0).toFixed(2));
-            const totalTransfer = parseFloat((netPay + perDiem).toFixed(2));
+            const perDiem = new Decimal(perDiemMap[parseInt(wId)] || 0).toDecimalPlaces(2);
+            const totalTransfer = netPay.plus(perDiem).toDecimalPlaces(2);
 
             await PayrollLine.create({
                 payroll_id: payroll.id,
                 worker_id: parseInt(wId),
                 project_id: projectId || null,
-                regular_hours: regularHours,
-                overtime_hours: otHours,
-                regular_rate: regularRate,
-                overtime_rate: overtimeRate,
-                regular_pay: regularPay,
-                overtime_pay: otPay,
-                gross_pay: grossPay,
+                regular_hours: regularHours.toNumber(),
+                overtime_hours: otHours.toNumber(),
+                regular_rate: regularRate.toNumber(),
+                overtime_rate: overtimeRate.toNumber(),
+                regular_pay: regularPay.toNumber(),
+                overtime_pay: otPay.toNumber(),
+                gross_pay: grossPay.toNumber(),
                 deductions: 0,
                 deductions_detail: [],
-                net_pay: netPay,
-                per_diem_amount: perDiem,
-                total_to_transfer: totalTransfer,
+                net_pay: netPay.toNumber(),
+                per_diem_amount: perDiem.toNumber(),
+                total_to_transfer: totalTransfer.toNumber(),
             }, { transaction: t });
 
-            totalGross += grossPay;
-            totalNet += netPay;
-            totalPerDiem += perDiem;
+            totalGross = totalGross.plus(grossPay);
+            totalNet = totalNet.plus(netPay);
+            totalPerDiem = totalPerDiem.plus(perDiem);
         }
 
-        const totalAmount = totalNet + totalPerDiem;
+        const totalAmount = totalNet.plus(totalPerDiem).toDecimalPlaces(2);
         await payroll.update({
-            total_gross: parseFloat(totalGross.toFixed(2)),
+            total_gross: totalGross.toDecimalPlaces(2).toNumber(),
             total_deductions: 0,
-            total_net: parseFloat(totalNet.toFixed(2)),
-            total_per_diem: parseFloat(totalPerDiem.toFixed(2)),
-            total_amount: parseFloat(totalAmount.toFixed(2)),
+            total_net: totalNet.toDecimalPlaces(2).toNumber(),
+            total_per_diem: totalPerDiem.toDecimalPlaces(2).toNumber(),
+            total_amount: totalAmount.toNumber(),
         }, { transaction: t });
 
         await t.commit();
@@ -330,9 +349,10 @@ const deletePayroll = async (req, res) => {
 
 // ─── PATCH /api/payroll/lines/:id/pay ────────────────────────────────────────
 const markWorkerPaid = async (req, res) => {
+    const t = await sequelize.transaction();
     try {
         const { payment_method, payment_reference, notes } = req.body;
-        const line = await PayrollLine.findOne({ where: { id: req.params.id, is_active: true } });
+        const line = await PayrollLine.findOne({ where: { id: req.params.id, is_active: true }, transaction: t });
         if (!line) return errorResponse(res, 'Payroll line not found.', 404);
 
         await line.update({
@@ -341,21 +361,21 @@ const markWorkerPaid = async (req, res) => {
             payment_method: payment_method || 'cash',
             payment_reference: payment_reference || '',
             notes: notes || '',
-        });
+        }, { transaction: t });
 
         // Mark per_diem as paid if applicable
         if (parseFloat(line.per_diem_amount || 0) > 0) {
-            const payroll = await Payroll.findByPk(line.payroll_id, { attributes: ['week_start_date'] });
+            const payroll = await Payroll.findByPk(line.payroll_id, { attributes: ['week_start_date'], transaction: t });
             if (payroll) {
                 await PerDiemEntry.update(
                     { status: 'paid', paid_at: new Date() },
-                    { where: { worker_id: line.worker_id, week_start_date: payroll.week_start_date, is_active: true } }
+                    { where: { worker_id: line.worker_id, week_start_date: payroll.week_start_date, is_active: true }, transaction: t }
                 ).catch(() => { });
             }
         }
 
         // Check if all lines in the payroll are paid → update payroll status
-        const payroll = await Payroll.findByPk(line.payroll_id, { include: [{ model: PayrollLine, as: 'lines', attributes: ['status'] }] });
+        const payroll = await Payroll.findByPk(line.payroll_id, { include: [{ model: PayrollLine, as: 'lines', attributes: ['status'] }], transaction: t });
         if (payroll) {
             const allLines = payroll.lines || [];
             const allPaid = allLines.every(l => l.status === 'paid');
@@ -363,29 +383,26 @@ const markWorkerPaid = async (req, res) => {
             await payroll.update({
                 status: allPaid ? 'paid' : somePaid ? 'partial' : 'approved',
                 paid_at: allPaid ? new Date() : null,
-            });
+            }, { transaction: t });
 
             // Create Transaction Record for the payment
-            try {
-                await Transaction.create({
-                    date: new Date(),
-                    amount: parseFloat(line.gross_pay),
-                    type: 'expense',
-                    category: (payment_method || 'zelle').toLowerCase().includes('cash') ? 'payroll_cash' : 'payroll_zelle',
-                    description: `Nómina semana ${payroll.week_start_date}`,
-                    worker_id: line.worker_id,
-                    payroll_id: line.payroll_id,
-                    status: 'cleared',
-                    notes: notes || '',
-                });
-            } catch (txErr) {
-                console.error('Error creating transaction for payroll line:', txErr);
-            }
+            await Transaction.create({
+                date: new Date(),
+                amount: parseFloat(line.gross_pay),
+                type: 'expense',
+                description: `Payroll week ${payroll.week_start_date}`,
+                worker_id: line.worker_id,
+                payroll_id: line.payroll_id,
+                source: 'auto_generated',
+                notes: notes || '',
+            }, { transaction: t });
         }
 
+        await t.commit();
         const updatedLine = await PayrollLine.findByPk(line.id, { include: LINE_INCLUDES });
         return successResponse(res, updatedLine, 'Worker marcado como pagado.');
     } catch (error) {
+        await t.rollback();
         console.error('markWorkerPaid error:', error);
         return errorResponse(res, 'Failed to mark worker as paid.', 500);
     }
@@ -440,8 +457,16 @@ const getPayrollLineById = async (req, res) => {
     try {
         const line = await PayrollLine.findByPk(req.params.id, {
             include: [
-                ...LINE_INCLUDES,
-                { model: Payroll, as: 'payroll', attributes: ['week_start_date', 'week_end_date'] }
+                {
+                    model: Worker, as: 'worker',
+                    attributes: ['id', 'worker_code', 'first_name', 'last_name', 'hourly_rate', 'ssn_encrypted', 'address'],
+                    include: [{ model: Trade, as: 'trade', attributes: ['id', 'name'] }],
+                },
+                { model: Payroll, as: 'payroll', attributes: ['week_start_date', 'week_end_date'] },
+                {
+                    model: Project, as: 'project', attributes: ['id', 'name'],
+                    include: [{ model: Client, as: 'client', attributes: ['id', 'company_name'] }],
+                },
             ]
         });
         if (!line) return errorResponse(res, 'Line not found', 404);
@@ -452,9 +477,444 @@ const getPayrollLineById = async (req, res) => {
     }
 };
 
+// ─── POST /api/payroll/lines/:id/upload-screenshot ───────────────────────────
+const uploadPaymentScreenshot = async (req, res) => {
+    try {
+        if (!req.file) return errorResponse(res, 'No file uploaded.', 400);
+
+        const line = await PayrollLine.findOne({ where: { id: req.params.id, is_active: true } });
+        if (!line) return errorResponse(res, 'Payroll line not found.', 404);
+
+        const screenshotUrl = `/uploads/payment_screenshots/${req.file.filename}`;
+        const filePath = path.resolve(req.file.path); // absolute path, works on Windows
+        console.log('[upload-screenshot] file:', req.file.filename, '| path:', filePath);
+        const imageBuffer = fs.readFileSync(filePath);
+        const base64Image = imageBuffer.toString('base64');
+        const mediaType = req.file.mimetype === 'image/png' ? 'image/png' : 'image/jpeg';
+
+        let extractedData = { payment_type: 'unknown' };
+        try {
+            extractedData = await extractPaymentData(base64Image, mediaType);
+        } catch (aiErr) {
+            console.error('Claude Vision error:', aiErr.message);
+        }
+
+        return successResponse(res, {
+            screenshot_url: screenshotUrl,
+            extracted_data: extractedData,
+            needs_confirmation: true,
+        }, 'Screenshot uploaded and analyzed.');
+    } catch (error) {
+        console.error('uploadPaymentScreenshot error:', error.message, error.stack);
+        return errorResponse(res, `Failed to process screenshot: ${error.message}`, 500);
+    }
+};
+
+// ─── POST /api/payroll/lines/:id/confirm-payment-data ────────────────────────
+const confirmPaymentData = async (req, res) => {
+    try {
+        const { extracted_data, payment_method, screenshot_url } = req.body;
+        const line = await PayrollLine.findOne({ where: { id: req.params.id, is_active: true } });
+        if (!line) return errorResponse(res, 'Payroll line not found.', 404);
+
+        const updates = {
+            payment_data: extracted_data || null,
+            payment_method: payment_method || line.payment_method,
+            payment_screenshot_url: screenshot_url || line.payment_screenshot_url,
+        };
+
+        if (!line.voucher_number) {
+            updates.voucher_number = await getNextVoucherNumber();
+        }
+
+        await line.update(updates);
+        const updated = await PayrollLine.findByPk(line.id, {
+            include: [...LINE_INCLUDES, { model: Payroll, as: 'payroll', attributes: ['week_start_date', 'week_end_date'] }]
+        });
+        return successResponse(res, updated, 'Payment data confirmed.');
+    } catch (error) {
+        console.error('confirmPaymentData error:', error);
+        return errorResponse(res, 'Failed to confirm payment data.', 500);
+    }
+};
+
+// ─── GET /api/payroll/lines/my ────────────────────────────────────────────────
+const getMyPayrollLines = async (req, res) => {
+    try {
+        const worker = await Worker.findOne({ where: { user_id: req.user.id, is_active: true } });
+        if (!worker) return errorResponse(res, 'Worker profile not found.', 404);
+
+        const lines = await PayrollLine.findAll({
+            where: { worker_id: worker.id, is_active: true },
+            include: [
+                { model: Payroll, as: 'payroll', attributes: ['week_start_date', 'week_end_date', 'status'] },
+                {
+                    model: Project, as: 'project', attributes: ['id', 'name'],
+                    include: [{ model: Client, as: 'client', attributes: ['id', 'company_name'] }]
+                },
+            ],
+            order: [[{ model: Payroll, as: 'payroll' }, 'week_start_date', 'DESC']],
+        });
+        return successResponse(res, lines, 'My payroll lines retrieved.');
+    } catch (error) {
+        console.error('getMyPayrollLines error:', error);
+        return errorResponse(res, 'Failed to retrieve payroll lines.', 500);
+    }
+};
+
+// ─── GET /api/payroll/lines/:id/voucher-view ─────────────────────────────────
+// BUG-006: Ownership check — contractor can only view their own voucher.
+// SEC-004: ssn_encrypted removed from worker attributes — not needed in voucher HTML.
+const getVoucherView = async (req, res) => {
+    try {
+        const isAdmin = req.user?.role === 'admin';
+        const line = await PayrollLine.findOne({
+            where: { id: req.params.id, is_active: true },
+            include: [
+                {
+                    model: Worker, as: 'worker',
+                    // SEC-004: removed ssn_encrypted — SSN must never appear in HTML voucher
+                    attributes: ['id', 'worker_code', 'first_name', 'last_name', 'hourly_rate', 'address', 'user_id'],
+                    include: [{ model: Trade, as: 'trade', attributes: ['id', 'name'] }],
+                },
+                { model: Payroll, as: 'payroll', attributes: ['week_start_date', 'week_end_date'] },
+                {
+                    model: Project, as: 'project', attributes: ['id', 'name'],
+                    include: [{ model: Client, as: 'client', attributes: ['id', 'company_name'] }]
+                },
+            ],
+        });
+
+        if (!line) return errorResponse(res, 'Payroll line not found.', 404);
+
+        // BUG-006: If requester is a contractor, verify they own this payroll line.
+        if (req.user.role === 'contractor') {
+            const ownerId = line.worker?.user_id;
+            if (!ownerId || ownerId !== req.user.id) {
+                return errorResponse(res, 'Acceso denegado.', 403);
+            }
+        }
+
+        // Access control: admin or owner contractor
+        if (req.user.role !== 'admin' && line.worker.user_id !== req.user.id) {
+            return errorResponse(res, 'Access denied.', 403);
+        }
+
+        const w = line.worker;
+        const payroll = line.payroll;
+        const project = line.project;
+        const client = project?.client;
+
+        // SSN last 4
+        const ssnLast4 = w.ssn_encrypted ? w.ssn_encrypted.replace(/\D/g, '').slice(-4) : '----';
+
+        // YTD calculation
+        const yearStart = new Date(new Date().getFullYear(), 0, 1);
+        const yearLines = await PayrollLine.findAll({
+            where: { worker_id: w.id, is_active: true },
+            include: [{ model: Payroll, as: 'payroll', attributes: ['week_start_date'] }],
+        });
+        const ytdRegular = yearLines.reduce((s, l) => {
+            const d = new Date((l.payroll?.week_start_date || '') + 'T00:00:00');
+            return d >= yearStart ? s + parseFloat(l.regular_pay || 0) : s;
+        }, 0);
+        const ytdOvertime = yearLines.reduce((s, l) => {
+            const d = new Date((l.payroll?.week_start_date || '') + 'T00:00:00');
+            return d >= yearStart ? s + parseFloat(l.overtime_pay || 0) : s;
+        }, 0);
+        const ytdPerDiem = yearLines.reduce((s, l) => {
+            const d = new Date((l.payroll?.week_start_date || '') + 'T00:00:00');
+            return d >= yearStart ? s + parseFloat(l.per_diem_amount || 0) : s;
+        }, 0);
+
+        // Week number
+        const weekStartDate = payroll?.week_start_date || '';
+        const weekDate = new Date(weekStartDate + 'T00:00:00');
+        const startOfYear = new Date(weekDate.getFullYear(), 0, 1);
+        const weekNum = Math.ceil(((weekDate - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+
+        // Per diem days & rate
+        const pdAmount = parseFloat(line.per_diem_amount || 0);
+        const pdDays = 5;
+        const pdRate = pdAmount > 0 ? (pdAmount / pdDays).toFixed(2) : '0.00';
+
+        // Format dates
+        const fmtDate = (d) => {
+            if (!d) return '';
+            const [y, m, day] = (d + '').split('T')[0].split('-');
+            return `${m}/${day}/${y}`;
+        };
+
+        const payData = line.payment_data || {};
+        const method = (line.payment_method || '').toLowerCase();
+        const deductions = Array.isArray(line.deductions_detail) ? line.deductions_detail : [];
+
+        // Payment date display
+        const paidAtStr = payData.paid_at_datetime ? fmtDate(payData.paid_at_datetime.split('T')[0]) : fmtDate(line.paid_at);
+
+        // Issue date = today
+        const today = new Date();
+        const issueDate = `${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}/${today.getFullYear()}`;
+
+        const fmt = (v) => `$${parseFloat(v || 0).toFixed(2)}`;
+
+        const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Statement — ${line.voucher_number || 'Draft'}</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  ${isAdmin
+  ? `@media print {
+      body { background: white !important; }
+      .voucher { max-width: 100% !important; margin: 0 !important; border-radius: 0 !important; }
+    }`
+  : `@media print { body { display: none !important; } }`
+}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #f3f4f6; color: #111827; font-size: 13px; }
+  .voucher { background: #1f2937; color: #f9fafb; max-width: 900px; margin: 24px auto; border-radius: 12px; overflow: hidden; padding: 28px 32px; }
+  .v-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+  .v-header-left .label-sm { font-size: 10px; letter-spacing: 1.5px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
+  .v-header-left h1 { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 600; color: #f9fafb; margin-bottom: 4px; }
+  .v-header-left .addr { font-size: 12px; color: #9ca3af; line-height: 1.6; }
+  .v-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+  .v-logo { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; }
+  .v-header-meta { display: flex; gap: 24px; align-items: flex-start; }
+  .v-meta-block { text-align: right; }
+  .v-meta-block .label-sm { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
+  .v-meta-block .val { font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 600; color: #f9fafb; margin-top: 2px; }
+  .v-sep { width: 1px; background: #374151; }
+  .v-info-row { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid #374151; border-bottom: 1px solid #374151; margin-bottom: 20px; }
+  .v-info-cell { padding: 14px 16px; border-right: 1px solid #374151; }
+  .v-info-cell:last-child { border-right: none; }
+  .v-info-cell .cell-label { font-size: 9px; letter-spacing: 1.2px; color: #6b7280; text-transform: uppercase; margin-bottom: 6px; }
+  .v-info-cell .cell-val { font-size: 13px; font-weight: 600; color: #f9fafb; line-height: 1.4; }
+  .v-info-cell .cell-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .v-two-col { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #374151; border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+  .v-col { padding: 16px 20px; }
+  .v-col + .v-col { border-left: 1px solid #374151; }
+  .v-col-title { font-size: 10px; letter-spacing: 1.5px; color: #6b7280; text-transform: uppercase; margin-bottom: 12px; font-weight: 600; }
+  table.v-table { width: 100%; border-collapse: collapse; }
+  table.v-table thead tr { border-bottom: 1px solid #374151; }
+  table.v-table th { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px; padding: 4px 6px; text-align: left; font-weight: 500; }
+  table.v-table th.r, table.v-table td.r { text-align: right; }
+  table.v-table td { padding: 8px 6px; color: #e5e7eb; font-size: 13px; border-bottom: 1px solid #1f2937; }
+  .v-table-foot td { border-top: 1px solid #374151; border-bottom: none; font-weight: 600; color: #f9fafb; padding-top: 12px; }
+  .ded-amt { color: #ef4444; }
+  .ded-ytd { color: #6b7280; font-size: 12px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 14px; }
+  .badge-zelle { background: #6D1ED4; color: #fff; }
+  .badge-cash { background: #08543D; color: #fff; }
+  .badge-check { background: #2A6C95; color: #fff; }
+  .pay-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #374151; color: #e5e7eb; font-size: 13px; }
+  .pay-row:last-of-type { border-bottom: none; }
+  .pay-row .pay-label { color: #9ca3af; }
+  .pay-total { margin-top: 12px; padding-top: 12px; }
+  .pay-total-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+  .pay-total-amt { font-family: 'Montserrat', sans-serif; font-size: 28px; font-weight: 700; }
+  .amt-zelle { color: #08543D; }
+  .amt-cash { color: #08543D; }
+  .amt-check { color: #2A6C95; }
+  .pay-divider-zelle { border-top: 2px solid #08543D; margin-top: 14px; padding-top: 10px; }
+  .pay-divider-cash { border-top: 2px solid #08543D; margin-top: 14px; padding-top: 10px; }
+  .pay-divider-check { border-top: 2px solid #2A6C95; margin-top: 14px; padding-top: 10px; }
+  .screenshot-box { border: 1.5px dashed #374151; border-radius: 8px; min-height: 180px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #6b7280; font-size: 12px; gap: 8px; }
+  .screenshot-box img { width: 100%; border-radius: 6px; object-fit: cover; max-height: 260px; }
+  .screenshot-tag { background: #374151; border-radius: 4px; padding: 3px 8px; font-size: 10px; color: #9ca3af; margin-top: 6px; }
+  .v-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #374151; }
+  .v-footer-left { font-size: 11px; color: #6b7280; line-height: 1.5; }
+  .paid-badge { background: #374151; color: #10b981; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="voucher">
+
+  <!-- HEADER -->
+  <div class="v-header">
+    <div class="v-header-left">
+      <div class="label-sm">Earnings Statement</div>
+      <h1>HM Construction Staffing LLLP</h1>
+      <div class="addr">500 Lucas Dr, Savannah, GA<br>hmcs@hmconstructionlllp.com</div>
+    </div>
+    <div class="v-header-right">
+      <img src="http://localhost:3000/imagen/logo_cuadrado.jpg" alt="HMCS" class="v-logo" onerror="this.style.display='none'">
+      <div class="v-header-meta">
+        <div class="v-meta-block">
+          <div class="label-sm">Statement #</div>
+          <div class="val">${line.voucher_number || 'DRAFT'}</div>
+        </div>
+        <div class="v-sep"></div>
+        <div class="v-meta-block">
+          <div class="label-sm">Issue Date</div>
+          <div class="val">${issueDate}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO ROW -->
+  <div class="v-info-row">
+    <div class="v-info-cell">
+      <div class="cell-label">Worker</div>
+      <div class="cell-val">${w.first_name} ${w.last_name}</div>
+      <div class="cell-sub">${w.worker_code}</div>
+    </div>
+    <div class="v-info-cell">
+      <div class="cell-label">Address</div>
+      <div class="cell-val">${w.address || '—'}</div>
+    </div>
+    <div class="v-info-cell">
+      <div class="cell-label">SSN (Last 4)</div>
+      <div class="cell-val">XXX-XX-${ssnLast4}</div>
+    </div>
+    <div class="v-info-cell">
+      <div class="cell-label">Pay Period</div>
+      <div class="cell-val">${fmtDate(weekStartDate)} – ${fmtDate(payroll?.week_end_date)}</div>
+      <div class="cell-sub">${weekDate.getFullYear()} · Week ${weekNum}</div>
+    </div>
+    <div class="v-info-cell">
+      <div class="cell-label">Project / Client</div>
+      <div class="cell-val">${client?.company_name || '—'}</div>
+      <div class="cell-sub">${project?.name || '—'}${w.trade?.name ? ' · ' + w.trade.name : ''}</div>
+    </div>
+  </div>
+
+  <!-- DEDUCTIONS + EARNINGS -->
+  <div class="v-two-col">
+    <div class="v-col">
+      <div class="v-col-title">Deductions</div>
+      <table class="v-table">
+        <thead><tr><th>Description</th><th class="r">Amount</th><th class="r">YTD</th></tr></thead>
+        <tbody>
+          ${deductions.length === 0 ? `<tr><td colspan="3" style="color:#6b7280;font-size:12px;padding:12px 6px;">No deductions</td></tr>` :
+            deductions.map(d => `<tr>
+              <td>${d.description || d.type || 'Deduction'}</td>
+              <td class="r ded-amt">– ${fmt(d.amount)}</td>
+              <td class="r ded-ytd">– ${fmt(d.amount)}</td>
+            </tr>`).join('')}
+        </tbody>
+        <tfoot class="v-table-foot">
+          <tr><td>Total Deductions</td><td class="r ded-amt">– ${fmt(line.deductions)}</td><td class="r ded-ytd">– ${fmt(line.deductions)}</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="v-col">
+      <div class="v-col-title">Earnings</div>
+      <table class="v-table">
+        <thead><tr><th>Description</th><th class="r">Hrs</th><th class="r">Rate</th><th class="r">Amt</th><th class="r">YTD</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Regular Time</td>
+            <td class="r">${parseFloat(line.regular_hours).toFixed(1)}</td>
+            <td class="r">${fmt(line.regular_rate)}</td>
+            <td class="r">${fmt(line.regular_pay)}</td>
+            <td class="r" style="color:#6b7280;">${fmt(ytdRegular)}</td>
+          </tr>
+          ${parseFloat(line.overtime_hours || 0) > 0 ? `<tr>
+            <td>Overtime 1.5x</td>
+            <td class="r">${parseFloat(line.overtime_hours).toFixed(1)}</td>
+            <td class="r">${fmt(line.overtime_rate)}</td>
+            <td class="r">${fmt(line.overtime_pay)}</td>
+            <td class="r" style="color:#6b7280;">${fmt(ytdOvertime)}</td>
+          </tr>` : ''}
+          ${pdAmount > 0 ? `<tr>
+            <td>Per Diem</td>
+            <td class="r">${pdDays}d</td>
+            <td class="r">$${pdRate}</td>
+            <td class="r">${fmt(pdAmount)}</td>
+            <td class="r" style="color:#6b7280;">${fmt(ytdPerDiem)}</td>
+          </tr>` : ''}
+        </tbody>
+        <tfoot class="v-table-foot">
+          <tr><td colspan="3">Gross Earnings</td><td class="r">${fmt(line.gross_pay)}</td><td class="r" style="color:#6b7280;">${fmt(ytdRegular + ytdOvertime)}</td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAYMENT INFO + SCREENSHOT -->
+  <div class="v-two-col">
+    <div class="v-col">
+      ${method === 'zelle' ? `
+        <span class="badge badge-zelle">✓ PAID VIA ZELLE</span>
+        <div class="pay-row"><span class="pay-label">Sent to</span><span>${payData.sent_to || w.first_name + ' ' + w.last_name}</span></div>
+        <div class="pay-row"><span class="pay-label">Registered as</span><span>${payData.registered_as || '—'}</span></div>
+        <div class="pay-row"><span class="pay-label">From account</span><span>${payData.from_account || '—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Confirmation #</span><span>${payData.confirmation_number || '—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Date &amp; Time</span><span>${paidAtStr || '—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Bank</span><span>${payData.bank || 'Wells Fargo'}</span></div>
+        <div class="pay-divider-zelle">
+          <div class="pay-total-label">NET TRANSFER</div>
+          <div class="pay-total-amt amt-zelle">${fmt(line.total_to_transfer)}</div>
+        </div>
+      ` : method === 'cash' ? `
+        <span class="badge badge-cash">&#x2Fef; CASH EWITHDRAWAL</span>
+        <div class="pay-row"><span class="pay-label">Bank</span><span>${payData.bank || 'Wells Fargo Bank'}</span></div>
+        <div class="pay-row"><span class="pay-label">Account</span><span>${payData.account || '—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Branch #</span><span>${payData.branch_number || '—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Transaction #</span><span>${payData.transaction_number || '—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Date &amp; Time</span><span>${paidAtStr || '—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Type</span><span>Cash Paid to Customer</span></div>
+        <div class="pay-divider-cash">
+          <div class="pay-total-label">CASH PAID</div>
+          <div class="pay-total-amt amt-cash">${fmt(line.total_to_transfer)}</div>
+        </div>
+      ` : method === 'check' ? `
+        <span class="badge badge-check">&#x2Fef; CHECK</span>
+        <div class="pay-row"><span class="pay-label">Payable to</span><span>${payData.payable_to || w.first_name + ' ' + w.last_name}</span></div>
+        <div class="pay-row"><span class="pay-label">Check #</span><span>${payData.check_number || '—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Bank</span><span>${payData.bank || 'Wells Fargo Bank'}</span></div>
+        <div class="pay-row"><span class="pay-label">Account</span><span>${payData.account || '—'}</span></div>
+        <div class="pay-row"><span class="pay-label">Issue Date</span><span>${paidAtStr || issueDate}</span></div>
+        <div class="pay-row"><span class="pay-label">Memo</span><span>Week ${weekNum} · ${w.worker_code}</span></div>
+        <div class="pay-divider-check">
+          <div class="pay-total-label">CHECK AMOUNT</div>
+          <div class="pay-total-amt amt-check">${fmt(line.total_to_transfer)}</div>
+        </div>
+      ` : `
+        <div style="color:#6b7280; font-size:13px; padding-top:8px;">No payment information recorded yet.</div>
+      `}
+    </div>
+    <div class="v-col">
+      <div class="v-col-title">${method === 'check' ? 'Check / Receipt Photo' : 'Payment Screenshot'}</div>
+      ${line.payment_screenshot_url
+        ? `<img src="http://localhost:5000${line.payment_screenshot_url}" alt="Payment screenshot" style="width:100%;border-radius:6px;object-fit:cover;max-height:260px;">
+           <div class="screenshot-tag">${method === 'zelle' ? 'Zelle' : method === 'cash' ? 'Cash' : 'Check'} · Wells Fargo</div>`
+        : `<div class="screenshot-box">
+             <svg width="40" height="40" fill="none" stroke="#6b7280" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+             <span>No screenshot uploaded</span>
+           </div>`}
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="v-footer">
+    <div class="v-footer-left">
+      HM Construction Staffing LLLP — Independent Contractor (1099)<br>
+      No se retienen impuestos federales ni estatales.
+    </div>
+    <div class="paid-badge">● Pagado · ${fmtDate(line.paid_at?.toISOString?.()?.split('T')[0] || '')}</div>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+    } catch (error) {
+        console.error('getVoucherView error:', error);
+        return errorResponse(res, 'Failed to generate voucher.', 500);
+    }
+};
+
 module.exports = {
     getAllPayrolls, getPayrollStats, getPendingWeeks, getPayrollById,
     generatePayroll, updatePayrollStatus, deletePayroll,
     markWorkerPaid, updatePayrollLine, getPayrollLineById,
     approvePayroll, getPayrollReview,
+    uploadPaymentScreenshot, confirmPaymentData, getVoucherView, getMyPayrollLines,
 };

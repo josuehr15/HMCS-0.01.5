@@ -117,30 +117,26 @@ const createProject = async (req, res) => {
         const {
             client_id, name, address, latitude, longitude,
             gps_radius_meters, lunch_rule, lunch_duration_minutes,
-            work_hours_per_day, paid_hours_per_day, start_date, end_date,
-            status, notes,
+            work_hours_per_day, paid_hours_per_day, shift_start_time,
+            shift_end_time, start_date, end_date, notes,
         } = req.body;
 
-        if (!client_id || !name || !address || latitude === undefined || longitude === undefined) {
-            return errorResponse(res, 'Campos requeridos: client_id, name, address, latitude, longitude.', 400);
+        if (!client_id || !name || !address || latitude == null || longitude == null) {
+            return errorResponse(res, 'client_id, name, address, latitude y longitude son requeridos.', 400);
         }
-
-        const client = await Client.findByPk(client_id);
-        if (!client) return errorResponse(res, 'Cliente no encontrado.', 400);
 
         const project = await Project.create({
             client_id, name, address,
-            latitude: parseFloat(latitude),
-            longitude: parseFloat(longitude),
-            gps_radius_meters: parseInt(gps_radius_meters || 500),
+            latitude, longitude,
+            gps_radius_meters: gps_radius_meters ?? 500,
             lunch_rule: lunch_rule || 'paid',
-            lunch_duration_minutes: parseInt(lunch_duration_minutes || 60),
-            work_hours_per_day: parseFloat(work_hours_per_day || 9.00),
-            paid_hours_per_day: parseFloat(paid_hours_per_day || 10.00),
+            lunch_duration_minutes: lunch_duration_minutes ?? 60,
+            work_hours_per_day: work_hours_per_day ?? 9.00,
+            paid_hours_per_day: paid_hours_per_day ?? 10.00,
+            shift_start_time: shift_start_time || null,
+            shift_end_time: shift_end_time || null,
             start_date: start_date || null,
             end_date: end_date || null,
-            status: status || 'active',
-            is_active: true,
             notes: notes || null,
         });
 
@@ -164,27 +160,29 @@ const updateProject = async (req, res) => {
         if (!project) return errorResponse(res, 'Project not found.', 404);
 
         const {
-            name, address, latitude, longitude, gps_radius_meters,
-            lunch_rule, lunch_duration_minutes, work_hours_per_day,
-            paid_hours_per_day, status, start_date, end_date, notes,
+            client_id, name, address, latitude, longitude,
+            gps_radius_meters, lunch_rule, lunch_duration_minutes,
+            work_hours_per_day, paid_hours_per_day, shift_start_time,
+            shift_end_time, start_date, end_date, notes, status,
         } = req.body;
 
-        const newStatus = status || project.status;
         await project.update({
-            name: name || project.name,
-            address: address || project.address,
-            latitude: latitude !== undefined ? parseFloat(latitude) : project.latitude,
-            longitude: longitude !== undefined ? parseFloat(longitude) : project.longitude,
-            gps_radius_meters: gps_radius_meters !== undefined ? parseInt(gps_radius_meters) : project.gps_radius_meters,
-            lunch_rule: lunch_rule || project.lunch_rule,
-            lunch_duration_minutes: lunch_duration_minutes !== undefined ? parseInt(lunch_duration_minutes) : project.lunch_duration_minutes,
-            work_hours_per_day: work_hours_per_day !== undefined ? parseFloat(work_hours_per_day) : project.work_hours_per_day,
-            paid_hours_per_day: paid_hours_per_day !== undefined ? parseFloat(paid_hours_per_day) : project.paid_hours_per_day,
-            status: newStatus,
-            is_active: newStatus === 'active',
-            start_date: start_date !== undefined ? start_date : project.start_date,
-            end_date: end_date !== undefined ? end_date : project.end_date,
-            notes: notes !== undefined ? notes : project.notes,
+            ...(client_id != null && { client_id }),
+            ...(name != null && { name }),
+            ...(address != null && { address }),
+            ...(latitude != null && { latitude }),
+            ...(longitude != null && { longitude }),
+            ...(gps_radius_meters != null && { gps_radius_meters }),
+            ...(lunch_rule != null && { lunch_rule }),
+            ...(lunch_duration_minutes != null && { lunch_duration_minutes }),
+            ...(work_hours_per_day != null && { work_hours_per_day }),
+            ...(paid_hours_per_day != null && { paid_hours_per_day }),
+            ...(shift_start_time !== undefined && { shift_start_time }),
+            ...(shift_end_time !== undefined && { shift_end_time }),
+            ...(start_date !== undefined && { start_date: start_date || null }),
+            ...(end_date !== undefined && { end_date: end_date || null }),
+            ...(notes !== undefined && { notes }),
+            ...(status != null && { status }),
         });
 
         const updated = await Project.findByPk(project.id, {
@@ -282,8 +280,39 @@ const forceDeleteProject = async (req, res) => {
     }
 };
 
+/**
+ * GET /api/projects/utils/resolve-map-url?url=...
+ * Resolves short Google Maps URLs to their long form to extract coordinates.
+ */
+const resolveMapUrl = async (req, res) => {
+    const { url } = req.query;
+    if (!url) return errorResponse(res, 'URL requerida', 400);
+
+    try {
+        const response = await fetch(url, { redirect: 'follow' });
+        const finalUrl = response.url;
+
+        // Try standard coordinates extractions on the final URL
+        const atMatch = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+        const qMatch = finalUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+        const llMatch = finalUrl.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
+        const destMatch = finalUrl.match(/[?&]destination=(-?\d+\.\d+),(-?\d+\.\d+)/);
+
+        const match = atMatch || qMatch || llMatch || destMatch;
+
+        if (match) {
+            return successResponse(res, { lat: match[1], lng: match[2] }, 'Coordenadas extraídas con éxito.');
+        }
+
+        return errorResponse(res, 'El enlace final no contenía coordenadas explícitas. Ingresa manualmente.', 404);
+    } catch (error) {
+        console.error('resolveMapUrl error:', error);
+        return errorResponse(res, 'Error al resolver la URL de Google Maps.', 500);
+    }
+};
+
 module.exports = {
     getAllProjects, getProjectById, getProjectLinkedData,
     createProject, updateProject, deleteProject,
-    toggleProjectStatus, forceDeleteProject,
+    toggleProjectStatus, forceDeleteProject, resolveMapUrl,
 };

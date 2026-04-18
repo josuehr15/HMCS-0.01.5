@@ -14,6 +14,26 @@ import { useAuth } from '../../context/AuthContext';
 import './Projects.css';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
+function fromTime24(timeStr) {
+    if (!timeStr) return { hour: '', minute: '', period: '' };
+    const [hhStr, mmStr] = timeStr.split(':');
+    let h = parseInt(hhStr, 10);
+    const period = h >= 12 ? 'PM' : 'AM';
+    if (h === 0) h = 12;
+    if (h > 12) h -= 12;
+    return { hour: String(h), minute: mmStr || '00', period };
+}
+
+function toTime24(hour, minute, period) {
+    if (!hour || !minute || !period) return null;
+    let h = parseInt(hour, 10);
+    if (period === 'PM' && h !== 12) h += 12;
+    if (period === 'AM' && h === 12) h = 0;
+    const hh = String(h).padStart(2, '0');
+    const mm = String(minute).padStart(2, '0');
+    return `${hh}:${mm}:00`;
+}
+
 const EMPTY_FORM = {
     client_id: '', name: '', address: '',
     latitude: '', longitude: '',
@@ -22,6 +42,8 @@ const EMPTY_FORM = {
     lunch_duration_minutes: '60',
     work_hours_per_day: '9.00',
     paid_hours_per_day: '10.00',
+    shiftStartHour: '', shiftStartMinute: '', shiftStartPeriod: '',
+    shiftEndHour: '', shiftEndMinute: '', shiftEndPeriod: '',
     start_date: '', end_date: '',
     status: 'active', notes: '',
 };
@@ -453,6 +475,11 @@ function ProjectDetailPanel({ project, api, showToast, onClose, onEdit, onDelete
                                 <div className="pj-detail__rule-chip">
                                     {parseFloat(project.paid_hours_per_day).toFixed(1)}h pagadas / día
                                 </div>
+                                {(project.shift_start_time || project.shift_end_time) && (
+                                    <div className="pj-detail__rule-chip" style={{ background: '#E0E7FF', color: '#3730A3' }}>
+                                        Horario: {project.shift_start_time ? project.shift_start_time.substring(0, 5) : '—'} a {project.shift_end_time ? project.shift_end_time.substring(0, 5) : '—'}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -506,13 +533,6 @@ function ProjectDetailPanel({ project, api, showToast, onClose, onEdit, onDelete
                             </div>
                         </div>
 
-                        {/* Documentos */}
-                        <div className="pj-detail__section">
-                            <h3 className="pj-detail__section-title">
-                                <FolderOpen size={13} /> DOCUMENTOS
-                            </h3>
-                            <DocumentUploader ownerType="company" ownerId={project.id} token={token} />
-                        </div>
 
                     </div>
 
@@ -654,6 +674,7 @@ export default function Projects() {
     const [filterStatus, setFilterStatus] = useState('active');
     const [mapsInput, setMapsInput] = useState('');
     const [mapsError, setMapsError] = useState('');
+    const [parsingMap, setParsingMap] = useState(false);
     const [stats, setStats] = useState({ total: 0, active: 0, onHold: 0, workersAssigned: 0 });
 
     const changeView = m => { setViewMode(m); localStorage.setItem('projects_view', m); };
@@ -716,7 +737,11 @@ export default function Projects() {
         setFormData(EMPTY_FORM); setMapsInput(''); setMapsError('');
         setFormError(''); setEditingId(null); setModalMode('create'); setModalOpen(true);
     };
-    const openEdit = p => {
+    const openEdit = (p) => {
+        
+        const startParsed = fromTime24(p.shift_start_time);
+        const endParsed = fromTime24(p.shift_end_time);
+
         setFormData({
             client_id: String(p.client_id || ''),
             name: p.name || '',
@@ -728,6 +753,12 @@ export default function Projects() {
             lunch_duration_minutes: String(p.lunch_duration_minutes || '60'),
             work_hours_per_day: String(p.work_hours_per_day || '9.00'),
             paid_hours_per_day: String(p.paid_hours_per_day || '10.00'),
+            shiftStartHour: startParsed.hour,
+            shiftStartMinute: startParsed.minute,
+            shiftStartPeriod: startParsed.period,
+            shiftEndHour: endParsed.hour,
+            shiftEndMinute: endParsed.minute,
+            shiftEndPeriod: endParsed.period,
             start_date: p.start_date || '',
             end_date: p.end_date || '',
             status: p.status || 'active',
@@ -737,14 +768,31 @@ export default function Projects() {
         setFormError(''); setEditingId(p.id); setModalMode('edit'); setModalOpen(true);
     };
 
-    const parseMapsUrl = () => {
+    const parseMapsUrl = async () => {
         if (!mapsInput.trim()) return;
+        
+        // 1. First try simple local regex for full links
         const coords = parseGoogleMapsUrl(mapsInput);
         if (coords) {
             setFormData(p => ({ ...p, latitude: coords.lat, longitude: coords.lng }));
             setMapsError('');
-        } else {
-            setMapsError('No se pudieron extraer coordenadas. Ingresa manualmente o usa una URL con @lat,lng.');
+            return;
+        }
+
+        // 2. If it's a short URL (maps.app.goo.gl), resolve via backend
+        setParsingMap(true);
+        setMapsError('');
+        try {
+            const res = await get(`/projects/utils/resolve-map-url?url=${encodeURIComponent(mapsInput)}`);
+            const data = res.data?.data || res.data;
+            if (data.lat && data.lng) {
+                setFormData(p => ({ ...p, latitude: data.lat, longitude: data.lng }));
+                setMapsError('');
+            }
+        } catch (err) {
+            setMapsError(err.response?.data?.message || 'No se pudieron extraer coordenadas. Ingresa manualmente o usa una URL con @lat,lng.');
+        } finally {
+            setParsingMap(false);
         }
     };
 
@@ -756,6 +804,8 @@ export default function Projects() {
         try {
             const payload = {
                 ...formData,
+                shift_start_time: toTime24(formData.shiftStartHour, formData.shiftStartMinute, formData.shiftStartPeriod),
+                shift_end_time: toTime24(formData.shiftEndHour, formData.shiftEndMinute, formData.shiftEndPeriod),
                 latitude: parseFloat(formData.latitude),
                 longitude: parseFloat(formData.longitude),
                 gps_radius_meters: parseInt(formData.gps_radius_meters || 500),
@@ -995,8 +1045,11 @@ export default function Projects() {
                                     value={mapsInput}
                                     onChange={e => setMapsInput(e.target.value)}
                                     placeholder="Pega un enlace de Google Maps o introduce manualmente..."
+                                    disabled={parsingMap}
                                 />
-                                <button type="button" className="proj-extract-btn" onClick={parseMapsUrl}>Extraer</button>
+                                <button type="button" className="proj-extract-btn" onClick={parseMapsUrl} disabled={parsingMap || !mapsInput.trim()}>
+                                    {parsingMap ? '...' : 'Extraer'}
+                                </button>
                             </div>
                             {mapsError && <p className="proj-maps-error">{mapsError}</p>}
                             <p className="proj-maps-hint">
@@ -1054,6 +1107,47 @@ export default function Projects() {
                                     <input className="wf-input" type="number" step="0.25" value={formData.paid_hours_per_day} onChange={e => setFormData(p => ({ ...p, paid_hours_per_day: e.target.value }))} />
                                 </div>
                             </div>
+                            <div className="wf-grid-2">
+                                <div className="wf-field">
+                                    <label className="wf-label">Hora de Entrada <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 'normal', marginLeft: 6 }}>(Opcional)</span></label>
+                                    <div style={{ display: 'flex', gap: 4 }}>
+                                        <select className="wf-select" style={{ flex: 1, padding: '0 8px' }} value={formData.shiftStartHour} onChange={e => setFormData(p => ({ ...p, shiftStartHour: e.target.value }))}>
+                                            <option value="">--</option>
+                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(h => <option key={h} value={h}>{h}</option>)}
+                                        </select>
+                                        <select className="wf-select" style={{ flex: 1, padding: '0 8px' }} value={formData.shiftStartMinute} onChange={e => setFormData(p => ({ ...p, shiftStartMinute: e.target.value }))}>
+                                            <option value="">--</option>
+                                            {['00', '15', '30', '45'].map(m => <option key={m} value={m}>{m}</option>)}
+                                        </select>
+                                        <select className="wf-select" style={{ flex: 1, padding: '0 8px' }} value={formData.shiftStartPeriod} onChange={e => setFormData(p => ({ ...p, shiftStartPeriod: e.target.value }))}>
+                                            <option value="">--</option>
+                                            <option value="AM">AM</option>
+                                            <option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="wf-field">
+                                    <label className="wf-label">Hora de Salida <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 'normal', marginLeft: 6 }}>(Opcional)</span></label>
+                                    <div style={{ display: 'flex', gap: 4 }}>
+                                        <select className="wf-select" style={{ flex: 1, padding: '0 8px' }} value={formData.shiftEndHour} onChange={e => setFormData(p => ({ ...p, shiftEndHour: e.target.value }))}>
+                                            <option value="">--</option>
+                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(h => <option key={h} value={h}>{h}</option>)}
+                                        </select>
+                                        <select className="wf-select" style={{ flex: 1, padding: '0 8px' }} value={formData.shiftEndMinute} onChange={e => setFormData(p => ({ ...p, shiftEndMinute: e.target.value }))}>
+                                            <option value="">--</option>
+                                            {['00', '15', '30', '45'].map(m => <option key={m} value={m}>{m}</option>)}
+                                        </select>
+                                        <select className="wf-select" style={{ flex: 1, padding: '0 8px' }} value={formData.shiftEndPeriod} onChange={e => setFormData(p => ({ ...p, shiftEndPeriod: e.target.value }))}>
+                                            <option value="">--</option>
+                                            <option value="AM">AM</option>
+                                            <option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <p style={{ marginTop: -8, marginBottom: 16, fontSize: 11, color: 'var(--text-muted)' }}>
+                                Si se configuran, se sugerirán automáticamente al registrar horas de este proyecto.
+                            </p>
 
                             {/* Fechas y estado */}
                             <div className="wf-section-title"><Calendar size={14} /> Fechas y Estado</div>

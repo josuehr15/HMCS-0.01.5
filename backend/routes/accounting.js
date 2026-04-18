@@ -9,6 +9,9 @@ const {
     previewCSV, confirmCSV,
     getPnL, getMarginsWorkers, getMarginsClients, getCashFlow,
     getTaxSummary, get1099Report,
+    getDashboardSummary, getCashflowYear,
+    previewImport, confirmImport, undoImport, getImportHistory,
+    getRules, createRule, updateRule, deleteRule, applyRule, previewRuleCount,
 } = require('../controllers/accountingController');
 
 router.use(auth);
@@ -19,6 +22,10 @@ router.post('/categories', checkRole('admin'), createCategory);
 router.put('/categories/:id', checkRole('admin'), updateCategory);
 router.delete('/categories/:id', checkRole('admin'), deleteCategory);
 
+// ── Dashboard endpoints ────────────────────────────────────────────
+router.get('/dashboard-summary', checkRole('admin'), getDashboardSummary);
+router.get('/cashflow-year', checkRole('admin'), getCashflowYear);
+
 // ── Reports (before /transactions to avoid routing conflicts) ──────
 router.get('/pnl', checkRole('admin'), getPnL);
 router.get('/margins/workers', checkRole('admin'), getMarginsWorkers);
@@ -27,7 +34,21 @@ router.get('/cash-flow', checkRole('admin'), getCashFlow);
 router.get('/tax-summary', checkRole('admin'), getTaxSummary);
 router.get('/1099-report', checkRole('admin'), get1099Report);
 
-// ── CSV Import ─────────────────────────────────────────────────────
+// ── Transaction Rules ──────────────────────────────────────────────
+router.get('/rules',                   checkRole('admin'), getRules);
+router.post('/rules/preview-count',    checkRole('admin'), previewRuleCount);
+router.post('/rules',                  checkRole('admin'), createRule);
+router.put('/rules/:id',               checkRole('admin'), updateRule);
+router.delete('/rules/:id',            checkRole('admin'), deleteRule);
+router.post('/rules/:id/apply',        checkRole('admin'), applyRule);
+
+// ── CSV Import v2 (3-step flow) ────────────────────────────────────
+router.get('/import/history',   checkRole('admin'), getImportHistory);
+router.post('/import/preview',  checkRole('admin'), previewImport);
+router.post('/import/confirm',  checkRole('admin'), confirmImport);
+router.delete('/import/:batchId', checkRole('admin'), undoImport);
+
+// ── CSV Import (legacy) ────────────────────────────────────────────
 router.post('/import-csv', checkRole('admin'), previewCSV);
 router.post('/import-csv/confirm', checkRole('admin'), confirmCSV);
 

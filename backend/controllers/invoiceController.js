@@ -1,10 +1,12 @@
 const { Op } = require('sequelize');
 const { sequelize } = require('../config/database');
+const Decimal = require('decimal.js'); // DEUDA-003: precise financial arithmetic
 const {
     Invoice, InvoiceLine, TimeEntry, Worker, Trade,
     Client, Project, ClientRate, User, PerDiemEntry, CompanySettings, Assignment,
 } = require('../models');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
+const { DEFAULT_OT_MULTIPLIER } = require('../config/businessConstants');
 
 // ─── Full includes for fetching invoices ────────────────────────────────────────
 const INVOICE_INCLUDES = [
@@ -127,6 +129,9 @@ const generateInvoice = async (req, res) => {
         const paymentDays = settings.payment_terms_days || 14;
         const dueDate = new Date(Date.now() + paymentDays * 86400000).toISOString().split('T')[0];
 
+        // LOGICA-004: read OT threshold from company_settings, never hardcode 40
+        const OT_THRESHOLD = new Decimal(settings.standard_hours_per_week || 40);
+
         const project = await Project.findByPk(project_id);
 
         // Create invoice header (draft initially)
@@ -140,49 +145,62 @@ const generateInvoice = async (req, res) => {
             notes: `${project?.name || ''}\nWeek worked from ${week_start_date} to ${week_end_date}`,
         }, { transaction: t });
 
+        // DEUDA-005: Prefetch ALL client rates for involved trade IDs in a single query
+        // instead of one ClientRate.findOne() per worker (N+1 anti-pattern).
+        const tradeIds = [...new Set(
+            Object.values(workerMap).map(({ worker }) => worker?.trade_id).filter(Boolean)
+        )];
+        const clientRates = await ClientRate.findAll({
+            where: { client_id, trade_id: { [Op.in]: tradeIds } },
+        });
+        const rateByTrade = {};
+        clientRates.forEach(cr => { rateByTrade[cr.trade_id] = cr; });
+
         // Create lines + calculate totals
-        let subtotal = 0;
-        let perDiemTotal = 0;
+        // DEUDA-003: use Decimal.js for all financial arithmetic to avoid float rounding errors
+        let subtotal = new Decimal(0);
+        let perDiemTotal = new Decimal(0);
 
         for (const wId of Object.keys(workerMap)) {
             const { worker, totalHours } = workerMap[wId];
             const tradeId = worker?.trade_id;
 
-            const clientRate = await ClientRate.findOne({ where: { client_id, trade_id: tradeId } });
-            const rate = clientRate ? parseFloat(clientRate.hourly_rate) : 0;
-            const otMult = clientRate ? parseFloat(clientRate.overtime_multiplier) : 1.5;
-            const otRate = parseFloat((rate * otMult).toFixed(2));
+            const clientRate = rateByTrade[tradeId];
+            const rate = new Decimal(clientRate ? clientRate.hourly_rate : 0);
+            const otMult = new Decimal(clientRate ? clientRate.overtime_multiplier : DEFAULT_OT_MULTIPLIER);
+            const otRate = rate.times(otMult).toDecimalPlaces(2);
 
-            const regularHrs = parseFloat(Math.min(totalHours, 40).toFixed(2));
-            const otHrs = parseFloat(Math.max(totalHours - 40, 0).toFixed(2));
-            const laborSubtotal = parseFloat(((regularHrs * rate) + (otHrs * otRate)).toFixed(2));
-            const perDiem = parseFloat((perDiemByWorker[parseInt(wId)] || 0).toFixed(2));
-            const lineTotal = parseFloat((laborSubtotal + perDiem).toFixed(2));
+            const totalHoursDec = new Decimal(totalHours);
+            const regularHrs = Decimal.min(totalHoursDec, OT_THRESHOLD).toDecimalPlaces(2);
+            const otHrs = Decimal.max(totalHoursDec.minus(OT_THRESHOLD), 0).toDecimalPlaces(2);
+            const laborSubtotal = regularHrs.times(rate).plus(otHrs.times(otRate)).toDecimalPlaces(2);
+            const perDiem = new Decimal(perDiemByWorker[parseInt(wId)] || 0).toDecimalPlaces(2);
+            const lineTotal = laborSubtotal.plus(perDiem).toDecimalPlaces(2);
 
             await InvoiceLine.create({
                 invoice_id: invoice.id,
                 worker_id: parseInt(wId),
                 trade_id: tradeId || 0,
                 description: `${worker?.first_name || ''} ${worker?.last_name || ''}`,
-                regular_hours: regularHrs,
-                overtime_hours: otHrs,
-                rate,
-                overtime_rate: otRate,
-                per_diem_amount: perDiem,
-                quantity: parseFloat(totalHours.toFixed(2)),
-                amount: laborSubtotal,
-                line_total: lineTotal,
+                regular_hours: regularHrs.toNumber(),
+                overtime_hours: otHrs.toNumber(),
+                rate: rate.toNumber(),
+                overtime_rate: otRate.toNumber(),
+                per_diem_amount: perDiem.toNumber(),
+                quantity: totalHoursDec.toDecimalPlaces(2).toNumber(),
+                amount: laborSubtotal.toNumber(),
+                line_total: lineTotal.toNumber(),
             }, { transaction: t });
 
-            subtotal += laborSubtotal;
-            perDiemTotal += perDiem;
+            subtotal = subtotal.plus(laborSubtotal);
+            perDiemTotal = perDiemTotal.plus(perDiem);
         }
 
-        const grandTotal = parseFloat((subtotal + perDiemTotal).toFixed(2));
+        const grandTotal = subtotal.plus(perDiemTotal).toDecimalPlaces(2);
         await invoice.update({
-            subtotal: parseFloat(subtotal.toFixed(2)),
-            per_diem_total: parseFloat(perDiemTotal.toFixed(2)),
-            total: grandTotal,
+            subtotal: subtotal.toDecimalPlaces(2).toNumber(),
+            per_diem_total: perDiemTotal.toDecimalPlaces(2).toNumber(),
+            total: grandTotal.toNumber(),
         }, { transaction: t });
 
         await t.commit();
@@ -197,9 +215,10 @@ const generateInvoice = async (req, res) => {
 };
 
 // ─── GET /api/invoices ───────────────────────────────────────────────────────────
+// DEUDA-002: supports ?page=1&limit=50 for pagination
 const getAllInvoices = async (req, res) => {
     try {
-        const { client_id, status, start_date, end_date, month } = req.query;
+        const { client_id, status, start_date, end_date, month, page, limit } = req.query;
         const where = { is_active: true };
         if (client_id) where.client_id = client_id;
         if (status && status !== 'all') where.status = status;
@@ -215,16 +234,30 @@ const getAllInvoices = async (req, res) => {
             where.invoice_date = { [Op.between]: [start_date, end_date] };
         }
 
-        const invoices = await Invoice.findAll({
+        const pageNum = parseInt(page, 10) || null;
+        const limitNum = Math.min(parseInt(limit, 10) || 200, 200);
+        const offset = pageNum ? (pageNum - 1) * limitNum : 0;
+        const paginationOpts = pageNum ? { limit: limitNum, offset } : {};
+
+        const { count, rows: invoices } = await Invoice.findAndCountAll({
             where,
             include: [
                 { model: Client, as: 'client', attributes: ['id', 'company_name'] },
                 { model: Project, as: 'project', attributes: ['id', 'name'] },
             ],
             order: [['invoice_date', 'DESC'], ['invoice_number', 'DESC']],
+            distinct: true,
+            ...paginationOpts,
         });
 
-        return successResponse(res, invoices, 'Invoices retrieved.');
+        return res.json({
+            success: true,
+            data: invoices,
+            total: count,
+            page: pageNum || 1,
+            limit: limitNum,
+            message: 'Invoices retrieved.',
+        });
     } catch (error) {
         console.error('getAllInvoices error:', error);
         return errorResponse(res, 'Failed to retrieve invoices.', 500);

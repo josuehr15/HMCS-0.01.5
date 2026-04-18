@@ -7,7 +7,9 @@ const {
     generatePayroll, updatePayrollStatus, deletePayroll,
     markWorkerPaid, updatePayrollLine, getPayrollLineById,
     approvePayroll,
+    uploadPaymentScreenshot, confirmPaymentData, getVoucherView, getMyPayrollLines,
 } = require('../controllers/payrollController');
+const uploadScreenshot = require('../middleware/uploadScreenshot');
 
 router.use(auth);
 
@@ -16,8 +18,13 @@ router.get('/stats', checkRole('admin'), getPayrollStats);
 router.get('/pending-weeks', checkRole('admin'), getPendingWeeks);
 router.post('/generate', checkRole('admin'), generatePayroll);
 
-// ── PayrollLine routes ─────────────────────────────────────────────────
+// ── PayrollLine routes — /lines/my MUST be before /lines/:id ──────────
+router.get('/lines/my', checkRole('contractor'), getMyPayrollLines);
+// BUG-006: allow admin OR contractor — ownership check inside getVoucherView
+router.get('/lines/:id/voucher-view', checkRole('admin', 'contractor'), getVoucherView);
 router.get('/lines/:id', checkRole('admin'), getPayrollLineById);
+router.post('/lines/:id/upload-screenshot', checkRole('admin'), uploadScreenshot.single('screenshot'), uploadPaymentScreenshot);
+router.post('/lines/:id/confirm-payment-data', checkRole('admin'), confirmPaymentData);
 router.patch('/lines/:id/pay', checkRole('admin'), markWorkerPaid);
 router.put('/lines/:id', checkRole('admin'), updatePayrollLine);
 

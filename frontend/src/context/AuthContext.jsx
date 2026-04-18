@@ -5,31 +5,58 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    // SEC-001: On mount, restore session by calling /auth/me (reads httpOnly cookie).
+    // We also keep hmcs_user in localStorage as a non-auth cache for instant UI render.
     useEffect(() => {
-        const savedToken = localStorage.getItem('hmcs_token');
-        const savedUser = localStorage.getItem('hmcs_user');
-        if (savedToken && savedUser) {
-            setToken(savedToken);
-            setUser(JSON.parse(savedUser));
-        }
-        setIsLoading(false);
+        const restoreSession = async () => {
+            // Optimistic render from cached user object (no security risk — cookie validates)
+            const cachedUser = localStorage.getItem('hmcs_user');
+            if (cachedUser) {
+                try { setUser(JSON.parse(cachedUser)); } catch { /* ignore */ }
+            }
+
+            try {
+                const res = await api.get('/auth/me');
+                const freshUser = res.data?.data?.user;
+                if (freshUser) {
+                    setUser(freshUser);
+                    localStorage.setItem('hmcs_user', JSON.stringify(freshUser));
+                } else {
+                    // Cookie invalid/expired
+                    setUser(null);
+                    localStorage.removeItem('hmcs_user');
+                    localStorage.removeItem('hmcs_token');
+                }
+            } catch {
+                // /auth/me returned 401 — session expired or no cookie
+                setUser(null);
+                localStorage.removeItem('hmcs_user');
+                localStorage.removeItem('hmcs_token');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        restoreSession();
     }, []);
 
     const login = async (email, password) => {
         const res = await api.post('/auth/login', { email, password });
         const { token: newToken, user: newUser } = res.data.data;
-        setToken(newToken);
         setUser(newUser);
+        // SEC-001: backend sets httpOnly cookie; we store token in localStorage only as
+        // Authorization header fallback (needed while transitioning to full cookie-only auth).
+        // The token in localStorage is NOT used for session restore — /auth/me handles that.
         localStorage.setItem('hmcs_token', newToken);
         localStorage.setItem('hmcs_user', JSON.stringify(newUser));
         return newUser;
     };
 
-    const logout = () => {
-        setToken(null);
+    const logout = async () => {
+        try {
+            await api.post('/auth/logout'); // clears httpOnly cookie on server
+        } catch { /* ignore network errors on logout */ }
         setUser(null);
         localStorage.removeItem('hmcs_token');
         localStorage.removeItem('hmcs_user');
@@ -37,9 +64,12 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{
-            user, token, isLoading,
-            isAuthenticated: !!token,
-            login, logout,
+            user,
+            token: localStorage.getItem('hmcs_token'), // kept for backward compat
+            isLoading,
+            isAuthenticated: !!user,
+            login,
+            logout,
         }}>
             {children}
         </AuthContext.Provider>

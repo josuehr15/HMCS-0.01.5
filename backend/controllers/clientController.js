@@ -31,6 +31,8 @@ const getAllClients = async (req, res) => {
                     model: ClientRate, as: 'clientRates',
                     include: [{ model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] }],
                 },
+                // BUG-08: include projects so frontend can count active projects per client
+                { model: Project, as: 'projects', attributes: ['id', 'status'], required: false },
             ],
             order: [['company_name', 'ASC']],
         });

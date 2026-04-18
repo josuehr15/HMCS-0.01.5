@@ -16,8 +16,8 @@ const fmt$ = v => `$${parseFloat(v || 0).toLocaleString('en-US', { minimumFracti
 const fmtDate = s => s ? new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '—';
 const fmtDateRange = (s, e) => {
     if (!s || !e) return '—';
-    const ds = new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const de = new Date(e + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const ds = new Date(s + 'T00:00:00').toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+    const de = new Date(e + 'T00:00:00').toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' });
     return `${ds} – ${de}`;
 };
 
@@ -466,7 +466,7 @@ function InvoiceDrawer({ invoice: initInv, onClose, onRefresh, navigate, onEdit 
                                     <div className="inv-drawer__info-grid">
                                         <div className="inv-info-row">
                                             <span>Método</span>
-                                            <strong>{invoice.payment_method}</strong>
+                                            <strong>{{ check: 'Cheque', wire: 'Transferencia', cash: 'Efectivo', ach: 'ACH', other: 'Otro' }[invoice.payment_method] || invoice.payment_method}</strong>
                                         </div>
                                         {invoice.payment_reference && (
                                             <div className="inv-info-row">
@@ -477,7 +477,7 @@ function InvoiceDrawer({ invoice: initInv, onClose, onRefresh, navigate, onEdit 
                                         {invoice.paid_at && (
                                             <div className="inv-info-row">
                                                 <span>Fecha Pago</span>
-                                                <strong>{new Date(invoice.paid_at).toLocaleDateString('en-US')}</strong>
+                                                <strong>{new Date(invoice.paid_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</strong>
                                             </div>
                                         )}
                                         {invoice.payment_notes && (

@@ -61,6 +61,16 @@ const Project = sequelize.define('Project', {
         allowNull: false,
         defaultValue: 'active',
     },
+    shift_start_time: {
+        type: DataTypes.TIME,
+        allowNull: true,
+        defaultValue: null,
+    },
+    shift_end_time: {
+        type: DataTypes.TIME,
+        allowNull: true,
+        defaultValue: null,
+    },
     start_date: {
         type: DataTypes.DATEONLY,
         allowNull: true,

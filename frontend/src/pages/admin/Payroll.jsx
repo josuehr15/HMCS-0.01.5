@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import useApi from '../../hooks/useApi';
 import { useAuth } from '../../context/AuthContext';
+import PaymentUploadModal from '../../components/admin/PaymentUploadModal';
 import './Payroll.css';
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -50,7 +52,7 @@ function WeekSidebar({ weeks, selected, onSelect }) {
         // use w.id ideally, but ungenerated might not have an id, so fallback to week_start_date
         const keyId = w.id || w.week_start_date;
         const totalAmount = parseFloat(w.total_amount || 0).toFixed(2);
-        
+
         // Count workers (lines length if available, fallback to worker_count)
         const workerCount = w.lines ? w.lines.length : (w.worker_count || 0);
 
@@ -79,11 +81,22 @@ function WeekSidebar({ weeks, selected, onSelect }) {
   );
 }
 
-function PayrollDetail({ payroll, weekObj, api, onActionComplete, showToast, loadingDetail }) {
+function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayroll, showToast, loadingDetail }) {
   const [loading, setLoading] = useState(false);
 
-  const [payModal, setPayModal] = useState(null);
-  const [payForm, setPayForm] = useState({ payment_method: 'zelle', payment_reference: '', notes: '' });
+  const [workerModal, setWorkerModal] = useState(null);
+  const [wStep, setWStep] = useState(1);
+  const [wDeductions, setWDeductions] = useState([]);
+  const [wPayMethod, setWPayMethod] = useState('zelle');
+  const [wPayRef, setWPayRef] = useState('');
+  const [wFile, setWFile] = useState(null);
+  const [wPreview, setWPreview] = useState(null);
+  const [wScreenshotUrl, setWScreenshotUrl] = useState(null);
+  const [wUploading, setWUploading] = useState(false);
+  const [wDedFile, setWDedFile] = useState(null);
+  const [wDedPreview, setWDedPreview] = useState(null);
+  const [wIsEdit, setWIsEdit] = useState(false);
+  const [uploadLine, setUploadLine] = useState(null);
 
   // If no week selected
   if (!weekObj) return (
@@ -102,9 +115,9 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, showToast, loa
       });
       onActionComplete('generate', res.data?.data || res.data || res);
       showToast('success', 'Nómina generada correctamente para esta semana.');
-    } catch (e) { 
+    } catch (e) {
       const msg = e.response?.data?.message || 'Error al generar la nómina. Intenta de nuevo.';
-      showToast('error', msg); 
+      showToast('error', msg);
     }
     setLoading(false);
   };
@@ -115,31 +128,142 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, showToast, loa
       const res = await api.patch(`/payroll/${payroll.id}/status`, { status: 'approved' });
       onActionComplete('approve', res.data?.data || res.data || res);
       showToast('success', 'Nómina aprobada correctamente.');
-    } catch (e) { 
+    } catch (e) {
       const msg = e.response?.data?.message || 'Error al aprobar la nómina.';
-      showToast('error', msg); 
+      showToast('error', msg);
     }
     setLoading(false);
   };
 
-  const openPayModal = (line) => {
-    setPayModal(line);
-    setPayForm({ payment_method: 'zelle', payment_reference: '', notes: '' });
+  const openWorkerModal = (line) => {
+    setWorkerModal(line);
+    setWStep(1);
+    setWIsEdit(line.status === 'paid');
+    setWDeductions(
+      Array.isArray(line.deductions_detail) && line.deductions_detail.length > 0
+        ? line.deductions_detail
+        : []
+    );
+    setWPayMethod('zelle');
+    setWPayRef('');
+    setWFile(null);
+    setWPreview(null);
+    setWScreenshotUrl(null);
+    setWDedFile(null);
+    setWDedPreview(null);
   };
 
-  const submitPayModal = async () => {
-    if (!payModal) return;
+  const closeWorkerModal = () => {
+    setWorkerModal(null);
+    setWStep(1);
+    setWDeductions([]);
+    setWFile(null);
+    setWPreview(null);
+    setWScreenshotUrl(null);
+    setWDedFile(null);
+    setWDedPreview(null);
+    setWIsEdit(false);
+  };
+
+  const addDeduction = () => {
+    setWDeductions(prev => [...prev, { type: 'other', description: '', amount: '' }]);
+  };
+
+  const updateDeduction = (idx, field, value) => {
+    setWDeductions(prev => prev.map((d, i) => i === idx ? { ...d, [field]: value } : d));
+  };
+
+  const removeDeduction = (idx) => {
+    setWDeductions(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const totalDeductions = wDeductions.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+  const netToTransfer = workerModal
+    ? parseFloat(workerModal.gross_pay || 0) - totalDeductions
+    : 0;
+
+  const handleFileSelect = (f) => {
+    if (!f) return;
+    setWFile(f);
+    setWPreview(URL.createObjectURL(f));
+  };
+
+  const handleDedFileSelect = (f) => {
+    if (!f) return;
+    setWDedFile(f);
+    setWDedPreview(URL.createObjectURL(f));
+  };
+
+  const uploadScreenshot = async () => {
+    if (!wFile || !workerModal) return;
+    setWUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('screenshot', wFile);
+      const res = await fetch(
+        `http://localhost:5000/api/payroll/lines/${workerModal.id}/upload-screenshot`,
+        { method: 'POST', credentials: 'include', body: formData }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Upload failed');
+      const url = json.data?.screenshot_url || json.screenshot_url || '';
+      setWScreenshotUrl(url);
+      setWStep(3);
+    } catch (err) {
+      console.error('Upload error:', err);
+      setWStep(3);
+    } finally {
+      setWUploading(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!workerModal) return;
     setLoading(true);
     try {
-      const res = await api.patch(`/payroll/lines/${payModal.id}/pay`, payForm);
-      onActionComplete('line_paid', res.data?.data || res.data || res);
-      showToast('success', 'Pago registrado correctamente.');
-      setPayModal(null);
-    } catch (e) { 
+      if (wDeductions.length > 0) {
+        const validDeds = wDeductions.filter(d => parseFloat(d.amount || 0) > 0);
+        if (validDeds.length > 0) {
+          await api.put(`/payroll/lines/${workerModal.id}`, {
+            deductions_detail: validDeds,
+          });
+        }
+      }
+
+      if (wScreenshotUrl) {
+        await api.post(`/payroll/lines/${workerModal.id}/confirm-payment-data`, {
+          extracted_data: { payment_type: wPayMethod },
+          payment_method: wPayMethod,
+          screenshot_url: wScreenshotUrl,
+        });
+      }
+
+      if (wIsEdit) {
+        if (wPayRef || wPayMethod) {
+          await api.patch(`/payroll/lines/${workerModal.id}/pay`, {
+            payment_method: wPayMethod,
+            payment_reference: wPayRef,
+            notes: '',
+          }).catch(() => {});
+        }
+        onRefreshPayroll?.();
+        showToast('success', 'Cambios guardados correctamente.');
+      } else {
+        const res = await api.patch(`/payroll/lines/${workerModal.id}/pay`, {
+          payment_method: wPayMethod,
+          payment_reference: wPayRef,
+          notes: '',
+        });
+        onActionComplete('line_paid', res.data?.data || res.data || res);
+        showToast('success', 'Pago registrado correctamente.');
+      }
+      closeWorkerModal();
+    } catch (e) {
       const msg = e.response?.data?.message || 'Error al registrar el pago.';
-      showToast('error', msg); 
+      showToast('error', msg);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (loadingDetail) {
@@ -185,10 +309,10 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, showToast, loa
   }
 
   // ESTADO B — Con Nómina Geenrada
-  const laborTotal  = payroll.lines.reduce((s, l) => s + parseFloat(l.gross_pay || 0), 0);
+  const laborTotal = payroll.lines.reduce((s, l) => s + parseFloat(l.gross_pay || 0), 0);
   const regularTotal = payroll.lines.reduce((s, l) => s + parseFloat(l.regular_pay || 0), 0);
-  const otTotal     = payroll.lines.reduce((s, l) => s + parseFloat(l.overtime_pay || 0), 0);
-  const pdTotal     = payroll.lines.reduce((s, l) => s + parseFloat(l.per_diem_amount || 0), 0);
+  const otTotal = payroll.lines.reduce((s, l) => s + parseFloat(l.overtime_pay || 0), 0);
+  const pdTotal = payroll.lines.reduce((s, l) => s + parseFloat(l.per_diem_amount || 0), 0);
   const transferTotal = payroll.lines.reduce((s, l) => s + parseFloat(l.total_to_transfer || 0), 0);
 
   return (
@@ -229,11 +353,19 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, showToast, loa
           const initials = `${worker.first_name?.[0] || ''}${worker.last_name?.[0] || ''}`.toUpperCase();
           const isPaid = line.status === 'paid';
           return (
-            <div key={line.id} className="worker-row" style={{ gridTemplateColumns: 'minmax(180px, 1fr) 70px 70px 70px 80px 80px 90px 140px' }}>
+            <div
+              key={line.id}
+              className="worker-row"
+              style={{
+                gridTemplateColumns: 'minmax(180px, 1fr) 70px 70px 70px 80px 80px 90px 140px',
+                cursor: 'pointer',
+              }}
+              onClick={() => openWorkerModal(line)}
+            >
               <div className="worker-info">
                 <div className="worker-avatar">{initials}</div>
                 <div>
-                  <div className="worker-name" title={`${worker.first_name} ${worker.last_name}`}>
+                  <div className="worker-name">
                     {worker.first_name} {worker.last_name}
                   </div>
                   <div className="worker-trade" title={worker.trade?.name}>
@@ -253,12 +385,37 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, showToast, loa
               <div className="amount green">${parseFloat(line.total_to_transfer || 0).toFixed(2)}</div>
               <div className="pay-action">
                 {isPaid ? (
-                  <>
-                    <button className="btn-paid-done" disabled>Pagado ✓</button>
-                    <a href={`/admin/payroll/voucher/${line.id}`} target="_blank" className="btn-voucher" title="Descargar Voucher">🖨️</a>
-                  </>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
+                      <button className="btn-paid-done" disabled>✓ Pagado</button>
+                      <a href={`/admin/payroll/voucher/${line.id}`} target="_blank" rel="noreferrer" className="btn-voucher" title="Ver Voucher">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <line x1="16" y1="13" x2="8" y2="13"/>
+                          <line x1="16" y1="17" x2="8" y2="17"/>
+                          <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                      </a>
+                    </div>
+                    {line.voucher_number ? (
+                      <span style={{ fontSize: 10, color: '#10b981', fontWeight: 600 }} onClick={(e) => e.stopPropagation()}>{line.voucher_number}</span>
+                    ) : (
+                      <button
+                        className="btn-voucher-upload"
+                        onClick={(e) => { e.stopPropagation(); setUploadLine(line); }}
+                        title="Subir comprobante de pago"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}>
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                          <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        Comprobante
+                      </button>
+                    )}
+                  </div>
                 ) : (
-                  <button className="btn-pay" onClick={() => openPayModal(line)}>
+                  <button className="btn-pay" onClick={(e) => { e.stopPropagation(); openWorkerModal(line); }}>
                     Marcar pagado
                   </button>
                 )}
@@ -270,7 +427,7 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, showToast, loa
 
       <div className="detail-footer">
         <div className="footer-note">
-           Verifica el método de transferencia al registrar el pago.
+          Verifica el método de transferencia al registrar el pago.
         </div>
         <div className="footer-totals">
           <div className="ft-item">
@@ -288,44 +445,298 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, showToast, loa
         </div>
       </div>
 
-      {payModal && (
-        <div className="payroll-modal-backdrop">
-          <div className="payroll-modal fade-in-up">
-            <h3>Registrar Pago</h3>
-            <p className="pm-worker"><strong>{payModal.worker?.first_name} {payModal.worker?.last_name}</strong></p>
-            <div className="pm-amount">
-              Total a transferir: <span className="green">${parseFloat(payModal.total_to_transfer).toFixed(2)}</span>
-            </div>
-            
-            <div className="pm-form">
-              <div className="pm-field">
-                <label>Método de Pago</label>
-                <select value={payForm.payment_method} onChange={e => setPayForm({...payForm, payment_method: e.target.value})}>
-                  <option value="zelle">Zelle</option>
-                  <option value="cash">Efectivo</option>
-                  <option value="check">Cheque bancario</option>
-                </select>
-              </div>
+      {uploadLine && (
+        <PaymentUploadModal
+          lineId={uploadLine.id}
+          onClose={() => setUploadLine(null)}
+          onSuccess={() => { setUploadLine(null); onRefreshPayroll?.(); }}
+        />
+      )}
 
-              {(payForm.payment_method !== 'cash') && (
-                <div className="pm-field">
-                  <label>Número de Confirmación / Cheque</label>
-                  <input type="text" value={payForm.payment_reference} onChange={e => setPayForm({...payForm, payment_reference: e.target.value})} placeholder="Opcional..." />
+      {workerModal && ReactDOM.createPortal(
+        <div className="payroll-modal-backdrop" onClick={(e) => e.target === e.currentTarget && closeWorkerModal()}>
+          <div className="payroll-modal fade-in-up" style={{ width: 580, maxWidth: '95vw' }}>
+
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+                  {wStep === 1 && (wIsEdit ? 'Editar Deducciones' : 'Deducciones')}
+                  {wStep === 2 && (wIsEdit ? 'Editar Comprobante' : 'Comprobante de Pago')}
+                  {wStep === 3 && (wIsEdit ? 'Confirmar Cambios' : 'Confirmar Pago')}
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>
+                  {workerModal.worker?.first_name} {workerModal.worker?.last_name} · ${parseFloat(workerModal.gross_pay || 0).toFixed(2)} bruto
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 5 }}>
+                  {[1,2,3].map(s => (
+                    <div key={s} style={{
+                      width: s === wStep ? 20 : 8, height: 8,
+                      borderRadius: s === wStep ? 4 : '50%',
+                      background: wStep > s ? '#10b981' : wStep === s ? '#08543D' : '#e5e7eb',
+                      transition: 'all 0.2s'
+                    }} />
+                  ))}
                 </div>
-              )}
-
-              <div className="pm-field">
-                <label>Notas adicionals (Internas)</label>
-                <input type="text" value={payForm.notes} onChange={e => setPayForm({...payForm, notes: e.target.value})} placeholder="Opcional..." />
+                <button onClick={closeWorkerModal} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#9ca3af', padding: '0 4px' }}>✕</button>
               </div>
             </div>
 
-            <div className="pm-actions">
-               <button className="btn-outline" onClick={() => setPayModal(null)} disabled={loading}>Cancelar</button>
-               <button className="btn-generate" onClick={submitPayModal} disabled={loading}>{loading ? 'Guardando...' : 'Confirmar Pago'}</button>
-            </div>
+            {wIsEdit && (
+              <div style={{
+                background: '#fffbeb', border: '1px solid #fbbf24', borderRadius: 6,
+                padding: '8px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span style={{ fontSize: 12, color: '#92400e', fontWeight: 500 }}>
+                  Este pago ya fue procesado. Los cambios actualizarán el voucher existente.
+                </span>
+              </div>
+            )}
+
+            {/* ── PASO 1: DEDUCCIONES ── */}
+            {wStep === 1 && (
+              <div>
+                <div style={{ marginBottom: 12 }}>
+                  {wDeductions.map((d, idx) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 90px 32px', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                      <select
+                        value={d.type}
+                        onChange={e => updateDeduction(idx, 'type', e.target.value)}
+                        style={{ padding: '7px 8px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13, background: '#fff' }}
+                      >
+                        <option value="tool_damage">Tool Damage</option>
+                        <option value="advance">Pay Advance</option>
+                        <option value="gas">Gas / Mileage</option>
+                        <option value="other">Otro</option>
+                      </select>
+                      <input
+                        placeholder="Descripción"
+                        value={d.description}
+                        onChange={e => updateDeduction(idx, 'description', e.target.value)}
+                        style={{ padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                      />
+                      <input
+                        type="number"
+                        placeholder="$0.00"
+                        value={d.amount}
+                        onChange={e => updateDeduction(idx, 'amount', e.target.value)}
+                        style={{ padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                      />
+                      <button
+                        onClick={() => removeDeduction(idx)}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 18, padding: 0 }}
+                      >✕</button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={addDeduction}
+                    style={{ background: 'none', border: '1px dashed #d1d5db', borderRadius: 6, padding: '7px 14px', fontSize: 13, color: '#6b7280', cursor: 'pointer', width: '100%', marginTop: 4 }}
+                  >+ Agregar deducción</button>
+                </div>
+
+                {/* Foto de recibo de deducción (opcional) */}
+                <div style={{ marginTop: 12, marginBottom: 4 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                    Foto de recibo (opcional)
+                  </div>
+                  <div
+                    onClick={() => document.getElementById('wded-file-input').click()}
+                    onDrop={(e) => { e.preventDefault(); handleDedFileSelect(e.dataTransfer.files?.[0]); }}
+                    onDragOver={(e) => e.preventDefault()}
+                    style={{
+                      border: '1.5px dashed #d1d5db', borderRadius: 8,
+                      minHeight: wDedPreview ? 'auto' : 80,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      justifyContent: 'center', gap: 6, cursor: 'pointer',
+                      background: '#f9fafb', padding: wDedPreview ? 0 : '12px 16px',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {wDedPreview ? (
+                      <img src={wDedPreview} alt="Recibo" style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 6 }} />
+                    ) : (
+                      <>
+                        <svg width="24" height="24" fill="none" stroke="#9ca3af" strokeWidth="1.5" viewBox="0 0 24 24">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                          <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <span style={{ fontSize: 12, color: '#9ca3af' }}>Click o arrastra foto del recibo de deducción</span>
+                      </>
+                    )}
+                    <input id="wded-file-input" type="file" accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={e => handleDedFileSelect(e.target.files?.[0])} />
+                  </div>
+                  {wDedPreview && (
+                    <button onClick={() => { setWDedFile(null); setWDedPreview(null); }} style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: 11, cursor: 'pointer', marginTop: 4 }}>
+                      Quitar foto
+                    </button>
+                  )}
+                </div>
+
+                {wDeductions.length > 0 && (
+                  <div style={{ background: '#f9fafb', borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 13 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#6b7280', marginBottom: 4 }}>
+                      <span>Bruto</span><span>${parseFloat(workerModal.gross_pay || 0).toFixed(2)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ef4444', marginBottom: 4 }}>
+                      <span>Deducciones</span><span>– ${totalDeductions.toFixed(2)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#08543D', borderTop: '1px solid #e5e7eb', paddingTop: 6 }}>
+                      <span>Net Transfer</span><span>${netToTransfer.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 12, borderTop: '1px solid #f3f4f6' }}>
+                  <button className="btn-outline" onClick={closeWorkerModal}>Cancelar</button>
+                  <button className="btn-generate" onClick={() => setWStep(2)}>Continuar → Comprobante</button>
+                </div>
+              </div>
+            )}
+
+            {/* ── PASO 2: COMPROBANTE ── */}
+            {wStep === 2 && (
+              <div>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                  {[
+                    { id: 'zelle', label: 'Zelle', color: '#6D1ED4' },
+                    { id: 'cash',  label: 'Cash',  color: '#08543D' },
+                    { id: 'check', label: 'Check', color: '#2A6C95' },
+                  ].map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => setWPayMethod(m.id)}
+                      style={{
+                        flex: 1, padding: '8px 12px', borderRadius: 8,
+                        border: `2px solid ${wPayMethod === m.id ? m.color : '#e5e7eb'}`,
+                        background: wPayMethod === m.id ? m.color : '#fff',
+                        color: wPayMethod === m.id ? '#fff' : '#374151',
+                        fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s'
+                      }}
+                    >{m.label}</button>
+                  ))}
+                </div>
+
+                {wPayMethod !== 'cash' && (
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
+                      {wPayMethod === 'zelle' ? 'Confirmation #' : 'Check #'}
+                    </label>
+                    <input
+                      value={wPayRef}
+                      onChange={e => setWPayRef(e.target.value)}
+                      placeholder={wPayMethod === 'zelle' ? 'ej: WFCT0ZZ9FJ78' : 'ej: 1042'}
+                      style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13, boxSizing: 'border-box' }}
+                    />
+                  </div>
+                )}
+
+                <div
+                  onClick={() => document.getElementById('wfile-input').click()}
+                  onDrop={(e) => { e.preventDefault(); handleFileSelect(e.dataTransfer.files?.[0]); }}
+                  onDragOver={(e) => e.preventDefault()}
+                  style={{
+                    border: '1.5px dashed #d1d5db', borderRadius: 8, minHeight: 160,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 8, cursor: 'pointer', background: '#f9fafb', padding: 16, marginBottom: 14,
+                    transition: 'border-color 0.15s'
+                  }}
+                >
+                  {wPreview ? (
+                    <img src={wPreview} alt="Preview" style={{ maxHeight: 160, borderRadius: 6, objectFit: 'contain' }} />
+                  ) : (
+                    <>
+                      <svg width="36" height="36" fill="none" stroke="#9ca3af" strokeWidth="1.5" viewBox="0 0 24 24">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                      <span style={{ fontSize: 13, color: '#6b7280' }}>Click o arrastra la foto del comprobante</span>
+                      <span style={{ fontSize: 11, color: '#9ca3af' }}>JPG o PNG</span>
+                    </>
+                  )}
+                  <input id="wfile-input" type="file" accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={e => handleFileSelect(e.target.files?.[0])} />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, paddingTop: 12, borderTop: '1px solid #f3f4f6' }}>
+                  <button className="btn-outline" onClick={() => setWStep(1)}>← Atrás</button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn-outline" onClick={() => setWStep(3)} style={{ color: '#6b7280' }}>Omitir foto</button>
+                    <button className="btn-generate" disabled={!wFile || wUploading} onClick={uploadScreenshot}>
+                      {wUploading ? 'Subiendo...' : 'Subir y continuar →'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── PASO 3: RESUMEN + CONFIRMAR ── */}
+            {wStep === 3 && (
+              <div>
+                <div style={{ background: '#f9fafb', borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Resumen</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280', marginBottom: 6 }}>
+                    <span>Worker</span>
+                    <span style={{ fontWeight: 500, color: '#111' }}>{workerModal.worker?.first_name} {workerModal.worker?.last_name}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280', marginBottom: 6 }}>
+                    <span>Método</span>
+                    <span style={{ fontWeight: 500, color: '#111', textTransform: 'capitalize' }}>{wPayMethod}</span>
+                  </div>
+                  {wPayRef && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280', marginBottom: 6 }}>
+                      <span>{wPayMethod === 'zelle' ? 'Confirmation #' : 'Check #'}</span>
+                      <span style={{ fontWeight: 500, color: '#111', fontFamily: 'monospace' }}>{wPayRef}</span>
+                    </div>
+                  )}
+                  {wDeductions.length > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#ef4444', marginBottom: 6 }}>
+                      <span>Deducciones</span>
+                      <span style={{ fontWeight: 500 }}>– ${totalDeductions.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {wScreenshotUrl && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280', marginBottom: 6 }}>
+                      <span>Comprobante</span>
+                      <span style={{ color: '#10b981', fontWeight: 500 }}>✓ Foto adjunta</span>
+                    </div>
+                  )}
+                  {wDedPreview && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280', marginBottom: 6 }}>
+                      <span>Recibo deducción</span>
+                      <span style={{ color: '#10b981', fontWeight: 500 }}>✓ Foto adjunta</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 15, color: '#08543D', borderTop: '1px solid #e5e7eb', paddingTop: 10, marginTop: 8 }}>
+                    <span>Net Transfer</span>
+                    <span>${netToTransfer.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {wPreview && (
+                  <div style={{ marginBottom: 14 }}>
+                    <img src={wPreview} alt="Comprobante" style={{ width: '100%', maxHeight: 140, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #e5e7eb' }} />
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, paddingTop: 12, borderTop: '1px solid #f3f4f6' }}>
+                  <button className="btn-outline" onClick={() => setWStep(2)}>← Atrás</button>
+                  <button
+                    className="btn-generate"
+                    style={{ background: '#10b981', borderColor: '#10b981' }}
+                    onClick={handleConfirmPayment}
+                    disabled={loading}
+                  >
+                    {loading ? 'Guardando...' : wIsEdit ? '✓ Guardar Cambios' : '✓ Confirmar y Pagar'}
+                  </button>
+                </div>
+              </div>
+            )}
+
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -357,7 +768,7 @@ export default function AdminPayroll() {
       ]);
       const dataWeeks = wRes.data?.data || wRes.data;
       const dataStats = sRes.data?.data || sRes.data;
-      
+
       const mappedStats = {
         pending: parseFloat(dataStats.pending_amount || 0).toFixed(2),
         paidWeek: parseFloat(dataStats.paid_this_week || 0).toFixed(2),
@@ -369,7 +780,7 @@ export default function AdminPayroll() {
       setWeeks(Array.isArray(dataWeeks) ? dataWeeks : []);
       setStats(mappedStats);
     } catch (e) { console.error('Error fetching data'); }
-  }, [api]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchWeeksAndStats();
@@ -381,7 +792,7 @@ export default function AdminPayroll() {
       setSelectedPayroll(null);
       return;
     }
-    
+
     // If it has a payroll_id, fetch deeply. Else, ungenerated.
     if (selectedWeekObj.payroll_id) {
       setLoadingDetail(true);
@@ -397,7 +808,7 @@ export default function AdminPayroll() {
       // Keep week structure but no detailed payroll records
       setSelectedPayroll(null);
     }
-  }, [selectedWeekObj?.id, selectedWeekObj?.payroll_id, api]);
+  }, [selectedWeekObj?.id, selectedWeekObj?.payroll_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelectWeek = (keyId, wObj) => {
     setSelectedId(keyId);
@@ -412,35 +823,45 @@ export default function AdminPayroll() {
     if (!weeks || weeks.length === 0) return;
     const firstUngenerated = weeks.find(w => !w.payroll_id);
     if (!firstUngenerated) {
-        showToast('info', 'Todas las semanas visibles ya tienen nómina generada.');
-        return;
+      showToast('info', 'Todas las semanas visibles ya tienen nómina generada.');
+      return;
     }
     handleSelectWeek(firstUngenerated.week_start_date, firstUngenerated);
   };
 
+  const refreshSelectedPayroll = useCallback(() => {
+    if (selectedWeekObj?.payroll_id) {
+      setLoadingDetail(true);
+      api.get(`/payroll/${selectedWeekObj.payroll_id}`)
+        .then(res => setSelectedPayroll(res.data?.data || res.data))
+        .catch(() => { })
+        .finally(() => setLoadingDetail(false));
+    }
+  }, [selectedWeekObj?.payroll_id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Called from within PayrollDetail to refresh page state without Full Refetch logic breaks
   const handleActionComplete = (actionType, updatedData) => {
     if (actionType === 'generate' || actionType === 'approve') {
-       // Deep refresh lists and select the updated payroll
-       fetchWeeksAndStats().then(() => {
-          const fakeKey = updatedData.id || updatedData.week_start_date;
-          setSelectedId(fakeKey);
-          setSelectedWeekObj({ ...updatedData, payroll_id: updatedData.id });
-       });
+      // Deep refresh lists and select the updated payroll
+      fetchWeeksAndStats().then(() => {
+        const fakeKey = updatedData.id || updatedData.week_start_date;
+        setSelectedId(fakeKey);
+        setSelectedWeekObj({ ...updatedData, payroll_id: updatedData.id });
+      });
     } else if (actionType === 'line_paid') {
-       // Only patch the local detailed payroll
-       setSelectedPayroll(prev => {
-         if (!prev) return prev;
-         const updatedLines = prev.lines.map(l => l.id === updatedData.id ? updatedData : l);
-         
-         const allPaid = updatedLines.every(x => x.status === 'paid');
-         const somePaid = updatedLines.some(x => x.status === 'paid');
-         const newStatus = allPaid ? 'paid' : somePaid ? 'partial' : prev.status;
+      // Only patch the local detailed payroll
+      setSelectedPayroll(prev => {
+        if (!prev) return prev;
+        const updatedLines = prev.lines.map(l => l.id === updatedData.id ? updatedData : l);
 
-         return { ...prev, lines: updatedLines, status: newStatus };
-       });
-       // Silently update stats so headers catch up
-       fetchWeeksAndStats();
+        const allPaid = updatedLines.every(x => x.status === 'paid');
+        const somePaid = updatedLines.some(x => x.status === 'paid');
+        const newStatus = allPaid ? 'paid' : somePaid ? 'partial' : prev.status;
+
+        return { ...prev, lines: updatedLines, status: newStatus };
+      });
+      // Silently update stats so headers catch up
+      fetchWeeksAndStats();
     }
   };
 
@@ -460,24 +881,25 @@ export default function AdminPayroll() {
 
       {/* SECTION: Metrics */}
       <div className="payroll-metrics">
-        <MetricCard color="red"   label="Pendiente de pago"  value={`$${stats.pending}`}  hint={`${stats.pendingWorkers} workers sin pagar`} />
+        <MetricCard color="red" label="Pendiente de pago" value={`$${stats.pending}`} hint={`${stats.pendingWorkers} workers sin pagar`} />
         <MetricCard color="green" label="Pagado esta semana" value={`$${stats.paidWeek}`} hint="pagos realizados" />
-        <MetricCard color="blue"  label="Pagado este mes"    value={`$${stats.paidMonth}`} hint="acumulado del mes" />
-        <MetricCard color="amber" label="Workers por pagar"  value={stats.workersDue}     hint="semana seleccionada" />
+        <MetricCard color="blue" label="Pagado este mes" value={`$${stats.paidMonth}`} hint="acumulado del mes" />
+        <MetricCard color="amber" label="Workers por pagar" value={stats.workersDue} hint="semana seleccionada" />
       </div>
 
       {/* SECTION: Body Grid */}
       <div className="payroll-body">
-        <WeekSidebar 
-          weeks={weeks} 
-          selected={selectedId} 
-          onSelect={handleSelectWeek} 
+        <WeekSidebar
+          weeks={weeks}
+          selected={selectedId}
+          onSelect={handleSelectWeek}
         />
-        <PayrollDetail 
+        <PayrollDetail
           payroll={selectedPayroll}
           weekObj={selectedWeekObj}
           api={api}
           onActionComplete={handleActionComplete}
+          onRefreshPayroll={refreshSelectedPayroll}
           showToast={showToast}
           loadingDetail={loadingDetail}
         />
@@ -487,9 +909,9 @@ export default function AdminPayroll() {
         <div className={`payroll-toast payroll-toast--${toast.type}`}>
           <span className="payroll-toast__icon">
             {toast.type === 'success' && '✓'}
-            {toast.type === 'error'   && '✕'}
+            {toast.type === 'error' && '✕'}
             {toast.type === 'warning' && '!'}
-            {toast.type === 'info'    && 'i'}
+            {toast.type === 'info' && 'i'}
           </span>
           <span className="payroll-toast__message">{toast.message}</span>
           <button className="payroll-toast__close" onClick={() => setToast(null)}>✕</button>

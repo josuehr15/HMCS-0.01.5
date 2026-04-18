@@ -242,13 +242,498 @@
     cursor: not-allowed;
 }
 
+/* ─── Logo cards ─────────────────────────────────────────────────────────────── */
+.set-logo-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.set-logo-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--bg);
+}
+
+.set-logo-card__preview {
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--hover);
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.set-logo-card__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.set-logo-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.set-logo-card__title {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.set-logo-card__desc {
+    font-size: 0.77rem;
+    color: var(--text-muted);
+    margin: 0 0 6px;
+}
+
+.set-logo-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ─── Section header (title + action button row) ─────────────────────────────── */
+.set-section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* ─── Add button ─────────────────────────────────────────────────────────────── */
+.set-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    background: #2A6C95;
+    color: white;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+
+.set-add-btn:hover {
+    background: #1d5278;
+}
+
+/* ─── Trades list ────────────────────────────────────────────────────────────── */
+.set-trades-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.set-empty {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 24px 0;
+}
+
+.set-trade-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--bg);
+    transition: border-color 0.15s;
+}
+
+.set-trade-item:hover {
+    border-color: rgba(42, 108, 149, 0.3);
+}
+
+.set-trade-item--inactive {
+    opacity: 0.55;
+}
+
+.set-trade-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.set-trade-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.set-trade-name-es {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.set-trade-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.set-trade-badge--active {
+    background: rgba(22, 163, 74, 0.1);
+    color: #16a34a;
+}
+
+.set-trade-badge--inactive {
+    background: rgba(107, 114, 128, 0.12);
+    color: var(--text-muted);
+}
+
+.set-trade-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.set-trade-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    background: var(--hover);
+    transition: all 0.15s;
+}
+
+.set-trade-btn:hover {
+    color: var(--text);
+    background: var(--border);
+}
+
+.set-trade-btn--deactivate:hover {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+.set-trade-btn--activate:hover {
+    background: rgba(22, 163, 74, 0.1);
+    color: #16a34a;
+}
+
+/* ─── Pill group (payment method) ────────────────────────────────────────────── */
+.set-pill-group {
+    display: flex;
+    gap: 8px;
+}
+
+.set-pill {
+    padding: 8px 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--bg);
+    transition: all 0.15s;
+    cursor: pointer;
+}
+
+.set-pill:hover {
+    border-color: #2A6C95;
+    color: #2A6C95;
+}
+
+.set-pill--active {
+    border-color: #2A6C95;
+    background: rgba(42, 108, 149, 0.08);
+    color: #2A6C95;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .set-pill--active {
+    background: rgba(42, 108, 149, 0.15);
+    color: #5BA3CF;
+    border-color: #5BA3CF;
+}
+
+/* ─── Input with unit label ──────────────────────────────────────────────────── */
+.set-input-unit-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.set-input-unit-wrap .set-input {
+    padding-right: 90px;
+}
+
+.set-input-unit {
+    position: absolute;
+    right: 12px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* ─── Warning note ───────────────────────────────────────────────────────────── */
+.set-warn-note {
+    background: rgba(234, 179, 8, 0.08);
+    border: 1px solid rgba(234, 179, 8, 0.25);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    color: var(--text);
+}
+
+/* ─── Notification groups ────────────────────────────────────────────────────── */
+.set-notif-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.set-notif-group:last-of-type {
+    border-bottom: none;
+}
+
+.set-notif-group-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 8px;
+}
+
+.set-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 0;
+}
+
+.set-toggle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.set-toggle-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.set-toggle-desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* ─── CSS Toggle Switch ──────────────────────────────────────────────────────── */
+.set-switch {
+    position: relative;
+    display: inline-flex;
+    width: 42px;
+    height: 24px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.set-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.set-switch-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 24px;
+    transition: background 0.2s;
+}
+
+.set-switch-slider::before {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.set-switch input:checked + .set-switch-slider {
+    background: #2A6C95;
+}
+
+[data-theme="dark"] .set-switch input:checked + .set-switch-slider {
+    background: #5BA3CF;
+}
+
+.set-switch input:checked + .set-switch-slider::before {
+    transform: translateX(18px);
+}
+
+/* ─── Modal ──────────────────────────────────────────────────────────────────── */
+.set-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+}
+
+.set-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.set-modal--sm {
+    max-width: 360px;
+}
+
+.set-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.set-modal-header h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.set-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    transition: all 0.15s;
+}
+
+.set-modal-close:hover {
+    background: var(--hover);
+    color: var(--text);
+}
+
+.set-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 20px;
+}
+
+.set-modal-body p {
+    font-size: 0.88rem;
+    color: var(--text);
+    margin: 0;
+}
+
+.set-modal-error {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 12px;
+    background: rgba(220, 38, 38, 0.08);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    border-radius: 7px;
+    font-size: 0.82rem;
+    color: #dc2626;
+}
+
+.set-modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px 18px;
+    border-top: 1px solid var(--border);
+}
+
+/* ─── Secondary & danger buttons ─────────────────────────────────────────────── */
+.set-btn-secondary {
+    padding: 9px 18px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.86rem;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--bg);
+    transition: all 0.15s;
+}
+
+.set-btn-secondary:hover {
+    background: var(--hover);
+}
+
+.set-btn-danger {
+    padding: 9px 18px;
+    background: #dc2626;
+    color: white;
+    border-radius: 8px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    transition: background 0.15s;
+}
+
+.set-btn-danger:hover {
+    background: #b91c1c;
+}
+
 @media (max-width: 640px) {
     .set-layout {
         grid-template-columns: 1fr;
     }
 
     .set-grid-2,
-    .set-grid-3 {
+    .set-grid-3,
+    .set-logo-cards {
         grid-template-columns: 1fr;
     }
 

@@ -363,14 +363,27 @@
 
 /* Payroll Modal */
 .payroll-modal-backdrop {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.5); z-index: 1000;
-  display: flex; align-items: center; justify-content: center;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 20px;
 }
 .payroll-modal {
-  background: white; border-radius: 12px; padding: 24px;
-  width: 100%; max-width: 400px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 580px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e5e7eb;
+  position: relative;
+  z-index: 501;
 }
 .payroll-modal h3 { margin-top: 0; margin-bottom: 8px; color: #111827; }
 .pm-worker { font-size: 16px; margin-bottom: 2px; }
@@ -394,3 +407,15 @@
 .btn-outline:hover { background: #F3F4F6; }
 .btn-voucher { text-decoration: none; font-size: 16px; margin-left: 8px; filter: grayscale(1); transition: filter 0.2s; }
 .btn-voucher:hover { filter: grayscale(0); }
+.btn-voucher-upload {
+  background: none;
+  border: 1px dashed #d1d5db;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-voucher-upload:hover { border-color: #08543D; color: #08543D; }
+

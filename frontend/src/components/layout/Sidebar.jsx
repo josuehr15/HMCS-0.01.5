@@ -6,6 +6,7 @@ import {
     LayoutDashboard, Users, Building2, FolderKanban, Clock,
     FileText, DollarSign, LogOut, Sun, Moon, Pin,
     Calculator, BarChart2, Settings,
+    Wallet,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -27,6 +28,7 @@ const MENU_SECTIONS = [
         items: [
             { path: '/admin/accounting', label: 'Contabilidad', icon: Calculator },
             { path: '/admin/reports', label: 'Reportes', icon: BarChart2 },
+            { path: '/admin/per-diem', label: 'Per Diem', icon: Wallet },
         ],
     },
     {

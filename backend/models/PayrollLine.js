@@ -30,6 +30,9 @@ const PayrollLine = sequelize.define('PayrollLine', {
     paid_at: { type: DataTypes.DATE, allowNull: true },
     payment_method: { type: DataTypes.STRING, allowNull: true }, // zelle, cash, check
     payment_reference: { type: DataTypes.STRING, allowNull: true },
+    payment_screenshot_url: { type: DataTypes.TEXT, allowNull: true },
+    payment_data: { type: DataTypes.JSONB, allowNull: true },
+    voucher_number: { type: DataTypes.STRING(20), allowNull: true },
     notes: { type: DataTypes.TEXT, allowNull: true },
     is_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 }, {

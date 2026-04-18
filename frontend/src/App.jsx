@@ -3,9 +3,12 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import AdminLayout from './components/layout/AdminLayout';
 import ContractorLayout from './components/layout/ContractorLayout';
+import ErrorBoundary from './components/ErrorBoundary'; // DEUDA-004
+import ComingSoon from './components/ComingSoon';        // BASURA-002
 import Login from './pages/Login';
 import Dashboard from './pages/admin/Dashboard';
 import ClockPage from './pages/contractor/ClockPage';
+import MyPayments from './pages/contractor/MyPayments';
 import Workers from './pages/admin/Workers';
 import Clients from './pages/admin/Clients';
 import Projects from './pages/admin/Projects';
@@ -17,6 +20,8 @@ import VoucherPrint from './pages/admin/VoucherPrint';
 import Accounting from './pages/admin/Accounting';
 import Reports from './pages/admin/Reports';
 import Settings from './pages/admin/Settings';
+import PerDiem from './pages/admin/PerDiem';
+import PerDiemContractor from './pages/contractor/PerDiemContractor';
 import './styles/globals.css';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -67,6 +72,7 @@ const AppRoutes = () => {
                 <Route path="payroll" element={<Payroll />} />
                 <Route path="accounting" element={<Accounting />} />
                 <Route path="reports" element={<Reports />} />
+                <Route path="per-diem" element={<PerDiem />} />
                 <Route path="settings" element={<Settings />} />
             </Route>
 
@@ -78,9 +84,10 @@ const AppRoutes = () => {
             }>
                 <Route index element={<Navigate to="clock" replace />} />
                 <Route path="clock" element={<ClockPage />} />
-                <Route path="hours" element={<div className="fade-in"><h2>Mis Horas</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
-                <Route path="per-diem" element={<div className="fade-in"><h2>Per Diem</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
-                <Route path="profile" element={<div className="fade-in"><h2>Mi Perfil</h2><p style={{ color: 'var(--text-muted)', marginTop: 8 }}>Próximamente...</p></div>} />
+                <Route path="payments" element={<MyPayments />} />
+                <Route path="hours" element={<ComingSoon title="Mis Horas" description="Historial detallado de horas trabajadas. Disponible en la Fase 5." />} />
+                <Route path="per-diem" element={<PerDiemContractor />} />
+                <Route path="profile" element={<ComingSoon title="Mi Perfil" description="Edita tu información de contacto y preferencias. Disponible en la Fase 5." />} />
             </Route>
 
             {/* Default redirect */}
@@ -94,7 +101,10 @@ const App = () => {
         <BrowserRouter>
             <ThemeProvider>
                 <AuthProvider>
-                    <AppRoutes />
+                    {/* DEUDA-004: ErrorBoundary prevents a single JS error from crashing the app */}
+                    <ErrorBoundary>
+                        <AppRoutes />
+                    </ErrorBoundary>
                 </AuthProvider>
             </ThemeProvider>
         </BrowserRouter>

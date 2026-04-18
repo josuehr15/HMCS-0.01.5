@@ -27,6 +27,12 @@ const Transaction = sequelize.define('Transaction', {
     is_reconciled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     notes: { type: DataTypes.TEXT, allowNull: true },
     is_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+
+    // Import tracking
+    import_batch_id:   { type: DataTypes.STRING(50),  allowNull: true },
+    import_source:     { type: DataTypes.STRING(50),  allowNull: true },
+    is_imported:       { type: DataTypes.BOOLEAN,     allowNull: false, defaultValue: false },
+    original_filename: { type: DataTypes.STRING(255), allowNull: true },
 }, {
     tableName: 'transactions',
     underscored: true,
@@ -34,3 +40,14 @@ const Transaction = sequelize.define('Transaction', {
 });
 
 module.exports = Transaction;
+
+// Auto-add original_filename column if missing
+(async () => {
+    try {
+        const qi = sequelize.getQueryInterface();
+        const cols = await qi.describeTable('transactions');
+        if (!cols.original_filename) {
+            await qi.addColumn('transactions', 'original_filename', { type: DataTypes.STRING(255), allowNull: true });
+        }
+    } catch (e) { console.error('[Transaction] ensureColumns error:', e.message); }
+})();

@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { Clock, FileText, DollarSign, User, LogOut, Sun, Moon } from 'lucide-react';
+import { Clock, FileText, DollarSign, User, LogOut, Sun, Moon, Wallet } from 'lucide-react';
 import './ContractorLayout.css';
 
 const ContractorLayout = () => {
@@ -43,9 +43,9 @@ const ContractorLayout = () => {
                     <FileText size={20} />
                     <span>Mis Horas</span>
                 </NavLink>
-                <NavLink to="/contractor/per-diem" className={({ isActive }) => `contractor-nav-item ${isActive ? 'contractor-nav-item--active' : ''}`}>
-                    <DollarSign size={20} />
-                    <span>Per Diem</span>
+                <NavLink to="/contractor/payments" className={({ isActive }) => `contractor-nav-item ${isActive ? 'contractor-nav-item--active' : ''}`}>
+                    <Wallet size={20} />
+                    <span>Mis Pagos</span>
                 </NavLink>
                 <NavLink to="/contractor/profile" className={({ isActive }) => `contractor-nav-item ${isActive ? 'contractor-nav-item--active' : ''}`}>
                     <User size={20} />

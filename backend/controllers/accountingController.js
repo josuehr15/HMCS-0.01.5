@@ -1,7 +1,7 @@
 const { Op, literal, fn, col } = require('sequelize');
 const { sequelize } = require('../config/database');
 const {
-    AccountingCategory, Transaction, BankImport,
+    AccountingCategory, Transaction, TransactionRule, BankImport,
     Worker, Client, Project, Invoice, InvoiceLine, Payroll, PayrollLine, PerDiemEntry, Trade, User,
 } = require('../models');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
@@ -82,7 +82,18 @@ const extractBankRef = (desc = '') => {
 const getCategories = async (req, res) => {
     try {
         await ensureSeedCategories();
-        const cats = await AccountingCategory.findAll({ where: { is_active: true }, order: [['type', 'ASC'], ['name_es', 'ASC']] });
+        const cats = await AccountingCategory.findAll({
+            where: { is_active: true },
+            attributes: {
+                include: [
+                    [
+                        literal(`(SELECT COUNT(*) FROM transactions WHERE transactions.category_id = "AccountingCategory".id AND transactions.is_active = true)`),
+                        'transaction_count'
+                    ]
+                ]
+            },
+            order: [['type', 'ASC'], ['name_es', 'ASC']],
+        });
         return successResponse(res, cats, 'Categories retrieved.');
     } catch (e) { console.error(e); return errorResponse(res, 'Failed.', 500); }
 };
@@ -610,36 +621,91 @@ const getCashFlow = async (req, res) => {
 // ═════════════════════════════════════════════════════════════
 const getTaxSummary = async (req, res) => {
     try {
-        const year = req.query.year || new Date().getFullYear();
-        const where = { is_active: true, parent_transaction_id: null, date: { [Op.between]: [`${year}-01-01`, `${year}-12-31`] } };
+        const year = parseInt(req.query.year) || new Date().getFullYear();
+        const start = `${year}-01-01`;
+        const end   = `${year}-12-31`;
 
-        const txs = await Transaction.findAll({ where, include: [{ model: AccountingCategory, as: 'category' }] });
-
-        const perDiemTotal = await PerDiemEntry.sum('amount', {
-            where: { is_active: true, week_start_date: { [Op.between]: [`${year}-01-01`, `${year}-12-31`] } },
-        }) || 0;
-
-        let totalIncome = 0, totalDeductible = 0;
-        const deductibleMap = {};
-
-        txs.forEach(tx => {
-            const amt = parseFloat(tx.amount);
-            if (tx.type === 'income') { totalIncome += amt; return; }
-            if (tx.category?.tax_deductible) {
-                const key = tx.category.tax_category || 'other';
-                deductibleMap[key] = (deductibleMap[key] || { label: key, amount: 0 });
-                deductibleMap[key].amount += amt;
-                totalDeductible += amt;
-            }
+        // All transactions for the year (excluding split children)
+        const txAll = await Transaction.findAll({
+            where: { is_active: true, parent_transaction_id: null, date: { [Op.between]: [start, end] } },
+            include: [{ model: AccountingCategory, as: 'category' }],
         });
+
+        // Gross income
+        const gross_income = parseFloat(
+            txAll.filter(t => t.type === 'income')
+                 .reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+                 .toFixed(2)
+        );
+
+        // Deductible expenses grouped by category
+        const byCat = {};
+        txAll.filter(t => t.type === 'expense' && t.category?.tax_deductible).forEach(t => {
+            const key = t.category.id;
+            if (!byCat[key]) byCat[key] = { name_es: t.category.name_es, slug: t.category.name, total: 0 };
+            byCat[key].total += Math.abs(parseFloat(t.amount || 0));
+        });
+        const deductible_by_category = Object.values(byCat)
+            .map(c => ({ ...c, total: parseFloat(c.total.toFixed(2)) }));
+        const total_deductible = parseFloat(
+            deductible_by_category.reduce((s, c) => s + c.total, 0).toFixed(2)
+        );
+
+        // Per Diem passthrough (not taxable)
+        const perDiemSum = await PerDiemEntry.sum('amount', {
+            where: { is_active: true, week_start_date: { [Op.between]: [start, end] } },
+        }) || 0;
+        const per_diem_total = parseFloat(parseFloat(perDiemSum).toFixed(2));
+
+        // Workers 1099 — total gross_pay per worker for the year
+        const lines = await PayrollLine.findAll({
+            where: { is_active: true },
+            include: [
+                {
+                    model: Payroll, as: 'payroll',
+                    where: { is_active: true, week_start_date: { [Op.between]: [start, end] } },
+                    required: true,
+                },
+                {
+                    model: Worker, as: 'worker',
+                    attributes: ['id', 'first_name', 'last_name', 'worker_code', 'ssn_encrypted', 'address', 'city', 'state', 'zip_code'],
+                    required: true,
+                },
+            ],
+        });
+
+        const workerMap = {};
+        lines.forEach(line => {
+            const w = line.worker;
+            if (!w) return;
+            if (!workerMap[w.id]) {
+                workerMap[w.id] = {
+                    id: w.id,
+                    first_name: w.first_name,
+                    last_name: w.last_name,
+                    worker_code: w.worker_code,
+                    ssn: w.ssn_encrypted,   // getter decrypts it
+                    address: w.address,
+                    city: w.city,
+                    state: w.state,
+                    zip_code: w.zip_code,
+                    total_paid: 0,
+                };
+            }
+            workerMap[w.id].total_paid += parseFloat(line.gross_pay || 0);
+        });
+        const workers_1099 = Object.values(workerMap)
+            .map(w => ({ ...w, total_paid: parseFloat(w.total_paid.toFixed(2)) }))
+            .sort((a, b) => b.total_paid - a.total_paid);
 
         return successResponse(res, {
             year,
-            total_income: parseFloat(totalIncome.toFixed(2)),
-            total_deductible: parseFloat(totalDeductible.toFixed(2)),
-            net_taxable: parseFloat((totalIncome - totalDeductible).toFixed(2)),
-            per_diem_passthrough: parseFloat(parseFloat(perDiemTotal).toFixed(2)),
-            deductible_by_category: Object.values(deductibleMap).map(d => ({ ...d, amount: parseFloat(d.amount.toFixed(2)) })),
+            gross_income,
+            deductible_by_category,
+            total_deductible,
+            net_taxable: parseFloat((gross_income - total_deductible).toFixed(2)),
+            per_diem_total,
+            workers_1099,
         }, 'Tax summary retrieved.');
     } catch (e) { console.error(e); return errorResponse(res, 'Failed.', 500); }
 };
@@ -688,15 +754,559 @@ const buildDateFilter = (start, end, year) => {
     return {};
 };
 
+// ═════════════════════════════════════════════════════════════
+// DASHBOARD SUMMARY — GET /api/accounting/dashboard-summary?month=YYYY-MM
+// ═════════════════════════════════════════════════════════════
+const getDashboardSummary = async (req, res) => {
+    try {
+        const now = new Date();
+        const monthParam = req.query.month || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const [y, m] = monthParam.split('-').map(Number);
+
+        // Current month date range
+        const curFirst = `${y}-${String(m).padStart(2, '0')}-01`;
+        const curLast = new Date(y, m, 0).toISOString().split('T')[0];
+
+        // Previous month date range
+        const prevDate = new Date(y, m - 2, 1);
+        const prevY = prevDate.getFullYear();
+        const prevM = prevDate.getMonth() + 1;
+        const prevFirst = `${prevY}-${String(prevM).padStart(2, '0')}-01`;
+        const prevLast = new Date(prevY, prevM, 0).toISOString().split('T')[0];
+
+        const baseWhere = { is_active: true, parent_transaction_id: null };
+
+        const [curTxs, prevTxs, allCategories, uncatCount] = await Promise.all([
+            Transaction.findAll({ where: { ...baseWhere, date: { [Op.between]: [curFirst, curLast] } }, include: [{ model: AccountingCategory, as: 'category' }] }),
+            Transaction.findAll({ where: { ...baseWhere, date: { [Op.between]: [prevFirst, prevLast] } }, include: [{ model: AccountingCategory, as: 'category' }] }),
+            AccountingCategory.findAll({ where: { is_active: true }, order: [['type', 'ASC'], ['name_es', 'ASC']] }),
+            // BUG-13: count ALL uncategorized (no date filter) so it matches what Transactions tab shows
+            Transaction.count({ where: { ...baseWhere, category_id: null } }),
+        ]);
+
+        const sumTxs = (txs) => {
+            let income = 0, expenses = 0;
+            txs.forEach(tx => {
+                const amt = parseFloat(tx.amount || 0);
+                if (tx.type === 'income') income += amt;
+                else expenses += amt;
+            });
+            const net = parseFloat((income - expenses).toFixed(2));
+            const margin = income > 0 ? parseFloat(((income - expenses) / income * 100).toFixed(1)) : null;
+            return { income: parseFloat(income.toFixed(2)), expenses: parseFloat(expenses.toFixed(2)), net, margin };
+        };
+
+        const current = sumTxs(curTxs);
+        const previous = sumTxs(prevTxs);
+
+        // P&L by category for current month
+        const catTotals = {};
+        curTxs.forEach(tx => {
+            const amt = parseFloat(tx.amount || 0);
+            const slug = tx.category?.name || '__uncategorized__';
+            const name_es = tx.category?.name_es || 'Sin categorizar';
+            const type = tx.type;
+            const key = `${type}::${slug}`;
+            if (!catTotals[key]) catTotals[key] = { name_es, slug, type, total: 0 };
+            catTotals[key].total += amt;
+        });
+
+        // Build income rows from seed categories + actual data
+        const incomeCats = allCategories.filter(c => c.type === 'income');
+        const expenseCats = allCategories.filter(c => c.type === 'expense');
+
+        const incomeRows = incomeCats.map(c => ({
+            name_es: c.name_es,
+            slug: c.name,
+            total: parseFloat((catTotals[`income::${c.name}`]?.total || 0).toFixed(2)),
+        }));
+
+        const expenseRows = expenseCats.map(c => ({
+            name_es: c.name_es,
+            slug: c.name,
+            total: parseFloat((catTotals[`expense::${c.name}`]?.total || 0).toFixed(2)),
+        })).filter(r => r.total > 0);
+
+        // Add uncategorized expenses row if any
+        const uncatTotal = parseFloat((catTotals[`expense::__uncategorized__`]?.total || 0).toFixed(2));
+        if (uncatTotal > 0) {
+            expenseRows.unshift({ name_es: 'Sin categorizar', slug: 'uncategorized', total: uncatTotal });
+        }
+
+        return res.json({
+            current,
+            previous,
+            uncategorized_count: uncatCount,
+            pl_by_category: { income: incomeRows, expenses: expenseRows },
+        });
+    } catch (e) {
+        console.error('getDashboardSummary error:', e);
+        return res.status(500).json({ error: 'Failed.' });
+    }
+};
+
+// ═════════════════════════════════════════════════════════════
+// CASHFLOW YEAR — GET /api/accounting/cashflow-year?year=YYYY
+// ═════════════════════════════════════════════════════════════
+const getCashflowYear = async (req, res) => {
+    try {
+        const year = parseInt(req.query.year) || new Date().getFullYear();
+        const LABELS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+        const txs = await Transaction.findAll({
+            where: { is_active: true, parent_transaction_id: null, date: { [Op.between]: [`${year}-01-01`, `${year}-12-31`] } },
+            attributes: ['date', 'amount', 'type'],
+        });
+
+        const buckets = {};
+        txs.forEach(tx => {
+            const mo = new Date(tx.date + 'T00:00:00').getMonth() + 1;
+            if (!buckets[mo]) buckets[mo] = { income: 0, expenses: 0 };
+            if (tx.type === 'income') buckets[mo].income += parseFloat(tx.amount || 0);
+            else buckets[mo].expenses += parseFloat(tx.amount || 0);
+        });
+
+        const months = Array.from({ length: 12 }, (_, i) => {
+            const mo = i + 1;
+            return {
+                month: mo,
+                label: LABELS[i],
+                income: parseFloat((buckets[mo]?.income || 0).toFixed(2)),
+                expenses: parseFloat((buckets[mo]?.expenses || 0).toFixed(2)),
+            };
+        });
+
+        return res.json({ year, months });
+    } catch (e) {
+        console.error('getCashflowYear error:', e);
+        return res.status(500).json({ error: 'Failed.' });
+    }
+};
+
+// ═════════════════════════════════════════════════════════════════
+// IMPORT COLUMNS MIGRATION
+// ═════════════════════════════════════════════════════════════════
+const ensureImportColumns = async () => {
+    const tryAdd = async (sql) => {
+        try { await sequelize.query(sql); } catch (_) { /* column already exists */ }
+    };
+    await tryAdd(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS import_batch_id VARCHAR(50) DEFAULT NULL`);
+    await tryAdd(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS import_source VARCHAR(50) DEFAULT NULL`);
+    await tryAdd(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_imported TINYINT(1) NOT NULL DEFAULT 0`);
+};
+ensureImportColumns().catch(e => console.warn('Import columns migration:', e.message));
+
+// ─── CSV parsers ─────────────────────────────────────────────────
+const _parseCsvWF = (csvContent) => {
+    const rows = [];
+    for (const line of csvContent.trim().split('\n')) {
+        if (!line.trim()) continue;
+        const matches = line.match(/(".*?"|[^,]+)(?=,|$)/g);
+        if (!matches || matches.length < 2) continue;
+        const clean = matches.map(m => m.replace(/^"|"$/g, '').trim());
+        const [dateStr, amtStr, , , desc] = clean;
+        const rawAmt = parseFloat(amtStr);
+        if (isNaN(rawAmt) || !dateStr) continue;
+        const [m, d, y] = dateStr.split('/');
+        if (!m || !d || !y) continue;
+        rows.push({
+            date: `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`,
+            amount: Math.abs(rawAmt),
+            type: rawAmt < 0 ? 'expense' : 'income',
+            description: desc || clean[2] || '',
+        });
+    }
+    return rows;
+};
+
+const _parseCsvBoA = (csvContent) => {
+    const lines = csvContent.trim().split('\n');
+    const rows = [];
+    for (const line of lines.slice(1)) {
+        if (!line.trim()) continue;
+        const matches = line.match(/(".*?"|[^,]+)(?=,|$)/g);
+        if (!matches || matches.length < 3) continue;
+        const clean = matches.map(m => m.replace(/^"|"$/g, '').trim());
+        const [dateStr, desc, amtStr] = clean;
+        const rawAmt = parseFloat(amtStr);
+        if (isNaN(rawAmt) || !dateStr) continue;
+        const [m, d, y] = dateStr.split('/');
+        if (!m || !d || !y) continue;
+        rows.push({
+            date: `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`,
+            amount: Math.abs(rawAmt),
+            type: rawAmt < 0 ? 'expense' : 'income',
+            description: desc || '',
+        });
+    }
+    return rows;
+};
+
+// ═════════════════════════════════════════════════════════════════
+// TRANSACTION RULES — helper
+// ═════════════════════════════════════════════════════════════════
+const applyRulesToTransactions = async (transactions, rules) => {
+    const results = [];
+    for (const txn of transactions) {
+        const desc = (txn.description || '').toLowerCase();
+        const isExpense = txn.type === 'expense';
+
+        for (const rule of rules) {
+            if (rule.record_type === 'expense' && !isExpense) continue;
+            if (rule.record_type === 'income'  &&  isExpense) continue;
+
+            const matched = rule.keywords.some(kw =>
+                desc.includes(kw.toLowerCase().trim())
+            );
+            if (!matched) continue;
+
+            const updates = {};
+            if (rule.category_id) updates.category_id = rule.category_id;
+            if (rule.worker_id)   updates.worker_id   = rule.worker_id;
+
+            if (Object.keys(updates).length > 0) {
+                await txn.update(updates);
+                results.push({ transaction_id: txn.id, rule_id: rule.id });
+            }
+            break; // first matching rule wins
+        }
+    }
+    return results;
+};
+
+// ═════════════════════════════════════════════════════════════════
+// TRANSACTION RULES — CRUD
+// ═════════════════════════════════════════════════════════════════
+
+const getRules = async (req, res) => {
+    try {
+        const rules = await TransactionRule.findAll({
+            where: { is_active: true },
+            include: [
+                { model: AccountingCategory, as: 'category', attributes: ['id', 'name_es', 'name'] },
+                { model: Worker,             as: 'worker',   attributes: ['id', 'first_name', 'last_name', 'worker_code'] },
+            ],
+            order: [['created_at', 'DESC']],
+        });
+        return res.json({ success: true, data: rules });
+    } catch (e) {
+        console.error('getRules error:', e);
+        return errorResponse(res, 'Failed to get rules.', 500);
+    }
+};
+
+const createRule = async (req, res) => {
+    try {
+        const { name, keywords, record_type, category_id, worker_id, apply_to_existing } = req.body;
+        if (!name || !Array.isArray(keywords) || keywords.length === 0) {
+            return errorResponse(res, 'name and keywords are required.', 400);
+        }
+
+        const rule = await TransactionRule.create({
+            name,
+            keywords,
+            record_type: record_type || 'any',
+            category_id: category_id || null,
+            worker_id:   worker_id   || null,
+            apply_to_existing: !!apply_to_existing,
+            created_by_user_id: req.user?.id || null,
+        });
+
+        let applied = 0;
+        if (apply_to_existing) {
+            const transactions = await Transaction.findAll({ where: { is_active: true } });
+            const results = await applyRulesToTransactions(transactions, [rule]);
+            applied = results.length;
+            await rule.update({ times_applied: applied, last_applied_at: new Date() });
+        }
+
+        const full = await TransactionRule.findByPk(rule.id, {
+            include: [
+                { model: AccountingCategory, as: 'category', attributes: ['id', 'name_es', 'name'] },
+                { model: Worker,             as: 'worker',   attributes: ['id', 'first_name', 'last_name', 'worker_code'] },
+            ],
+        });
+        return res.json({ success: true, data: full, applied_count: applied });
+    } catch (e) {
+        console.error('createRule error:', e);
+        return errorResponse(res, 'Failed to create rule.', 500);
+    }
+};
+
+const updateRule = async (req, res) => {
+    try {
+        const rule = await TransactionRule.findOne({ where: { id: req.params.id, is_active: true } });
+        if (!rule) return res.status(404).json({ success: false, message: 'Regla no encontrada.' });
+        await rule.update(req.body);
+        return res.json({ success: true, data: rule });
+    } catch (e) {
+        console.error('updateRule error:', e);
+        return errorResponse(res, 'Failed to update rule.', 500);
+    }
+};
+
+const deleteRule = async (req, res) => {
+    try {
+        const rule = await TransactionRule.findOne({ where: { id: req.params.id, is_active: true } });
+        if (!rule) return res.status(404).json({ success: false, message: 'Regla no encontrada.' });
+        await rule.update({ is_active: false });
+        return res.json({ success: true });
+    } catch (e) {
+        console.error('deleteRule error:', e);
+        return errorResponse(res, 'Failed to delete rule.', 500);
+    }
+};
+
+const applyRule = async (req, res) => {
+    try {
+        const rule = await TransactionRule.findOne({ where: { id: req.params.id, is_active: true } });
+        if (!rule) return res.status(404).json({ success: false, message: 'Regla no encontrada.' });
+
+        const transactions = await Transaction.findAll({ where: { is_active: true } });
+        const results = await applyRulesToTransactions(transactions, [rule]);
+
+        await rule.update({
+            times_applied: (rule.times_applied || 0) + results.length,
+            last_applied_at: new Date(),
+        });
+        return res.json({ success: true, applied_count: results.length });
+    } catch (e) {
+        console.error('applyRule error:', e);
+        return errorResponse(res, 'Failed to apply rule.', 500);
+    }
+};
+
+const previewRuleCount = async (req, res) => {
+    try {
+        const { keywords, record_type } = req.body;
+        if (!Array.isArray(keywords) || keywords.length === 0) {
+            return res.json({ success: true, count: 0 });
+        }
+        const transactions = await Transaction.findAll({ where: { is_active: true } });
+        const matched = transactions.filter(txn => {
+            const desc = (txn.description || '').toLowerCase();
+            const isExpense = txn.type === 'expense';
+            if (record_type === 'expense' && !isExpense) return false;
+            if (record_type === 'income'  &&  isExpense) return false;
+            return keywords.some(kw => desc.includes(kw.toLowerCase().trim()));
+        });
+        return res.json({ success: true, count: matched.length });
+    } catch (e) {
+        console.error('previewRuleCount error:', e);
+        return errorResponse(res, 'Failed.', 500);
+    }
+};
+
+// ═════════════════════════════════════════════════════════════════
+// IMPORT v2  — POST /api/accounting/import/preview
+// ═════════════════════════════════════════════════════════════════
+const previewImport = async (req, res) => {
+    try {
+        const { csv_content, bank_type = 'wells_fargo' } = req.body;
+        if (!csv_content) return errorResponse(res, 'csv_content required.', 400);
+
+        const rows = bank_type === 'bank_of_america' ? _parseCsvBoA(csv_content) : _parseCsvWF(csv_content);
+        if (rows.length === 0) return errorResponse(res, 'No valid rows found in CSV.', 400);
+
+        await ensureSeedCategories();
+        const categories = await AccountingCategory.findAll({ where: { is_active: true } });
+        const workers = await Worker.findAll({ where: { is_active: true }, attributes: ['id', 'worker_code', 'first_name', 'last_name'] });
+        const workerByCode = {};
+        workers.forEach(w => { workerByCode[w.worker_code] = w; });
+
+        const result = await Promise.all(rows.map(async (row) => {
+            const existing = await Transaction.findOne({
+                where: { date: row.date, amount: row.amount, description: row.description, is_active: true },
+                attributes: ['id'],
+            });
+
+            const codes = extractWorkerCodes(row.description);
+            const detectedWorkerObj = codes.length > 0 ? (workerByCode[codes[0]] || null) : null;
+            const suggestedCat = guessCategory(row.description, row.amount, row.type, categories);
+
+            return {
+                ...row,
+                is_duplicate: !!existing,
+                detected_worker: detectedWorkerObj ? {
+                    id: detectedWorkerObj.id,
+                    worker_code: detectedWorkerObj.worker_code,
+                    first_name: detectedWorkerObj.first_name,
+                    last_name: detectedWorkerObj.last_name,
+                } : null,
+                suggested_category: suggestedCat ? {
+                    id: suggestedCat.id,
+                    name_es: suggestedCat.name_es,
+                } : null,
+            };
+        }));
+
+        return res.json({
+            success: true,
+            data: {
+                rows: result,
+                new_count: result.filter(r => !r.is_duplicate).length,
+                duplicate_count: result.filter(r => r.is_duplicate).length,
+            },
+        });
+    } catch (e) {
+        console.error('previewImport error:', e);
+        return errorResponse(res, 'Failed to preview import.', 500);
+    }
+};
+
+// ═════════════════════════════════════════════════════════════════
+// IMPORT v2  — POST /api/accounting/import/confirm
+// ═════════════════════════════════════════════════════════════════
+const confirmImport = async (req, res) => {
+    try {
+        const { rows, bank_type = 'wells_fargo', original_filename = null } = req.body;
+        if (!Array.isArray(rows) || rows.length === 0) return errorResponse(res, 'rows required.', 400);
+
+        const batchId = `IMPORT-${Date.now()}`;
+        const toInsert = rows.filter(r => !r.is_duplicate);
+        const created = [];
+
+        for (const row of toInsert) {
+            const tx = await Transaction.create({
+                date: row.date,
+                amount: row.amount,
+                type: row.type,
+                description: row.description,
+                category_id: row.suggested_category?.id || null,
+                worker_id: row.detected_worker?.id || null,
+                source: 'csv_import',
+                import_batch_id: batchId,
+                import_source: bank_type,
+                is_imported: true,
+                is_active: true,
+                original_filename: original_filename || null,
+            });
+            created.push(tx);
+        }
+
+        // Apply active rules to the newly imported transactions
+        const activeRules = await TransactionRule.findAll({ where: { is_active: true } });
+        if (activeRules.length > 0 && created.length > 0) {
+            const newTxns = await Transaction.findAll({
+                where: { import_batch_id: batchId, is_active: true },
+            });
+            await applyRulesToTransactions(newTxns, activeRules);
+        }
+
+        return res.json({
+            success: true,
+            data: { imported_count: created.length, batch_id: batchId },
+        });
+    } catch (e) {
+        console.error('confirmImport error:', e);
+        return errorResponse(res, 'Failed to confirm import.', 500);
+    }
+};
+
+// ═════════════════════════════════════════════════════════════════
+// IMPORT v2  — GET /api/accounting/import/history
+// ═════════════════════════════════════════════════════════════════
+const getImportHistory = async (req, res) => {
+    try {
+        const batches = await Transaction.findAll({
+            where: {
+                is_imported: true,
+                import_batch_id: { [Op.not]: null },
+            },
+            attributes: [
+                'import_batch_id',
+                'import_source',
+                [fn('MIN', col('created_at')),        'created_at'],
+                [fn('MAX', col('original_filename')), 'original_filename'],
+                [fn('COUNT', col('id')),              'total_count'],
+                [fn('SUM', literal("CASE WHEN is_active = true THEN 1 ELSE 0 END")),  'active_count'],
+                [fn('SUM', literal("CASE WHEN is_active = false THEN 1 ELSE 0 END")), 'undone_count'],
+                [fn('SUM', literal("CASE WHEN `type` = 'expense' AND is_active = true THEN amount ELSE 0 END")), 'total_expenses'],
+                [fn('SUM', literal("CASE WHEN `type` = 'income'  AND is_active = true THEN amount ELSE 0 END")), 'total_income'],
+            ],
+            group: ['import_batch_id', 'import_source'],
+            order: [[fn('MIN', col('created_at')), 'DESC']],
+            raw: true,
+        });
+
+        const result = await Promise.all(batches.map(async (batch) => {
+            const transactions = await Transaction.findAll({
+                where: { import_batch_id: batch.import_batch_id, is_active: true },
+                include: [
+                    { model: AccountingCategory, as: 'category', attributes: ['id', 'name_es'], required: false },
+                    { model: Worker, as: 'worker', attributes: ['id', 'first_name', 'last_name', 'worker_code'], required: false },
+                ],
+                order: [['date', 'DESC']],
+                limit: 50,
+            });
+
+            const isUndone = parseInt(batch.active_count) === 0 && parseInt(batch.total_count) > 0;
+
+            return {
+                batch_id:         batch.import_batch_id,
+                import_source:    batch.import_source,
+                original_filename: batch.original_filename || null,
+                created_at:       batch.created_at,
+                total_count:      parseInt(batch.total_count),
+                active_count:     parseInt(batch.active_count),
+                undone_count:     parseInt(batch.undone_count),
+                total_expenses:   parseFloat(batch.total_expenses || 0),
+                total_income:     parseFloat(batch.total_income  || 0),
+                is_undone:        isUndone,
+                transactions: transactions.map(t => ({
+                    id:               t.id,
+                    transaction_date: t.date,
+                    description:      t.description,
+                    amount:           t.amount,
+                    type:             t.type,
+                    category: t.category ? { id: t.category.id, name_es: t.category.name_es } : null,
+                    worker:   t.worker   ? { id: t.worker.id, name: `${t.worker.first_name} ${t.worker.last_name}`, code: t.worker.worker_code } : null,
+                })),
+            };
+        }));
+
+        return res.json({ success: true, data: result });
+    } catch (e) {
+        console.error('getImportHistory error:', e);
+        return errorResponse(res, 'Failed to get import history.', 500);
+    }
+};
+
+// ═════════════════════════════════════════════════════════════════
+// IMPORT v2  — DELETE /api/accounting/import/:batchId
+// ═════════════════════════════════════════════════════════════════
+const undoImport = async (req, res) => {
+    try {
+        const { batchId } = req.params;
+        if (!batchId) return errorResponse(res, 'batchId required.', 400);
+
+        const [count] = await Transaction.update(
+            { is_active: false },
+            { where: { import_batch_id: batchId, is_active: true } }
+        );
+
+        return res.json({ success: true, message: `${count} transacciones eliminadas.` });
+    } catch (e) {
+        console.error('undoImport error:', e);
+        return errorResponse(res, 'Failed to undo import.', 500);
+    }
+};
+
 module.exports = {
     // Categories
     getCategories, createCategory, updateCategory, deleteCategory,
     // Transactions
     getTransactions, getTransactionById, createTransaction, updateTransaction, deleteTransaction,
     splitTransaction,
-    // CSV
+    // CSV (legacy)
     previewCSV, confirmCSV,
     // Reports
     getPnL, getMarginsWorkers, getMarginsClients, getCashFlow,
     getTaxSummary, get1099Report,
+    // Dashboard
+    getDashboardSummary, getCashflowYear,
+    // Import v2
+    previewImport, confirmImport, undoImport, getImportHistory,
+    // Transaction Rules
+    getRules, createRule, updateRule, deleteRule, applyRule, previewRuleCount,
 };

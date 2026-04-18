@@ -15,6 +15,7 @@ const Document = require('./Document');
 const CompanySettings = require('./CompanySettings');
 const AccountingCategory = require('./AccountingCategory');
 const Transaction = require('./Transaction');
+const TransactionRule = require('./TransactionRule');
 const BankImport = require('./BankImport');
 
 // ─── User Associations ─────────────────────────────────
@@ -81,6 +82,7 @@ Payroll.hasMany(PayrollLine, { foreignKey: 'payroll_id', as: 'lines' });
 // ─── PayrollLine Associations ──────────────────────────
 PayrollLine.belongsTo(Payroll, { foreignKey: 'payroll_id', as: 'payroll' });
 PayrollLine.belongsTo(Worker, { foreignKey: 'worker_id', as: 'worker' });
+PayrollLine.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
 
 // ─── PerDiemEntry Associations ─────────────────────────
 PerDiemEntry.belongsTo(Worker, { foreignKey: 'worker_id', as: 'worker' });
@@ -102,8 +104,13 @@ Transaction.belongsTo(Transaction, { foreignKey: 'parent_transaction_id', as: 'p
 // ─── BankImport Associations ────────────────────────────────────
 BankImport.belongsTo(User, { foreignKey: 'imported_by_user_id', as: 'importedBy' });
 
+// ─── TransactionRule Associations ───────────────────────────────
+TransactionRule.belongsTo(AccountingCategory, { foreignKey: 'category_id', as: 'category' });
+TransactionRule.belongsTo(Worker,             { foreignKey: 'worker_id',   as: 'worker'   });
+TransactionRule.belongsTo(User,               { foreignKey: 'created_by_user_id', as: 'createdBy' });
+
 module.exports = {
     User, Worker, Client, Trade, Project, Assignment, ClientRate,
     TimeEntry, Invoice, InvoiceLine, Payroll, PayrollLine, PerDiemEntry, Document, CompanySettings,
-    AccountingCategory, Transaction, BankImport,
+    AccountingCategory, Transaction, TransactionRule, BankImport,
 };
