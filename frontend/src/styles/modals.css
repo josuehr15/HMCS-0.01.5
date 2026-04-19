@@ -1,0 +1,670 @@
+/* ═══════════════════════════════════════════════════════════════════
+   HMCS UNIFIED MODAL SYSTEM — v2
+   Drop-in replacement for src/styles/modals.css
+   Preserves ALL existing class names — no JSX changes required.
+   Supports [data-theme="light"] and [data-theme="dark"].
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes hmcs-modal-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.975); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);     }
+}
+@keyframes hmcs-overlay-in {
+  from { opacity: 0; backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); }
+  to   { opacity: 1; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+}
+
+/* ── OVERLAY ─────────────────────────────────────────────── */
+.cl-overlay,
+.te-modal-overlay,
+.workers-modal-overlay,
+.inv-pay-overlay,
+.inv-edit-overlay,
+.inv-gen-overlay,
+.ip-pay-overlay,
+.pj-overlay,
+.pd-modal-overlay,
+.payroll-modal-backdrop,
+.mp-modal-backdrop,
+.modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  background:
+    radial-gradient(120% 90% at 50% 40%, rgba(10,15,28,0.35) 0%, rgba(10,15,28,0.70) 100%) !important;
+  backdrop-filter: blur(10px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(140%) !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 48px 20px !important;
+  overflow-y: auto !important;
+  z-index: 500;
+  animation: hmcs-overlay-in 0.22s ease;
+}
+[data-theme="dark"] .cl-overlay,
+[data-theme="dark"] .te-modal-overlay,
+[data-theme="dark"] .workers-modal-overlay,
+[data-theme="dark"] .inv-pay-overlay,
+[data-theme="dark"] .inv-edit-overlay,
+[data-theme="dark"] .inv-gen-overlay,
+[data-theme="dark"] .ip-pay-overlay,
+[data-theme="dark"] .pj-overlay,
+[data-theme="dark"] .pd-modal-overlay,
+[data-theme="dark"] .payroll-modal-backdrop,
+[data-theme="dark"] .mp-modal-backdrop,
+[data-theme="dark"] .modal-overlay {
+  background:
+    radial-gradient(120% 90% at 50% 40%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.80) 100%) !important;
+}
+
+/* ── CONTAINER ──────────────────────────────────────────── */
+.cl-modal,
+.te-modal,
+.workers-modal,
+.inv-pay-modal,
+.inv-edit-modal,
+.inv-gen-modal,
+.ip-pay-modal,
+.pj-modal,
+.pd-modal,
+.payroll-modal,
+.mp-modal,
+.pum-modal,
+.set-modal,
+.rule-modal,
+.modal-content,
+.workers-confirm-modal,
+.pj-confirm-modal {
+  position: relative;
+  background: var(--bg-card) !important;
+  border-radius: 20px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 32px 80px -16px rgba(10,15,28,0.35),
+    0 8px 24px -8px rgba(10,15,28,0.20) !important;
+  width: 100%;
+  max-width: 640px;
+  max-height: none !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: auto;
+  flex-shrink: 0;
+  animation: hmcs-modal-in 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-theme="dark"] .cl-modal,
+[data-theme="dark"] .te-modal,
+[data-theme="dark"] .workers-modal,
+[data-theme="dark"] .inv-pay-modal,
+[data-theme="dark"] .inv-edit-modal,
+[data-theme="dark"] .inv-gen-modal,
+[data-theme="dark"] .ip-pay-modal,
+[data-theme="dark"] .pj-modal,
+[data-theme="dark"] .pd-modal,
+[data-theme="dark"] .payroll-modal,
+[data-theme="dark"] .mp-modal,
+[data-theme="dark"] .pum-modal,
+[data-theme="dark"] .set-modal,
+[data-theme="dark"] .rule-modal,
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .workers-confirm-modal,
+[data-theme="dark"] .pj-confirm-modal {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 32px 80px -12px rgba(0,0,0,0.6),
+    0 8px 24px -8px rgba(0,0,0,0.4) !important;
+}
+
+/* ── TOP ACCENT BAR (brand signature) ──────────────────── */
+.cl-modal::before,
+.te-modal::before,
+.workers-modal::before,
+.inv-pay-modal::before,
+.inv-edit-modal::before,
+.inv-gen-modal::before,
+.ip-pay-modal::before,
+.pj-modal::before,
+.pd-modal::before,
+.payroll-modal::before,
+.mp-modal::before,
+.pum-modal::before,
+.set-modal::before,
+.rule-modal::before,
+.modal-content::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #08543D 0%, #2A6C95 55%, #3A8BC0 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+/* confirm / danger modals get a red accent bar */
+.workers-confirm-modal::before,
+.pj-confirm-modal::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #EF4444 0%, #DC2626 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+.cl-modal__header,
+.te-modal__header,
+.workers-modal__header,
+.inv-pay-modal__header,
+.inv-edit-modal__header,
+.inv-gen-modal__header,
+.ip-pay-modal__header,
+.pj-modal__header,
+.pd-modal__header,
+.set-modal-header,
+.rule-modal__header,
+.mp-modal-header {
+  padding: 24px 28px 20px !important;
+  border-bottom: 1px solid var(--border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-shrink: 0;
+  background: var(--bg-card) !important;
+  gap: 16px;
+}
+
+/* ── TITLE ──────────────────────────────────────────────── */
+.cl-modal__title,
+.te-modal__title,
+.workers-modal__title,
+.inv-edit-modal__title,
+.inv-gen-modal__title,
+.inv-modal-title,
+.pj-modal__title,
+.pd-modal__title,
+.mp-modal-title,
+.rule-modal__title {
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 1.125rem !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+  margin: 0 !important;
+  letter-spacing: -0.3px !important;
+  line-height: 1.3 !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Optional subtitle slot under the title */
+.hmcs-modal-subtitle {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 3px;
+  letter-spacing: 0;
+}
+
+/* ── CLOSE (X) ──────────────────────────────────────────── */
+.cl-modal__close,
+.te-modal__close,
+.workers-modal__close,
+.inv-pay-modal__close,
+.inv-edit-modal__close,
+.ip-pay-modal__close,
+.pj-modal__close,
+.pd-modal__close,
+.set-modal-close,
+.rule-modal__close,
+.mp-modal-close {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  border: 1px solid transparent !important;
+  background: var(--hover) !important;
+  color: var(--text-muted) !important;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+  flex-shrink: 0;
+}
+.cl-modal__close:hover,
+.te-modal__close:hover,
+.workers-modal__close:hover,
+.inv-pay-modal__close:hover,
+.inv-edit-modal__close:hover,
+.ip-pay-modal__close:hover,
+.pj-modal__close:hover,
+.pd-modal__close:hover,
+.set-modal-close:hover,
+.rule-modal__close:hover,
+.mp-modal-close:hover {
+  background: var(--bg-card) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  transform: none !important;
+}
+
+/* ── BODY ───────────────────────────────────────────────── */
+.cl-modal__body,
+.te-modal__body,
+.workers-modal__body,
+.set-modal-body,
+.mp-modal-body,
+.pd-modal__body,
+.pj-modal__body,
+.inv-pay-modal__body,
+.inv-edit-modal__body,
+.inv-gen-modal__body,
+.ip-pay-modal__body {
+  flex: 1;
+  padding: 24px 28px !important;
+  scroll-behavior: smooth;
+  background: var(--bg-card);
+}
+/* Scrollbar dentro del body */
+.cl-modal__body::-webkit-scrollbar,
+.te-modal__body::-webkit-scrollbar,
+.workers-modal__body::-webkit-scrollbar,
+.pd-modal__body::-webkit-scrollbar,
+.pj-modal__body::-webkit-scrollbar { width: 4px; }
+.cl-modal__body::-webkit-scrollbar-track,
+.te-modal__body::-webkit-scrollbar-track,
+.workers-modal__body::-webkit-scrollbar-track,
+.pd-modal__body::-webkit-scrollbar-track,
+.pj-modal__body::-webkit-scrollbar-track { background: transparent; }
+.cl-modal__body::-webkit-scrollbar-thumb,
+.te-modal__body::-webkit-scrollbar-thumb,
+.workers-modal__body::-webkit-scrollbar-thumb,
+.pd-modal__body::-webkit-scrollbar-thumb,
+.pj-modal__body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ── FOOTER ─────────────────────────────────────────────── */
+.cl-modal__footer,
+.te-modal__footer,
+.workers-modal__footer,
+.inv-pay-modal__footer,
+.inv-edit-modal__footer,
+.inv-gen-modal__footer,
+.ip-pay-modal__footer,
+.pj-modal__footer,
+.pd-modal__footer,
+.set-modal-actions,
+.rule-modal__footer,
+.mp-modal-footer,
+.workers-confirm-modal__actions,
+.pj-confirm-modal__actions {
+  padding: 16px 28px 20px !important;
+  border-top: 1px solid var(--border) !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-shrink: 0;
+  background: var(--bg-card) !important;
+}
+
+/* ── BUTTON BASE (shared sizing) ────────────────────────── */
+.cl-btn-primary,
+.te-modal__btn-save,
+.workers-btn-primary,
+.pj-modal__btn-save,
+.pj-btn-save,
+.inv-btn-primary,
+.pd-btn-save,
+.mp-btn-confirm,
+.set-btn-primary,
+.cl-btn-cancel,
+.te-modal__btn-cancel,
+.workers-btn-outline,
+.pj-btn-cancel,
+.inv-btn-cancel,
+.pd-btn-cancel,
+.set-btn-cancel,
+.workers-btn-danger,
+.pj-btn-delete,
+.cl-btn-danger,
+.inv-btn-danger {
+  height: 40px;
+  padding: 0 20px !important;
+  border-radius: 10px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.1px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease !important;
+  white-space: nowrap;
+}
+
+/* ── PRIMARY ────────────────────────────────────────────── */
+.cl-btn-primary,
+.te-modal__btn-save,
+.workers-btn-primary,
+.pj-modal__btn-save,
+.pj-btn-save,
+.inv-btn-primary,
+.pd-btn-save,
+.mp-btn-confirm,
+.set-btn-primary {
+  background: linear-gradient(180deg, #3380AD 0%, #2A6C95 55%, #1E5270 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px solid #1E5270 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    0 1px 2px rgba(30,82,112,0.2),
+    0 6px 16px -4px rgba(42,108,149,0.45) !important;
+  font-family: 'Montserrat', sans-serif !important;
+  font-weight: 700 !important;
+}
+.cl-btn-primary:hover,
+.te-modal__btn-save:hover,
+.workers-btn-primary:hover,
+.pj-btn-save:hover,
+.pj-modal__btn-save:hover,
+.inv-btn-primary:hover,
+.pd-btn-save:hover,
+.mp-btn-confirm:hover,
+.set-btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    0 2px 4px rgba(30,82,112,0.25),
+    0 10px 22px -4px rgba(42,108,149,0.55) !important;
+}
+.cl-btn-primary:active,
+.te-modal__btn-save:active,
+.workers-btn-primary:active,
+.pj-btn-save:active {
+  transform: translateY(0) !important;
+  box-shadow:
+    inset 0 2px 4px rgba(10,30,45,0.25),
+    0 1px 2px rgba(30,82,112,0.2) !important;
+}
+.cl-btn-primary:disabled,
+.te-modal__btn-save:disabled,
+.workers-btn-primary:disabled,
+.pj-btn-save:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    0 1px 2px rgba(30,82,112,0.15) !important;
+}
+
+/* ── CANCEL (outline) ───────────────────────────────────── */
+.cl-btn-cancel,
+.te-modal__btn-cancel,
+.workers-btn-outline,
+.pj-btn-cancel,
+.inv-btn-cancel,
+.pd-btn-cancel,
+.set-btn-cancel {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border) !important;
+}
+.cl-btn-cancel:hover,
+.te-modal__btn-cancel:hover,
+.workers-btn-outline:hover,
+.pj-btn-cancel:hover,
+.inv-btn-cancel:hover,
+.pd-btn-cancel:hover,
+.set-btn-cancel:hover {
+  background: var(--hover) !important;
+  color: var(--text) !important;
+  border-color: var(--text-muted) !important;
+}
+
+/* ── DANGER ─────────────────────────────────────────────── */
+.workers-btn-danger,
+.pj-btn-delete,
+.cl-btn-danger,
+.inv-btn-danger {
+  background: linear-gradient(180deg, #EF4444 0%, #DC2626 55%, #B91C1C 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px solid #B91C1C !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    0 1px 2px rgba(185,28,28,0.25),
+    0 6px 16px -4px rgba(220,38,38,0.45) !important;
+  font-family: 'Montserrat', sans-serif !important;
+  font-weight: 700 !important;
+}
+.workers-btn-danger:hover,
+.pj-btn-delete:hover,
+.cl-btn-danger:hover,
+.inv-btn-danger:hover {
+  transform: translateY(-1px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    0 10px 22px -4px rgba(220,38,38,0.55) !important;
+}
+
+/* ── CONFIRM MODALS (compact 440px, centered) ──────────── */
+.workers-confirm-modal,
+.pj-confirm-modal {
+  max-width: 440px !important;
+  padding: 36px 32px 28px !important;
+  text-align: center !important;
+  flex-direction: column;
+  gap: 0;
+}
+.workers-confirm-modal__actions,
+.pj-confirm-modal__actions {
+  justify-content: center !important;
+  border-top: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+  margin-top: 24px;
+  gap: 10px !important;
+}
+
+/* Optional: icon + title + body slots for confirm modals */
+.hmcs-confirm-icon {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  margin: 0 auto 18px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(239,68,68,0.10);
+  color: #DC2626;
+}
+[data-theme="dark"] .hmcs-confirm-icon {
+  background: rgba(239,68,68,0.15);
+  color: #F87171;
+}
+.hmcs-confirm-icon--warn { background: rgba(245,158,11,0.10); color: #D97706; }
+[data-theme="dark"] .hmcs-confirm-icon--warn { background: rgba(245,158,11,0.15); color: #FBBF24; }
+.hmcs-confirm-icon--info { background: rgba(42,108,149,0.10); color: #2A6C95; }
+[data-theme="dark"] .hmcs-confirm-icon--info { background: rgba(58,139,192,0.15); color: #60A5FA; }
+
+.hmcs-confirm-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.4px;
+  margin-bottom: 8px;
+}
+.hmcs-confirm-body {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+/* ── INPUTS & SELECTS dentro de modales ─────────────────── */
+.cl-modal .wf-input,
+.te-modal .te-modal__input,
+.te-modal .te-modal__select,
+.te-modal .te-modal__time-select,
+.workers-modal .wf-input,
+.workers-modal .wf-select,
+.pj-modal input,
+.pj-modal select,
+.pj-modal textarea,
+.pd-modal input,
+.pd-modal select,
+.inv-pay-modal input,
+.inv-pay-modal select,
+.inv-edit-modal input,
+.inv-edit-modal select,
+.inv-edit-modal textarea,
+.hmcs-input, .hmcs-select, .hmcs-textarea {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px !important;
+  background: var(--hover) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.hmcs-textarea,
+.pj-modal textarea,
+.inv-edit-modal textarea {
+  height: auto;
+  padding: 12px 14px !important;
+  resize: vertical;
+  min-height: 80px;
+}
+.cl-modal .wf-input:focus,
+.te-modal .te-modal__input:focus,
+.te-modal .te-modal__select:focus,
+.workers-modal .wf-input:focus,
+.pj-modal input:focus,
+.pj-modal select:focus,
+.pj-modal textarea:focus,
+.inv-pay-modal input:focus,
+.inv-edit-modal input:focus,
+.hmcs-input:focus, .hmcs-select:focus, .hmcs-textarea:focus {
+  background: var(--bg-card) !important;
+  border-color: #2A6C95 !important;
+  box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.15) !important;
+  outline: none !important;
+}
+
+/* ── LABELS ─────────────────────────────────────────────── */
+.te-modal .te-modal__label,
+.pj-modal label,
+.pd-modal label,
+.inv-pay-modal label,
+.inv-edit-modal label,
+.hmcs-label {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-muted) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 7px !important;
+}
+
+/* ── WIDE VARIANT ───────────────────────────────────────── */
+.pj-modal.pj-modal--wide {
+  max-width: 800px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   IDENTITY HEADER — avatar + name + meta
+   Usado en te-modal (timesheets), mp-modal (payroll), etc.
+   ═══════════════════════════════════════════════════════════ */
+.hmcs-modal-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1;
+}
+.hmcs-modal-identity__avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.hmcs-modal-identity__avatar {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3A8BC0 0%, #2A6C95 55%, #1a4f70 100%);
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    0 4px 14px rgba(42, 108, 149, 0.35);
+  user-select: none;
+}
+.hmcs-modal-identity__badge {
+  position: absolute;
+  bottom: -3px; right: -3px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #10B981;
+  border: 2.5px solid var(--bg-card, #fff);
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+.hmcs-modal-identity__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.hmcs-modal-identity__name {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hmcs-modal-identity__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.hmcs-modal-identity__meta-code {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2A6C95;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: rgba(42,108,149,0.10);
+}
+[data-theme="dark"] .hmcs-modal-identity__meta-code {
+  color: #60A5FA;
+  background: rgba(58,139,192,0.15);
+}
+.hmcs-modal-identity__dot {
+  color: var(--text-secondary);
+  font-size: 8px;
+}

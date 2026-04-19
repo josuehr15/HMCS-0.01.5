@@ -392,7 +392,21 @@ export default function Settings() {
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="set-modal-header">
-                            <h3>{tradeModal.mode === 'create' ? 'Nuevo Oficio' : 'Editar Oficio'}</h3>
+                            <div className="hmcs-modal-identity">
+                                <div className="hmcs-modal-identity__avatar-wrap">
+                                    <div className="hmcs-modal-identity__avatar">
+                                        <Wrench size={24} />
+                                    </div>
+                                </div>
+                                <div className="hmcs-modal-identity__text">
+                                    <h2 className="hmcs-modal-identity__name">
+                                        {tradeModal.mode === 'create' ? 'Nuevo Oficio' : 'Editar Oficio'}
+                                    </h2>
+                                    <div className="hmcs-modal-identity__meta">
+                                        <span>Configuración de oficios</span>
+                                    </div>
+                                </div>
+                            </div>
                             <button className="set-modal-close" onClick={closeTradeModal}><X size={16} /></button>
                         </div>
                         <div className="set-modal-body">

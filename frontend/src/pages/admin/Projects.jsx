@@ -213,7 +213,19 @@ function AssignModal({ project, workers, api, showToast, onAssigned, onClose }) 
         <div className="pj-overlay" style={{ zIndex: 700 }} onClick={onClose}>
             <div className="pj-modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
                 <div className="pj-modal__header">
-                    <h2 className="pj-modal__title">Asignar Trabajador</h2>
+                    <div className="hmcs-modal-identity">
+                        <div className="hmcs-modal-identity__avatar-wrap">
+                            <div className="hmcs-modal-identity__avatar">
+                                <UserPlus size={24} />
+                            </div>
+                        </div>
+                        <div className="hmcs-modal-identity__text">
+                            <h2 className="hmcs-modal-identity__name">Asignar Trabajador</h2>
+                            <div className="hmcs-modal-identity__meta">
+                                <span>{project?.name || 'Proyecto'}</span>
+                            </div>
+                        </div>
+                    </div>
                     <button className="pj-modal__close" onClick={onClose}><X size={18} /></button>
                 </div>
                 <div className="pj-modal__body">
@@ -376,7 +388,7 @@ function ProjectDetailPanel({ project, api, showToast, onClose, onEdit, onDelete
                         {totalHrs > 0 && (
                             <span className="pj-detail__hrs-badge">{totalHrs.toFixed(0)}h</span>
                         )}
-                        <button className="pj-detail__close" onClick={onClose}>×</button>
+                        <button className="pj-detail__close" onClick={onClose}><X size={16} /></button>
                     </div>
                 </div>
 
@@ -580,7 +592,7 @@ function ProjectDetailPanel({ project, api, showToast, onClose, onEdit, onDelete
                                     <h3>Eliminar Proyecto Permanentemente</h3>
                                     <p>Este proyecto <strong>no tiene datos vinculados</strong>.</p>
                                     <div className="pj-linked-data" style={{ background: '#F0FDF4', borderColor: '#BBF7D0' }}>
-                                        <p style={{ color: '#065F46', fontWeight: 600, margin: 0 }}>✓ Sin datos vinculados</p>
+                                        <p style={{ color: '#065F46', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle size={14} /> Sin datos vinculados</p>
                                     </div>
                                 </>
                             ) : (
@@ -1006,9 +1018,24 @@ export default function Projects() {
                 <div className="pj-overlay" onClick={() => setModalOpen(false)}>
                     <div className="pj-modal pj-modal--wide" onClick={e => e.stopPropagation()}>
                         <div className="pj-modal__header">
-                            <h2 className="pj-modal__title">
-                                {modalMode === 'create' ? 'Nuevo Proyecto' : 'Editar Proyecto'}
-                            </h2>
+                            <div className="hmcs-modal-identity">
+                                <div className="hmcs-modal-identity__avatar-wrap">
+                                    <div className="hmcs-modal-identity__avatar">
+                                        {modalMode === 'edit' && formData.name
+                                            ? formData.name.slice(0, 2).toUpperCase()
+                                            : <FolderOpen size={24} />
+                                        }
+                                    </div>
+                                </div>
+                                <div className="hmcs-modal-identity__text">
+                                    <h2 className="hmcs-modal-identity__name">
+                                        {modalMode === 'create' ? 'Nuevo Proyecto' : formData.name || 'Editar Proyecto'}
+                                    </h2>
+                                    <div className="hmcs-modal-identity__meta">
+                                        <span>Gestión de proyectos</span>
+                                    </div>
+                                </div>
+                            </div>
                             <button className="pj-modal__close" onClick={() => setModalOpen(false)}><X size={18} /></button>
                         </div>
                         <div className="pj-modal__body">
@@ -1052,8 +1079,8 @@ export default function Projects() {
                                 </button>
                             </div>
                             {mapsError && <p className="proj-maps-error">{mapsError}</p>}
-                            <p className="proj-maps-hint">
-                                💡 Abre Google Maps, busca la dirección, haz click derecho → "¿Qué hay aquí?" y copia el enlace. Pégalo arriba para auto-extraer coordenadas.
+                            <p className="proj-maps-hint" style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                                <Info size={13} style={{ flexShrink: 0, marginTop: 2 }} /> Abre Google Maps, busca la dirección, haz click derecho → "¿Qué hay aquí?" y copia el enlace. Pégalo arriba para auto-extraer coordenadas.
                             </p>
                             <div className="wf-grid-3">
                                 <div className="wf-field">

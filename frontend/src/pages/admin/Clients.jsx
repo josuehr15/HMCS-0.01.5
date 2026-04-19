@@ -297,7 +297,19 @@ function ClientDrawer({ client, api, showToast, onClose, onEdit, onDeleted, onTo
                     <div className="cl-overlay" style={{ zIndex: 700 }} onClick={() => setResetModal(false)}>
                         <div className="cl-modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
                             <div className="cl-modal__header">
-                                <h2 className="cl-modal__title"><Key size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />Contraseña Temporal</h2>
+                                <div className="hmcs-modal-identity">
+                                    <div className="hmcs-modal-identity__avatar-wrap">
+                                        <div className="hmcs-modal-identity__avatar">
+                                            <Key size={24} />
+                                        </div>
+                                    </div>
+                                    <div className="hmcs-modal-identity__text">
+                                        <h2 className="hmcs-modal-identity__name">Contraseña Temporal</h2>
+                                        <div className="hmcs-modal-identity__meta">
+                                            <span>{client?.company_name || client?.contact_name}</span>
+                                        </div>
+                                    </div>
+                                </div>
                                 <button className="cl-modal__close" onClick={() => setResetModal(false)}><X size={16} /></button>
                             </div>
                             <div className="cl-modal__body">
@@ -794,7 +806,24 @@ export default function Clients() {
                 <div className="cl-overlay" onClick={() => setModalOpen(false)}>
                     <div className="cl-modal" onClick={e => e.stopPropagation()}>
                         <div className="cl-modal__header">
-                            <h2 className="cl-modal__title">{modalMode === 'create' ? 'Nuevo Cliente' : 'Editar Cliente'}</h2>
+                            <div className="hmcs-modal-identity">
+                                <div className="hmcs-modal-identity__avatar-wrap">
+                                    <div className="hmcs-modal-identity__avatar">
+                                        {modalMode === 'edit' && formData.company_name
+                                            ? formData.company_name.slice(0, 2).toUpperCase()
+                                            : <Building2 size={24} />
+                                        }
+                                    </div>
+                                </div>
+                                <div className="hmcs-modal-identity__text">
+                                    <h2 className="hmcs-modal-identity__name">
+                                        {modalMode === 'create' ? 'Nuevo Cliente' : formData.company_name || 'Editar Cliente'}
+                                    </h2>
+                                    <div className="hmcs-modal-identity__meta">
+                                        <span>Gestión de clientes</span>
+                                    </div>
+                                </div>
+                            </div>
                             <button className="cl-modal__close" onClick={() => setModalOpen(false)}><X size={16} /></button>
                         </div>
                         <div className="cl-modal__body">

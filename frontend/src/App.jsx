@@ -23,6 +23,7 @@ import Settings from './pages/admin/Settings';
 import PerDiem from './pages/admin/PerDiem';
 import PerDiemContractor from './pages/contractor/PerDiemContractor';
 import './styles/globals.css';
+import './styles/modals.css';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
     const { isAuthenticated, user, isLoading } = useAuth();

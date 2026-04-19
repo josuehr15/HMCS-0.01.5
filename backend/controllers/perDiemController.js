@@ -99,4 +99,23 @@ const getWorkerPerDiem = async (req, res) => {
     }
 };
 
-module.exports = { createPerDiem, getAllPerDiem, markPerDiemPaid, getWorkerPerDiem };
+/**
+ * DELETE /api/per-diem/:id
+ * Soft-delete a per diem entry (admin only). Cannot delete if already paid.
+ */
+const deletePerDiem = async (req, res) => {
+    try {
+        const entry = await PerDiemEntry.findOne({ where: { id: req.params.id, is_active: true } });
+        if (!entry) return errorResponse(res, 'Per diem entry not found.', 404);
+        if (entry.status === 'paid') {
+            return errorResponse(res, 'No se puede eliminar un Per Diem ya pagado.', 400);
+        }
+        await entry.update({ is_active: false });
+        return successResponse(res, null, 'Per diem entry deleted.');
+    } catch (error) {
+        console.error('deletePerDiem error:', error);
+        return errorResponse(res, 'Failed to delete per diem entry.', 500);
+    }
+};
+
+module.exports = { createPerDiem, getAllPerDiem, markPerDiemPaid, getWorkerPerDiem, deletePerDiem };

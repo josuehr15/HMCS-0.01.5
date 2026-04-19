@@ -424,26 +424,18 @@ button:not(.no-lift):active {
 
 .workers-modal {
   animation: slideUp 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-  max-height: 88vh;
-  overflow-y: auto;
+  /* max-height removido — el overlay se encarga del scroll */
   display: flex;
   flex-direction: column;
 }
 
 .workers-modal__body {
-  overflow-y: auto;
   flex: 1;
 }
 
-/* Sticky modal header */
+/* Sticky modal header — aplicado via modals.css con !important */
 .workers-modal__header {
-  position: sticky;
-  top: 0;
-  background: var(--bg-card);
-  z-index: 1;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 /* Drawers con slideInRight */

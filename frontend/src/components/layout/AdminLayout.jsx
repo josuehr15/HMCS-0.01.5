@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from './Sidebar';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, Clock, FileText, CheckCircle, X } from 'lucide-react';
 import './AdminLayout.css';
 
 const AdminLayout = () => {
@@ -14,7 +14,7 @@ const AdminLayout = () => {
     const notifications = [
         { 
           id: 1, 
-          icon: '⏰', 
+          icon: <Clock size={16} />, 
           title: 'Nómina pendiente', 
           desc: 'Hay nómina esperando aprobación',
           time: 'Hace 2h',
@@ -23,7 +23,7 @@ const AdminLayout = () => {
         },
         { 
           id: 2, 
-          icon: '📄', 
+          icon: <FileText size={16} />, 
           title: 'Factura creada', 
           desc: 'Nueva factura por $450',
           time: 'Hace 3h',
@@ -32,7 +32,7 @@ const AdminLayout = () => {
         },
         { 
           id: 3, 
-          icon: '✅', 
+          icon: <CheckCircle size={16} />, 
           title: 'Clock-in registrado', 
           desc: 'Brian N. marcó entrada',
           time: 'Hace 4h',
@@ -129,7 +129,7 @@ const AdminLayout = () => {
                                         className="notif-panel__close"
                                         onClick={() => setShowNotifications(false)}
                                     >
-                                        ×
+                                        <X size={16} />
                                     </button>
                                 </div>
                                 <div className="notif-panel__list">

@@ -1,4 +1,5 @@
 import ReactDOM from 'react-dom';
+import { Printer, X } from 'lucide-react';
 
 const PrintPreviewModal = ({ title, previewHtml, onPrint, onDownloadExcel, onDownloadPdf, onDownloadCsv, onClose }) => {
     return ReactDOM.createPortal(
@@ -6,8 +7,20 @@ const PrintPreviewModal = ({ title, previewHtml, onPrint, onDownloadExcel, onDow
             <div className="print-preview-modal" style={{ zIndex: 501 }}>
 
                 <div className="print-preview-header">
-                    <div className="print-preview-title">{title}</div>
-                    <button className="print-preview-close" onClick={onClose}>×</button>
+                    <div className="hmcs-modal-identity">
+                        <div className="hmcs-modal-identity__avatar-wrap">
+                            <div className="hmcs-modal-identity__avatar">
+                                <Printer size={24} />
+                            </div>
+                        </div>
+                        <div className="hmcs-modal-identity__text">
+                            <h2 className="hmcs-modal-identity__name">{title}</h2>
+                            <div className="hmcs-modal-identity__meta">
+                                <span>Vista previa de impresión</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button className="print-preview-close" onClick={onClose}><X size={16} /></button>
                 </div>
 
                 <div className="print-preview-body">

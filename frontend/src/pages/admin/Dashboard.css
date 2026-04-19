@@ -531,6 +531,15 @@
     justify-content: center;
     font-size: 1rem;
     flex-shrink: 0;
+    color: var(--text-muted);
+}
+.ds-bank-icon--teal {
+    background: rgba(13, 148, 136, 0.12);
+    color: #0D9488;
+}
+.ds-bank-icon--green {
+    background: rgba(5, 150, 105, 0.12);
+    color: #059669;
 }
 
 /* Payroll */
@@ -631,6 +640,14 @@
     background: #10B981;
 }
 
+.ds-dot-status--off {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #DC2626;
+    display: inline-block;
+}
+
 /* Activity */
 .ds-activity-list {
     display: flex;
@@ -651,8 +668,13 @@
 
 .ds-activity__icon {
     font-size: 0.9rem;
-    width: 22px;
-    text-align: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: var(--hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 

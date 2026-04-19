@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
+import { DollarSign, X } from 'lucide-react';
 import useApi from '../../hooks/useApi';
 import { useAuth } from '../../context/AuthContext';
 import PaymentUploadModal from '../../components/admin/PaymentUploadModal';
@@ -458,18 +459,32 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
           <div className="payroll-modal fade-in-up" style={{ width: 580, maxWidth: '95vw' }}>
 
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
-                  {wStep === 1 && (wIsEdit ? 'Editar Deducciones' : 'Deducciones')}
-                  {wStep === 2 && (wIsEdit ? 'Editar Comprobante' : 'Comprobante de Pago')}
-                  {wStep === 3 && (wIsEdit ? 'Confirmar Cambios' : 'Confirmar Pago')}
-                </h3>
-                <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>
-                  {workerModal.worker?.first_name} {workerModal.worker?.last_name} · ${parseFloat(workerModal.gross_pay || 0).toFixed(2)} bruto
-                </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '22px 28px 18px', borderBottom: '1px solid var(--border)', margin: '0 -28px 20px', paddingLeft: 28, paddingRight: 28 }}>
+              <div className="hmcs-modal-identity">
+                <div className="hmcs-modal-identity__avatar-wrap">
+                  <div className="hmcs-modal-identity__avatar">
+                    {workerModal.worker?.first_name
+                      ? `${workerModal.worker.first_name[0]}${workerModal.worker.last_name?.[0] || ''}`.toUpperCase()
+                      : <DollarSign size={24} />
+                    }
+                  </div>
+                </div>
+                <div className="hmcs-modal-identity__text">
+                  <h2 className="hmcs-modal-identity__name">
+                    {workerModal.worker?.first_name} {workerModal.worker?.last_name}
+                  </h2>
+                  <div className="hmcs-modal-identity__meta">
+                    <span className="hmcs-modal-identity__meta-code">
+                      {wStep === 1 && (wIsEdit ? 'Editar Deducciones' : 'Deducciones')}
+                      {wStep === 2 && (wIsEdit ? 'Editar Comprobante' : 'Comprobante de Pago')}
+                      {wStep === 3 && (wIsEdit ? 'Confirmar Cambios' : 'Confirmar Pago')}
+                    </span>
+                    <span className="hmcs-modal-identity__dot">•</span>
+                    <span>${parseFloat(workerModal.gross_pay || 0).toFixed(2)} bruto</span>
+                  </div>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
                 <div style={{ display: 'flex', gap: 5 }}>
                   {[1,2,3].map(s => (
                     <div key={s} style={{
@@ -480,7 +495,7 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
                     }} />
                   ))}
                 </div>
-                <button onClick={closeWorkerModal} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#9ca3af', padding: '0 4px' }}>✕</button>
+                <button className="workers-modal__close" onClick={closeWorkerModal}><X size={16} /></button>
               </div>
             </div>
 

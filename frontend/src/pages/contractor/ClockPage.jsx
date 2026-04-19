@@ -88,7 +88,7 @@ const ClockPage = () => {
                 latitude: gps.latitude,
                 longitude: gps.longitude,
             });
-            setMessage({ type: 'success', text: '✅ Entrada registrada correctamente.' });
+            setMessage({ type: 'success', text: 'Entrada registrada correctamente.' });
             await loadEntries();
         } catch (err) {
             const msg = err.response?.data?.message || err.message || 'Error al marcar entrada.';
@@ -109,7 +109,7 @@ const ClockPage = () => {
                 latitude: gps.latitude,
                 longitude: gps.longitude,
             });
-            setMessage({ type: 'success', text: '✅ Salida registrada correctamente.' });
+            setMessage({ type: 'success', text: 'Salida registrada correctamente.' });
             await loadEntries();
         } catch (err) {
             const msg = err.response?.data?.message || err.message || 'Error al marcar salida.';

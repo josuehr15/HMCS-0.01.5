@@ -5,7 +5,8 @@ import {
     Users, Clock, AlertTriangle, Zap, PieChart, Building2,
     ArrowUpRight, CheckCircle2, Timer, CreditCard, BarChart3,
     Activity, FolderKanban, ArrowUp, ArrowDown, GripVertical,
-    Maximize2, Minimize2
+    Maximize2, Minimize2, Banknote, Calendar, Check, X, Edit2,
+    LogIn, LogOut
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -401,7 +402,7 @@ const Dashboard = () => {
                         <div className="ds-big-num ds-muted-xs">Disponible en Fase 4</div>
                         <div className="ds-divider" />
                         <div className="ds-bank-row">
-                            <div className="ds-bank-icon">🏦</div>
+                            <div className="ds-bank-icon ds-bank-icon--teal"><Landmark size={20} /></div>
                             <div style={{ flex: 1 }}>
                                 <div className="ds-fw600">Cuenta Principal</div>
                                 <div className="ds-muted-xs">Conectar en módulo de Contabilidad</div>
@@ -412,7 +413,7 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <div className="ds-bank-row">
-                            <div className="ds-bank-icon">💵</div>
+                            <div className="ds-bank-icon ds-bank-icon--green"><Banknote size={20} /></div>
                             <div style={{ flex: 1 }}><div className="ds-fw600">Efectivo</div><div className="ds-muted-xs">En mano</div></div>
                             <div className="ds-fw700">$0</div>
                         </div>
@@ -551,11 +552,11 @@ const Dashboard = () => {
                         <SectionTitle right={<span className="ds-link">Ver todo →</span>}>Actividad Reciente</SectionTitle>
                         <div className="ds-activity-list">
                             {[
-                                { icon: '🟢', text: `${workers[0]?.first_name || 'Worker'} marcó entrada`, sub: projects[0]?.name || 'Proyecto', time: 'Hoy' },
-                                { icon: '📄', text: `Factura creada`, sub: `$${(stats.revenue * 0.05).toFixed(0)}`, time: 'Hoy' },
-                                { icon: '🔴', text: `${workers[1]?.first_name || 'Worker'} marcó salida`, sub: projects[0]?.name || 'Proyecto', time: 'Ayer' },
-                                { icon: '✅', text: 'Factura pagada', sub: `$${(stats.paidAmount * 0.1).toFixed(0)} depositado`, time: 'Ayer' },
-                                { icon: '📅', text: 'Nueva asignación', sub: `${workers[0]?.first_name || 'Worker'} → ${projects[0]?.name || 'Proyecto'}`, time: 'Lun' },
+                                { icon: <LogIn size={15} color="#10B981" strokeWidth={2} />, text: `${workers[0]?.first_name || 'Worker'} marcó entrada`, sub: projects[0]?.name || 'Proyecto', time: 'Hoy' },
+                                { icon: <FileText size={15} color="#2A6C95" strokeWidth={2} />, text: `Factura creada`, sub: `$${(stats.revenue * 0.05).toFixed(0)}`, time: 'Hoy' },
+                                { icon: <LogOut size={15} color="#EF4444" strokeWidth={2} />, text: `${workers[1]?.first_name || 'Worker'} marcó salida`, sub: projects[0]?.name || 'Proyecto', time: 'Ayer' },
+                                { icon: <CheckCircle2 size={15} color="#059669" strokeWidth={2} />, text: 'Factura pagada', sub: `$${(stats.paidAmount * 0.1).toFixed(0)} depositado`, time: 'Ayer' },
+                                { icon: <Calendar size={15} color="#7C3AED" strokeWidth={2} />, text: 'Nueva asignación', sub: `${workers[0]?.first_name || 'Worker'} → ${projects[0]?.name || 'Proyecto'}`, time: 'Lun' },
                             ].map((a, i) => (
                                 <div key={i} className="ds-activity">
                                     <span className="ds-activity__icon">{a.icon}</span>
@@ -611,25 +612,25 @@ const Dashboard = () => {
                 );
                 const funnelItems = [
                     {
-                        icon: '⏳',
+                        icon: <Clock size={18} color="#F59E0B" strokeWidth={2} />,
                         label: 'No pagado',
                         value: stats.pendingAmount,
                         color: '#F59E0B',
-                        bg: 'rgba(245,158,11,0.08)',
+                        bg: 'rgba(245,158,11,0.12)',
                     },
                     {
-                        icon: '✅',
+                        icon: <CheckCircle2 size={18} color="#10B981" strokeWidth={2} />,
                         label: 'Remunerado',
                         value: stats.paidAmount,
                         color: '#10B981',
-                        bg: 'rgba(16,185,129,0.08)',
+                        bg: 'rgba(16,185,129,0.12)',
                     },
                     {
-                        icon: '🏦',
+                        icon: <Landmark size={18} color="#2A6C95" strokeWidth={2} />,
                         label: 'Depositado',
                         value: stats.deposited,
                         color: '#2A6C95',
-                        bg: 'rgba(42,108,149,0.08)',
+                        bg: 'rgba(42,108,149,0.12)',
                     },
                 ];
                 return (
@@ -783,11 +784,12 @@ const Dashboard = () => {
             {editing && (
                 <div className="ds-edit-bar">
                     <div className="ds-edit-bar__left">
-                        <span>✏️ <strong>Modo edición</strong> — Click una tarjeta, luego click otra para intercambiarlas. Usa S/M/L para redimensionar.</span>
+                        <Edit2 size={14} style={{ flexShrink: 0 }} />
+                        <span><strong>Modo edición</strong> — Click una tarjeta, luego click otra para intercambiarlas. Usa S/M/L para redimensionar.</span>
                     </div>
                     <div className="ds-edit-bar__right">
                         <button className="ds-edit-bar__widgets-btn" onClick={() => setShowModal(true)}>+ Widgets</button>
-                        <button className="ds-edit-bar__save" onClick={saveAndExit}>✓ Guardar</button>
+                        <button className="ds-edit-bar__save" onClick={saveAndExit}><Check size={14} /> Guardar</button>
                     </div>
                 </div>
             )}
@@ -813,7 +815,7 @@ const Dashboard = () => {
                                 <h2 className="ds-drawer__title">Personalizar Dashboard</h2>
                                 <p className="ds-drawer__sub">{activeWidgets.length} widgets activos</p>
                             </div>
-                            <button className="ds-drawer__close" onClick={() => setShowModal(false)}>×</button>
+                            <button className="ds-drawer__close" onClick={() => setShowModal(false)}><X size={16} /></button>
                         </div>
 
                         {/* Lista de widgets */}
@@ -842,7 +844,7 @@ const Dashboard = () => {
                         {/* Footer */}
                         <div className="ds-drawer__footer">
                             <button className="ds-drawer__save" onClick={() => setShowModal(false)}>
-                                ✓ Guardar cambios
+                                <Check size={14} /> Guardar cambios
                             </button>
                         </div>
                     </div>

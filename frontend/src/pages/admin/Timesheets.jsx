@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import {
     ChevronLeft, ChevronRight, CheckCircle, Check,
     Flag, XCircle, Clock, AlertCircle, Trash2,
-    Navigation, Save, Filter
+    Navigation, Save, Filter, X, Calendar, Lightbulb, Lock
 } from 'lucide-react';
 import useApi from '../../hooks/useApi';
 import { useAuth } from '../../context/AuthContext';
@@ -264,7 +264,7 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
                     <div className="te-modal__worker-info">
                         <div className="te-modal__avatar-wrap">
                             <div className="te-modal__avatar">{workerInitials(worker)}</div>
-                            <div className="te-modal__verified">✓</div>
+                            <div className="te-modal__verified"><Check size={10} /></div>
                         </div>
                         <div>
                             <h2 className="te-modal__name">{worker?.first_name} {worker?.last_name}</h2>
@@ -275,7 +275,7 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
                             </div>
                         </div>
                     </div>
-                    <button className="te-modal__close" onClick={onClose}>✕</button>
+                    <button className="te-modal__close" onClick={onClose}><X size={16} /></button>
                 </div>
 
                 {/* ── BODY ── */}
@@ -302,7 +302,7 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
                                     <option value="">Seleccionar...</option>
                                     {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </select>
-                                <span className="te-modal__select-arrow">▾</span>
+                                <span className="te-modal__select-arrow"><ChevronLeft size={13} style={{ transform: 'rotate(-90deg)' }} /></span>
                             </div>
                         </div>
                         <div className="te-modal__field">
@@ -314,7 +314,7 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
                                     value={form.date}
                                     onChange={e => setForm({ ...form, date: e.target.value })}
                                 />
-                                <span className="te-modal__input-icon">📅</span>
+                                <span className="te-modal__input-icon"><Calendar size={14} /></span>
                             </div>
                         </div>
                     </div>
@@ -323,7 +323,7 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
                     <div className="te-modal__time-block">
                         {(clockInSuggested || clockOutSuggested) && (
                             <div className="te-modal__suggested-badge">
-                                💡 Horario sugerido por el proyecto
+                                <Lightbulb size={12} /> Horario sugerido por el proyecto
                             </div>
                         )}
                         <div className="te-modal__time-row">
@@ -371,7 +371,7 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
                         {/* Barra total */}
                         <div className="te-modal__total-bar">
                             <div className="te-modal__total-left">
-                                <span className="te-modal__total-icon">🕐</span>
+                                <span className="te-modal__total-icon"><Clock size={14} /></span>
                                 <span className="te-modal__total-label">Tiempo total de labor</span>
                             </div>
                             <span className="te-modal__total-value">{calculatedHours}h</span>
@@ -401,7 +401,7 @@ function EntryDrawer({ entry, mode, defaultDate, worker, projects, api, showToas
                                 value={form.notes}
                                 onChange={e => setForm({...form, notes: e.target.value})}
                             />
-                            <span className="te-modal__input-icon">🔒</span>
+                            <span className="te-modal__input-icon"><Lock size={14} /></span>
                         </div>
                     </div>
 

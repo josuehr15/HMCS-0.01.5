@@ -68,9 +68,20 @@ function PayModal({ invoice, onClose, onPaid }) {
         <div className="inv-pay-overlay" onClick={onClose}>
             <div className="inv-pay-modal" onClick={e => e.stopPropagation()}>
                 <div className="inv-pay-modal__header">
-                    <div>
-                        <h3>Registrar Pago</h3>
-                        <p>Factura #{invoice?.invoice_number}</p>
+                    <div className="hmcs-modal-identity">
+                        <div className="hmcs-modal-identity__avatar-wrap">
+                            <div className="hmcs-modal-identity__avatar">
+                                <DollarSign size={24} />
+                            </div>
+                        </div>
+                        <div className="hmcs-modal-identity__text">
+                            <h2 className="hmcs-modal-identity__name">Registrar Pago</h2>
+                            <div className="hmcs-modal-identity__meta">
+                                <span className="hmcs-modal-identity__meta-code">#{invoice?.invoice_number}</span>
+                                <span className="hmcs-modal-identity__dot">•</span>
+                                <span>{invoice?.client?.company_name || '—'}</span>
+                            </div>
+                        </div>
                     </div>
                     <button className="inv-pay-modal__close" onClick={onClose}><X size={18} /></button>
                 </div>
@@ -157,9 +168,20 @@ function EditModal({ invoice: initInv, onClose, onSaved, showToast }) {
         <div className="inv-edit-overlay" onClick={onClose}>
             <div className="inv-edit-modal" onClick={e => e.stopPropagation()}>
                 <div className="inv-edit-modal__header">
-                    <div>
-                        <h3 className="inv-edit-modal__title">Editar Factura</h3>
-                        <p className="inv-edit-modal__sub">#{initInv.invoice_number}</p>
+                    <div className="hmcs-modal-identity">
+                        <div className="hmcs-modal-identity__avatar-wrap">
+                            <div className="hmcs-modal-identity__avatar">
+                                <Edit2 size={24} />
+                            </div>
+                        </div>
+                        <div className="hmcs-modal-identity__text">
+                            <h2 className="hmcs-modal-identity__name">Editar Factura</h2>
+                            <div className="hmcs-modal-identity__meta">
+                                <span className="hmcs-modal-identity__meta-code">#{initInv.invoice_number}</span>
+                                <span className="hmcs-modal-identity__dot">•</span>
+                                <span>{initInv.client?.company_name || '—'}</span>
+                            </div>
+                        </div>
                     </div>
                     <button className="inv-edit-modal__close" onClick={onClose}><X size={18} /></button>
                 </div>
@@ -647,12 +669,18 @@ function GenerateModal({ clients, onClose, onGenerated, showToast }) {
         <div className="inv-gen-overlay" onClick={onClose}>
             <div className="inv-gen-modal" onClick={e => e.stopPropagation()}>
                 <div className="inv-gen-modal__header">
-                    <div>
-                        <h3 className="inv-modal-title">
-                            <FileText size={20} />
-                            Generar Factura
-                        </h3>
-                        <p>Selecciona cliente, proyecto y semana facturada</p>
+                    <div className="hmcs-modal-identity">
+                        <div className="hmcs-modal-identity__avatar-wrap">
+                            <div className="hmcs-modal-identity__avatar">
+                                <FileText size={24} />
+                            </div>
+                        </div>
+                        <div className="hmcs-modal-identity__text">
+                            <h2 className="hmcs-modal-identity__name">Generar Factura</h2>
+                            <div className="hmcs-modal-identity__meta">
+                                <span>Selecciona cliente, proyecto y semana</span>
+                            </div>
+                        </div>
                     </div>
                     <button className="inv-pay-modal__close" onClick={onClose}><X size={18} /></button>
                 </div>

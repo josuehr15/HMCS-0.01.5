@@ -370,7 +370,19 @@ function WorkerDrawer({ worker, trades, onClose, onEdit, onDeleted, onToggle, ap
                 <div className="workers-modal-overlay" style={{ zIndex: 1200 }} onClick={() => setResetModal(false)}>
                     <div className="workers-modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
                         <div className="workers-modal__header">
-                            <h2 className="workers-modal__title"><Key size={16} /> Contraseña Temporal</h2>
+                            <div className="hmcs-modal-identity">
+                                <div className="hmcs-modal-identity__avatar-wrap">
+                                    <div className="hmcs-modal-identity__avatar">
+                                        <Key size={24} />
+                                    </div>
+                                </div>
+                                <div className="hmcs-modal-identity__text">
+                                    <h2 className="hmcs-modal-identity__name">Contraseña Temporal</h2>
+                                    <div className="hmcs-modal-identity__meta">
+                                        <span>{worker?.first_name} {worker?.last_name}</span>
+                                    </div>
+                                </div>
+                            </div>
                             <button className="workers-modal__close" onClick={() => setResetModal(false)}><X size={18} /></button>
                         </div>
                         <div style={{ padding: '24px 26px 28px' }}>
@@ -535,7 +547,19 @@ function TradesModal({ trades, onClose, onRefresh, api }) {
         <div className="workers-modal-overlay" onClick={onClose}>
             <div className="workers-modal trades-modal" onClick={e => e.stopPropagation()}>
                 <div className="workers-modal__header">
-                    <h2 className="workers-modal__title"><Wrench size={16} /> Gestionar Oficios</h2>
+                    <div className="hmcs-modal-identity">
+                        <div className="hmcs-modal-identity__avatar-wrap">
+                            <div className="hmcs-modal-identity__avatar">
+                                <Wrench size={24} />
+                            </div>
+                        </div>
+                        <div className="hmcs-modal-identity__text">
+                            <h2 className="hmcs-modal-identity__name">Gestionar Oficios</h2>
+                            <div className="hmcs-modal-identity__meta">
+                                <span>Configuración de oficios del sistema</span>
+                            </div>
+                        </div>
+                    </div>
                     <button className="workers-modal__close" onClick={onClose}><X size={20} /></button>
                 </div>
                 <div className="trades-modal__body">
@@ -879,7 +903,24 @@ export default function Workers() {
                 <div className="workers-modal-overlay" onClick={closeModal}>
                     <div className="workers-modal" onClick={e => e.stopPropagation()}>
                         <div className="workers-modal__header">
-                            <h2 className="workers-modal__title">{modalMode === 'create' ? 'Agregar Nuevo Trabajador' : 'Editar Trabajador'}</h2>
+                            <div className="hmcs-modal-identity">
+                                <div className="hmcs-modal-identity__avatar-wrap">
+                                    <div className="hmcs-modal-identity__avatar">
+                                        {modalMode === 'edit' && formData.first_name
+                                            ? `${formData.first_name[0]}${formData.last_name?.[0] || ''}`.toUpperCase()
+                                            : <Users size={24} />
+                                        }
+                                    </div>
+                                </div>
+                                <div className="hmcs-modal-identity__text">
+                                    <h2 className="hmcs-modal-identity__name">
+                                        {modalMode === 'create' ? 'Nuevo Trabajador' : `${formData.first_name} ${formData.last_name}`}
+                                    </h2>
+                                    <div className="hmcs-modal-identity__meta">
+                                        <span>{modalMode === 'create' ? 'Agregar trabajador al sistema' : 'Editar información del trabajador'}</span>
+                                    </div>
+                                </div>
+                            </div>
                             <button className="workers-modal__close" onClick={closeModal}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="workers-form">

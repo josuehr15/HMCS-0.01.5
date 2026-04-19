@@ -3,7 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const checkRole = require('../middleware/checkRole');
 const {
-    createPerDiem, getAllPerDiem, markPerDiemPaid, getWorkerPerDiem,
+    createPerDiem, getAllPerDiem, markPerDiemPaid, getWorkerPerDiem, deletePerDiem,
 } = require('../controllers/perDiemController');
 
 router.use(auth);
@@ -15,5 +15,6 @@ router.get('/my', checkRole('contractor'), getWorkerPerDiem);
 router.post('/', checkRole('admin'), createPerDiem);
 router.get('/', checkRole('admin'), getAllPerDiem);
 router.put('/:id/paid', checkRole('admin'), markPerDiemPaid);
+router.delete('/:id', checkRole('admin'), deletePerDiem);
 
 module.exports = router;
