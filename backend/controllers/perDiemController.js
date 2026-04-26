@@ -31,10 +31,12 @@ const createPerDiem = async (req, res) => {
  */
 const getAllPerDiem = async (req, res) => {
     try {
-        const { worker_id, status } = req.query;
+        const { worker_id, status, client_id, week_start_date, week_end_date } = req.query;
         const where = { is_active: true };
         if (worker_id) where.worker_id = worker_id;
         if (status) where.status = status;
+        if (week_start_date) where.week_start_date = { [Op.gte]: week_start_date };
+        if (week_end_date) where.week_end_date = { [Op.lte]: week_end_date };
 
         const entries = await PerDiemEntry.findAll({
             where,
@@ -42,7 +44,12 @@ const getAllPerDiem = async (req, res) => {
                 { model: Worker, as: 'worker', attributes: ['id', 'worker_code', 'first_name', 'last_name'] },
                 {
                     model: Assignment, as: 'assignment',
-                    include: [{ model: Project, as: 'project', attributes: ['id', 'name'] }],
+                    include: [{
+                        model: Project,
+                        as: 'project',
+                        attributes: ['id', 'name', 'client_id'],
+                        ...(client_id ? { where: { client_id: parseInt(client_id) } } : {}),
+                    }],
                 },
             ],
             order: [['created_at', 'DESC']],

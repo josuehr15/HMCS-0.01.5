@@ -86,6 +86,8 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
   const [loading, setLoading] = useState(false);
 
   const [workerModal, setWorkerModal] = useState(null);
+  const [wPerDiem, setWPerDiem] = useState('');
+  const [wPerDiemSaving, setWPerDiemSaving] = useState(false);
   const [wStep, setWStep] = useState(1);
   const [wDeductions, setWDeductions] = useState([]);
   const [wPayMethod, setWPayMethod] = useState('zelle');
@@ -140,6 +142,8 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
     setWorkerModal(line);
     setWStep(1);
     setWIsEdit(line.status === 'paid');
+    setWPerDiem((line.per_diem_amount ?? 0).toString());
+    setWPerDiemSaving(false);
     setWDeductions(
       Array.isArray(line.deductions_detail) && line.deductions_detail.length > 0
         ? line.deductions_detail
@@ -164,6 +168,8 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
     setWDedFile(null);
     setWDedPreview(null);
     setWIsEdit(false);
+    setWPerDiem('');
+    setWPerDiemSaving(false);
   };
 
   const addDeduction = () => {
@@ -267,6 +273,31 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
     }
   };
 
+  const handleUpdatePerDiem = async () => {
+    if (!workerModal) return;
+    if (workerModal.status === 'paid') return;
+    const nextAmt = parseFloat(wPerDiem || 0);
+    if (Number.isNaN(nextAmt) || nextAmt < 0) {
+      showToast('error', 'Monto de Per Diem inválido.');
+      return;
+    }
+    setWPerDiemSaving(true);
+    try {
+      const res = await api.patch(`/payroll/lines/${workerModal.id}/per-diem`, {
+        per_diem_amount: nextAmt,
+      });
+      const upd = res.data?.data || res.data || res;
+      setWorkerModal(upd);
+      onRefreshPayroll?.();
+      showToast('success', 'Per Diem actualizado.');
+    } catch (e) {
+      const msg = e.response?.data?.message || 'Error al actualizar Per Diem.';
+      showToast('error', msg);
+    } finally {
+      setWPerDiemSaving(false);
+    }
+  };
+
   if (loadingDetail) {
     return (
       <div className="detail-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
@@ -301,6 +332,16 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
         </div>
 
         <div style={{ padding: '0 20px 20px' }}>
+          <div className="alert-info" style={{ marginBottom: 12 }}>
+            <div className="alert-icon">💡</div>
+            <div>
+              <div className="alert-title">Registra los Per Diem antes de generar</div>
+              <div className="alert-desc">
+                Si algún worker tiene viáticos esta semana, regístralos en la página Per Diem
+                antes de generar la nómina. También puedes editarlos después (Fix 2).
+              </div>
+            </div>
+          </div>
           <button className="btn-generate" onClick={handleGenerate} disabled={loading}>
             {loading ? 'Generando...' : '+ Generar nómina para esta semana'}
           </button>
@@ -498,6 +539,33 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
                 <button className="workers-modal__close" onClick={closeWorkerModal}><X size={16} /></button>
               </div>
             </div>
+
+            {/* Per Diem editor (solo si NO está pagada) */}
+            {workerModal.status !== 'paid' && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                  Per Diem
+                </div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={wPerDiem}
+                    onChange={e => setWPerDiem(e.target.value)}
+                    style={{ flex: 1, padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+                  />
+                  <button
+                    className="btn-outline"
+                    onClick={handleUpdatePerDiem}
+                    disabled={wPerDiemSaving}
+                    style={{ padding: '8px 12px', fontSize: 13 }}
+                  >
+                    {wPerDiemSaving ? 'Actualizando...' : 'Actualizar Per Diem'}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {wIsEdit && (
               <div style={{

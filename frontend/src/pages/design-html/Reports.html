@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMCS - Reportes</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #F1F5F9;
+    --bg-card: #ffffff;
+    --text: #1E293B;
+    --text-muted: #64748B;
+    --border: #E2E8F0;
+    --hover: #F8FAFC;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
+button, select, input { font-family: inherit; border: none; background: none; cursor: pointer; }
+
+/* ── Page ── */
+.rpt-page { padding: 28px 32px 40px; max-width: 1200px; margin: 0 auto; }
+.rpt-header { margin-bottom: 20px; }
+.reports__title { font-size: 1.5rem; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+.reports__subtitle { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+
+/* ── Period bar ── */
+.rpt-period-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; width: fit-content; }
+.reports__period-label { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #6B7280; }
+.reports__period-input { background: #fff; border: 1px solid #E5E7EB; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-family: inherit; color: var(--text); cursor: pointer; }
+.reports__period-input:focus { outline: none; border-color: #2A6C95; }
+.rpt-period-sep { font-size: 13px; color: #6B7280; }
+
+/* ── Tabs ── */
+.reports__tabs { display: flex; border-bottom: 1px solid #E5E7EB; margin-bottom: 20px; }
+.reports__tab { padding: 10px 22px; font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; color: #6B7280; background: none; border-top: none; border-left: none; border-right: none; transition: color 0.15s; }
+.reports__tab:hover { color: var(--text); }
+.reports__tab--active { border-bottom-color: #2A6C95; color: #2A6C95; font-weight: 600; }
+
+/* ── Content ── */
+.rpt-tab-content { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── KPI Row ── */
+.reports__kpi-row { display: grid; gap: 12px; margin-bottom: 2px; }
+.reports__kpi-row--4 { grid-template-columns: repeat(4, 1fr); }
+.reports__kpi-row--3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .reports__kpi-row--4, .reports__kpi-row--3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .reports__kpi-row--4, .reports__kpi-row--3 { grid-template-columns: 1fr; } }
+
+/* ── KPI Card ── */
+.reports__kpi-card { background: #fff; border-radius: 10px; padding: 18px 20px; border: 0.5px solid #F3F4F6; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.reports__kpi-label { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #6B7280; margin: 0 0 8px; }
+.reports__kpi-value { font-size: 24px; font-weight: 600; color: #111827; margin: 0; line-height: 1.1; font-family: 'Montserrat', sans-serif; }
+.reports__kpi-sub { font-size: 11px; color: #6B7280; margin: 5px 0 0; }
+.reports__kpi-sub--up { color: #10B981; }
+.reports__kpi-sub--down { color: #DC2626; }
+
+/* ── Section Cards ── */
+.reports__section-card { background: #fff; border-radius: 10px; border: 0.5px solid #F3F4F6; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.reports__section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: #6B7280; margin: 0 0 14px; }
+.reports__section-card--table { padding: 0; overflow: hidden; }
+.reports__section-card--table .reports__section-label { padding: 14px 20px; margin-bottom: 0; border-bottom: 1px solid #F3F4F6; }
+.reports__section-card--table .rpt-table-wrap { border: none; border-radius: 0; }
+
+/* ── Filters ── */
+.rpt-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.rpt-export-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 0.82rem; font-weight: 500; color: var(--text); cursor: pointer; transition: all 0.15s; }
+.rpt-export-btn:hover { background: var(--hover); border-color: #2A6C95; color: #2A6C95; }
+
+/* ── View toggle ── */
+.rpt-view-toggle { display: flex; gap: 4px; }
+.reports__view-btn { background: transparent; border: 1px solid #E5E7EB; border-radius: 6px; padding: 7px 14px; font-size: 12px; cursor: pointer; color: #6B7280; font-family: inherit; transition: all 0.15s; }
+.reports__view-btn:hover { border-color: #2A6C95; color: #2A6C95; }
+.reports__view-btn--active { border-color: #2A6C95; color: #2A6C95; font-weight: 600; }
+
+/* ── Per Diem notice ── */
+.reports__per-diem-notice { background: #EFF6FF; border: 0.5px solid #BFDBFE; border-radius: 6px; padding: 9px 14px; font-size: 12px; color: #1D4ED8; font-weight: 500; }
+
+/* ── Select wrapper ── */
+.workers-select-wrapper { position: relative; display: inline-flex; align-items: center; }
+.workers-select { appearance: none; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 7px 30px 7px 12px; font-size: 0.82rem; font-family: inherit; color: var(--text); cursor: pointer; }
+.workers-select:focus { outline: none; border-color: #2A6C95; }
+.workers-select__arrow { position: absolute; right: 10px; pointer-events: none; color: var(--text-muted); }
+
+/* ── Table ── */
+.rpt-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+.rpt-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+.rpt-table th { padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; background: #2A6C95; white-space: nowrap; }
+.rpt-table td { padding: 10px 14px; color: var(--text); border-bottom: 1px solid var(--border); vertical-align: middle; }
+.rpt-table tbody tr:last-child td { border-bottom: none; }
+.rpt-table tbody tr:hover { background: var(--hover); }
+.rpt-table tfoot td { background: #F9FAFB; border-top: 1px solid #E5E7EB; font-weight: 600; border-bottom: none; }
+
+/* ── Status badges ── */
+.rpt-status { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+.rpt-status--draft { background: #F3F4F6; color: #6B7280; }
+.rpt-status--sent { background: #EFF6FF; color: #2563EB; }
+.rpt-status--paid { background: #D1FAE5; color: #065F46; }
+.rpt-status--overdue { background: #FEE2E2; color: #991B1B; }
+.rpt-status--approved { background: #D1FAE5; color: #065F46; }
+.rpt-status--pending_approval { background: #FEF3C7; color: #92400E; }
+
+/* ── Value modifiers ── */
+.rpt-ot { color: #F59E0B; font-weight: 600; }
+.rpt-ded { color: #EF4444; }
+.rpt-perdiem { color: #9CA3AF; font-style: italic; }
+.rpt-positive { color: #10B981; font-weight: 600; }
+.rpt-negative { color: #EF4444; font-weight: 600; }
+
+/* ── Chart placeholder ── */
+.chart-placeholder { width: 100%; height: 220px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-radius: 8px; display: flex; align-items: flex-end; justify-content: center; gap: 12px; padding: 20px 20px 30px; }
+.chart-bar-group { display: flex; gap: 4px; align-items: flex-end; flex-direction: column; align-items: center; }
+.chart-bar { border-radius: 4px 4px 0 0; min-width: 18px; }
+.chart-bar--regular { background: #2A6C95; }
+.chart-bar--ot { background: #F59E0B; }
+.chart-bar--total { background: #2A6C95; }
+.chart-bar--paid { background: #6B7280; }
+.chart-bar--margin { background: #10B981; }
+.chart-bar-label { font-size: 10px; color: #6B7280; margin-top: 6px; }
+.chart-legend { display: flex; gap: 16px; justify-content: center; padding: 8px 0; }
+.chart-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6B7280; }
+.chart-legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+/* ── P&L grid ── */
+.pnl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 700px) { .pnl-grid { grid-template-columns: 1fr; } }
+
+/* ── SVG icon helper ── */
+.icon { display: inline-flex; align-items: center; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<div class="rpt-page">
+    <!-- Header -->
+    <div class="rpt-header">
+        <h1 class="reports__title">Reportes</h1>
+        <p class="reports__subtitle">Analiza el rendimiento operativo y financiero</p>
+    </div>
+
+    <!-- Period bar -->
+    <div class="rpt-period-bar">
+        <span class="reports__period-label">Periodo</span>
+        <input type="date" class="reports__period-input" value="2026-04-01">
+        <span class="rpt-period-sep">&mdash;</span>
+        <input type="date" class="reports__period-input" value="2026-04-30">
+    </div>
+
+    <!-- Tabs -->
+    <div class="reports__tabs">
+        <button class="reports__tab reports__tab--active">Horas</button>
+        <button class="reports__tab">Facturacion</button>
+        <button class="reports__tab">Nomina</button>
+        <button class="reports__tab">Margenes</button>
+        <button class="reports__tab">P&amp;L</button>
+    </div>
+
+    <!-- Tab Content: Horas -->
+    <div class="rpt-tab-content">
+        <!-- KPIs -->
+        <div class="reports__kpi-row reports__kpi-row--4">
+            <div class="reports__kpi-card">
+                <p class="reports__kpi-label">TOTAL HORAS</p>
+                <p class="reports__kpi-value" style="color:#2A6C95">1,248.5h</p>
+            </div>
+            <div class="reports__kpi-card">
+                <p class="reports__kpi-label">HORAS REGULARES</p>
+                <p class="reports__kpi-value">1,040.0h</p>
+            </div>
+            <div class="reports__kpi-card">
+                <p class="reports__kpi-label">HORAS OVERTIME</p>
+                <p class="reports__kpi-value" style="color:#D97706">208.5h</p>
+            </div>
+            <div class="reports__kpi-card">
+                <p class="reports__kpi-label">PROMEDIO / WORKER</p>
+                <p class="reports__kpi-value">44.6h</p>
+                <p class="reports__kpi-sub">28 workers en el periodo</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="rpt-filters">
+            <div class="workers-select-wrapper">
+                <select class="workers-select">
+                    <option>Todos los Workers</option>
+                    <option>Carlos Martinez</option>
+                    <option>Jose Ramirez</option>
+                    <option>Miguel Torres</option>
+                </select>
+                <svg class="workers-select__arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="workers-select-wrapper">
+                <select class="workers-select">
+                    <option>Todos los Proyectos</option>
+                    <option>Riverside Plaza</option>
+                    <option>Harbor View Tower</option>
+                    <option>Midtown Office Complex</option>
+                </select>
+                <svg class="workers-select__arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <button class="rpt-export-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Exportar CSV
+            </button>
+        </div>
+
+        <!-- Chart -->
+        <div class="reports__section-card">
+            <p class="reports__section-label">Horas por Trabajador</p>
+            <div class="chart-placeholder">
+                <div class="chart-bar-group"><div style="display:flex;gap:3px;align-items:flex-end"><div class="chart-bar chart-bar--regular" style="height:140px;width:20px"></div><div class="chart-bar chart-bar--ot" style="height:35px;width:20px"></div></div><span class="chart-bar-label">Carlos</span></div>
+                <div class="chart-bar-group"><div style="display:flex;gap:3px;align-items:flex-end"><div class="chart-bar chart-bar--regular" style="height:130px;width:20px"></div><div class="chart-bar chart-bar--ot" style="height:50px;width:20px"></div></div><span class="chart-bar-label">Jose</span></div>
+                <div class="chart-bar-group"><div style="display:flex;gap:3px;align-items:flex-end"><div class="chart-bar chart-bar--regular" style="height:120px;width:20px"></div><div class="chart-bar chart-bar--ot" style="height:20px;width:20px"></div></div><span class="chart-bar-label">Miguel</span></div>
+                <div class="chart-bar-group"><div style="display:flex;gap:3px;align-items:flex-end"><div class="chart-bar chart-bar--regular" style="height:110px;width:20px"></div><div class="chart-bar chart-bar--ot" style="height:15px;width:20px"></div></div><span class="chart-bar-label">Pedro</span></div>
+                <div class="chart-bar-group"><div style="display:flex;gap:3px;align-items:flex-end"><div class="chart-bar chart-bar--regular" style="height:100px;width:20px"></div><div class="chart-bar chart-bar--ot" style="height:40px;width:20px"></div></div><span class="chart-bar-label">Luis</span></div>
+                <div class="chart-bar-group"><div style="display:flex;gap:3px;align-items:flex-end"><div class="chart-bar chart-bar--regular" style="height:90px;width:20px"></div><div class="chart-bar chart-bar--ot" style="height:10px;width:20px"></div></div><span class="chart-bar-label">Andres</span></div>
+                <div class="chart-bar-group"><div style="display:flex;gap:3px;align-items:flex-end"><div class="chart-bar chart-bar--regular" style="height:80px;width:20px"></div><div class="chart-bar chart-bar--ot" style="height:25px;width:20px"></div></div><span class="chart-bar-label">Diego</span></div>
+                <div class="chart-bar-group"><div style="display:flex;gap:3px;align-items:flex-end"><div class="chart-bar chart-bar--regular" style="height:75px;width:20px"></div><div class="chart-bar chart-bar--ot" style="height:0px;width:20px"></div></div><span class="chart-bar-label">Marco</span></div>
+            </div>
+            <div class="chart-legend">
+                <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#2A6C95"></span>Regular</span>
+                <span class="chart-legend-item"><span class="chart-legend-swatch" style="background:#F59E0B"></span>OT</span>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="reports__section-card reports__section-card--table">
+            <p class="reports__section-label">Detalle por Trabajador</p>
+            <div class="rpt-table-wrap">
+                <table class="rpt-table">
+                    <thead>
+                        <tr><th>Trabajador</th><th>Hrs Regulares</th><th>Hrs OT</th><th>Total</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Carlos Martinez</td><td>40.0h</td><td class="rpt-ot">8.5h</td><td><strong>48.5h</strong></td></tr>
+                        <tr><td>Jose Ramirez</td><td>40.0h</td><td class="rpt-ot">12.0h</td><td><strong>52.0h</strong></td></tr>
+                        <tr><td>Miguel Torres</td><td>40.0h</td><td class="rpt-ot">5.5h</td><td><strong>45.5h</strong></td></tr>
+                        <tr><td>Pedro Gonzalez</td><td>40.0h</td><td class="rpt-ot">3.0h</td><td><strong>43.0h</strong></td></tr>
+                        <tr><td>Luis Hernandez</td><td>38.0h</td><td class="rpt-ot">10.0h</td><td><strong>48.0h</strong></td></tr>
+                        <tr><td>Andres Lopez</td><td>40.0h</td><td class="rpt-ot">2.5h</td><td><strong>42.5h</strong></td></tr>
+                        <tr><td>Diego Vargas</td><td>36.0h</td><td class="rpt-ot">6.0h</td><td><strong>42.0h</strong></td></tr>
+                        <tr><td>Marco Jimenez</td><td>32.0h</td><td>0.0h</td><td><strong>32.0h</strong></td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr><td><strong>Total</strong></td><td><strong>306.0h</strong></td><td><strong>47.5h</strong></td><td><strong>353.5h</strong></td></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -7,11 +7,14 @@ const {
     createClient, updateClient, deleteClient,
     toggleClientStatus, forceDeleteClient, resetClientPassword,
     addClientRate, updateClientRate, deleteClientRate,
+    uploadClientLogo,
 } = require('../controllers/clientController');
+const uploadLogo = require('../middleware/uploadLogo');
 
 router.use(auth);
 
 // ── Sub-resource routes (must be BEFORE /:id) ──────────────────────
+router.post('/:id/logo', checkRole('admin'), uploadLogo.single('logo'), uploadClientLogo);
 router.get('/:id/linked-data', checkRole('admin'), getClientLinkedData);
 router.patch('/:id/toggle-status', checkRole('admin'), toggleClientStatus);
 router.put('/:id/reset-password', checkRole('admin'), resetClientPassword);

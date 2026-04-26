@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMCS - Configuracion</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #F1F5F9;
+    --bg-card: #ffffff;
+    --text: #1E293B;
+    --text-muted: #64748B;
+    --border: #E2E8F0;
+    --hover: #F8FAFC;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
+button, select, input { font-family: inherit; border: none; background: none; cursor: pointer; }
+
+/* ── Page ── */
+.set-page { padding: 28px 32px 40px; max-width: 960px; margin: 0 auto; }
+.set-header { margin-bottom: 24px; }
+.set-title { font-size: 1.5rem; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+.set-subtitle { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+
+/* ── Layout ── */
+.set-layout { display: grid; grid-template-columns: 200px 1fr; gap: 20px; align-items: start; }
+
+/* ── Nav ── */
+.set-nav { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 24px; }
+.set-nav__item { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 450; color: var(--text-muted); text-align: left; transition: all 0.15s; width: 100%; border: none; background: none; cursor: pointer; }
+.set-nav__item:hover { background: var(--hover); color: var(--text); }
+.set-nav__item--active { background: rgba(42,108,149,0.08); color: #2A6C95; font-weight: 600; }
+
+/* ── Content ── */
+.set-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 28px; }
+
+/* ── Section ── */
+.set-section { display: flex; flex-direction: column; gap: 16px; }
+.set-section__title { display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 700; color: var(--text); margin: 0; }
+.set-section__desc { font-size: 0.83rem; color: var(--text-muted); margin: -8px 0 0; }
+
+/* ── Fields ── */
+.set-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.set-grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; }
+.set-field { display: flex; flex-direction: column; gap: 6px; }
+.set-label { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+.set-input { padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.86rem; color: var(--text); background: var(--bg); font-family: inherit; transition: border-color 0.15s; width: 100%; }
+.set-input:focus { outline: none; border-color: #2A6C95; }
+.set-textarea { resize: vertical; min-height: 72px; }
+.set-hint { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
+
+/* ── Info box ── */
+.set-info-box { background: rgba(42,108,149,0.06); border: 1px solid rgba(42,108,149,0.15); border-radius: 8px; padding: 12px 16px; font-size: 0.84rem; color: var(--text); display: flex; flex-direction: column; gap: 4px; }
+
+/* ── Divider ── */
+.set-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+
+/* ── Save button ── */
+.set-actions { padding-top: 8px; }
+.set-save-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; background: #2A6C95; color: white; border-radius: 9px; font-size: 0.88rem; font-weight: 600; transition: all 0.18s; border: none; cursor: pointer; }
+.set-save-btn:hover { background: #1d5278; transform: translateY(-1px); }
+
+/* ── Logo cards ── */
+.set-logo-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.set-logo-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); }
+.set-logo-card__preview { height: 96px; display: flex; align-items: center; justify-content: center; background: var(--hover); border-radius: 7px; overflow: hidden; }
+.set-logo-card__empty { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.78rem; }
+.set-logo-card__info { display: flex; flex-direction: column; gap: 4px; }
+.set-logo-card__title { font-size: 0.86rem; font-weight: 600; color: var(--text); margin: 0; }
+.set-logo-card__desc { font-size: 0.77rem; color: var(--text-muted); margin: 0 0 6px; }
+.set-logo-card__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* ── Trades list ── */
+.set-section-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.set-add-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: #2A6C95; color: white; border-radius: 8px; font-size: 0.84rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; transition: background 0.15s; border: none; cursor: pointer; }
+.set-add-btn:hover { background: #1d5278; }
+.set-trades-list { display: flex; flex-direction: column; gap: 6px; }
+.set-trade-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 14px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg); transition: border-color 0.15s; }
+.set-trade-item:hover { border-color: rgba(42,108,149,0.3); }
+.set-trade-item--inactive { opacity: 0.55; }
+.set-trade-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.set-trade-name { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+.set-trade-name-es { font-size: 0.82rem; color: var(--text-muted); }
+.set-trade-badge { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.03em; }
+.set-trade-badge--active { background: rgba(22,163,74,0.1); color: #16a34a; }
+.set-trade-badge--inactive { background: rgba(107,114,128,0.12); color: var(--text-muted); }
+.set-trade-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.set-trade-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 6px; color: var(--text-muted); background: var(--hover); transition: all 0.15s; border: none; cursor: pointer; }
+.set-trade-btn:hover { color: var(--text); background: var(--border); }
+
+/* ── Pill group ── */
+.set-pill-group { display: flex; gap: 8px; }
+.set-pill { padding: 8px 18px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 0.84rem; font-weight: 500; color: var(--text-muted); background: var(--bg); transition: all 0.15s; cursor: pointer; }
+.set-pill:hover { border-color: #2A6C95; color: #2A6C95; }
+.set-pill--active { border-color: #2A6C95; background: rgba(42,108,149,0.08); color: #2A6C95; font-weight: 600; }
+
+/* ── Input with unit ── */
+.set-input-unit-wrap { position: relative; display: flex; align-items: center; }
+.set-input-unit-wrap .set-input { padding-right: 90px; }
+.set-input-unit { position: absolute; right: 12px; font-size: 0.78rem; color: var(--text-muted); pointer-events: none; white-space: nowrap; }
+
+/* ── Warning note ── */
+.set-warn-note { background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.25); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: var(--text); }
+
+/* ── Notification groups ── */
+.set-notif-group { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.set-notif-group:last-of-type { border-bottom: none; }
+.set-notif-group-title { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 8px; }
+.set-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; }
+.set-toggle-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.set-toggle-label { font-size: 0.875rem; font-weight: 500; color: var(--text); }
+.set-toggle-desc { font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; }
+
+/* ── Toggle Switch ── */
+.set-switch { position: relative; display: inline-flex; width: 42px; height: 24px; flex-shrink: 0; cursor: pointer; }
+.set-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.set-switch-slider { position: absolute; inset: 0; background: var(--border); border-radius: 24px; transition: background 0.2s; }
+.set-switch-slider::before { content: ''; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.set-switch input:checked + .set-switch-slider { background: #2A6C95; }
+.set-switch input:checked + .set-switch-slider::before { transform: translateX(18px); }
+
+/* ── Secondary button ── */
+.set-btn-secondary { padding: 9px 18px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.86rem; font-weight: 500; color: var(--text); background: var(--bg); transition: all 0.15s; cursor: pointer; }
+.set-btn-secondary:hover { background: var(--hover); }
+
+/* ── Password ── */
+.set-pwd-box { display: flex; flex-direction: column; gap: 14px; max-width: 420px; }
+.set-pwd-input-wrap { position: relative; }
+.set-pwd-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); display: flex; align-items: center; padding: 4px; border-radius: 4px; transition: color 0.15s; border: none; background: none; cursor: pointer; }
+.set-pwd-toggle:hover { color: var(--text); }
+
+@media (max-width: 640px) {
+    .set-layout { grid-template-columns: 1fr; }
+    .set-grid-2, .set-grid-3, .set-logo-cards { grid-template-columns: 1fr; }
+    .set-nav { position: static; flex-direction: row; overflow-x: auto; }
+    .set-nav__item { white-space: nowrap; }
+}
+</style>
+</head>
+<body>
+
+<div class="set-page">
+    <!-- Header -->
+    <div class="set-header">
+        <h1 class="set-title">Configuracion</h1>
+        <p class="set-subtitle">Ajustes generales del sistema HMCS</p>
+    </div>
+
+    <div class="set-layout">
+        <!-- Sidebar Nav -->
+        <nav class="set-nav">
+            <button class="set-nav__item set-nav__item--active">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22V4a2 2 0 012-2h8a2 2 0 012 2v18Z"/><path d="M6 12H4a2 2 0 00-2 2v6a2 2 0 002 2h2"/><path d="M18 9h2a2 2 0 012 2v9a2 2 0 01-2 2h-2"/></svg>
+                Empresa
+            </button>
+            <button class="set-nav__item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7Z"/><path d="M14 2v4a2 2 0 002 2h4"/></svg>
+                Facturacion
+            </button>
+            <button class="set-nav__item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                Oficios
+            </button>
+            <button class="set-nav__item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                Nomina
+            </button>
+            <button class="set-nav__item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                Notificaciones
+            </button>
+            <button class="set-nav__item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                Cuenta de Usuario
+            </button>
+        </nav>
+
+        <!-- Content -->
+        <div class="set-content">
+            <div class="set-section">
+                <!-- Logo Upload -->
+                <h2 class="set-section__title">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22V4a2 2 0 012-2h8a2 2 0 012 2v18Z"/><path d="M6 12H4a2 2 0 00-2 2v6a2 2 0 002 2h2"/><path d="M18 9h2a2 2 0 012 2v9a2 2 0 01-2 2h-2"/></svg>
+                    Logo de la Empresa
+                </h2>
+                <p class="set-section__desc">Los logos se usan en el header de la app y en facturas.</p>
+
+                <div class="set-logo-cards">
+                    <div class="set-logo-card">
+                        <div class="set-logo-card__preview">
+                            <div class="set-logo-card__empty">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                <span>Sin logo</span>
+                            </div>
+                        </div>
+                        <div class="set-logo-card__info">
+                            <p class="set-logo-card__title">Logo Horizontal</p>
+                            <p class="set-logo-card__desc">Usado en el header de la app</p>
+                            <div class="set-logo-card__actions">
+                                <button class="set-btn-secondary">Cambiar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="set-logo-card">
+                        <div class="set-logo-card__preview">
+                            <div class="set-logo-card__empty">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                <span>Sin logo</span>
+                            </div>
+                        </div>
+                        <div class="set-logo-card__info">
+                            <p class="set-logo-card__title">Logo Cuadrado</p>
+                            <p class="set-logo-card__desc">Usado en facturas y documentos</p>
+                            <div class="set-logo-card__actions">
+                                <button class="set-btn-secondary">Cambiar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="set-divider">
+
+                <!-- Company Info -->
+                <h2 class="set-section__title">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22V4a2 2 0 012-2h8a2 2 0 012 2v18Z"/><path d="M6 12H4a2 2 0 00-2 2v6a2 2 0 002 2h2"/><path d="M18 9h2a2 2 0 012 2v9a2 2 0 01-2 2h-2"/></svg>
+                    Informacion de la Empresa
+                </h2>
+                <p class="set-section__desc">Esta informacion aparece en las facturas y documentos oficiales.</p>
+
+                <div class="set-grid-2">
+                    <div class="set-field">
+                        <label class="set-label">Nombre Legal *</label>
+                        <input class="set-input" value="HM Construction Staffing LLLP">
+                    </div>
+                    <div class="set-field">
+                        <label class="set-label">Email</label>
+                        <input class="set-input" type="email" value="info@hmcstaffing.com">
+                    </div>
+                </div>
+                <div class="set-field">
+                    <label class="set-label">Direccion</label>
+                    <input class="set-input" value="500 Lucas Dr">
+                </div>
+                <div class="set-grid-3">
+                    <div class="set-field">
+                        <label class="set-label">Ciudad</label>
+                        <input class="set-input" value="Savannah">
+                    </div>
+                    <div class="set-field">
+                        <label class="set-label">Estado</label>
+                        <input class="set-input" value="GA" maxlength="2">
+                    </div>
+                    <div class="set-field">
+                        <label class="set-label">ZIP</label>
+                        <input class="set-input" value="31406">
+                    </div>
+                </div>
+                <div class="set-field">
+                    <label class="set-label">Telefono</label>
+                    <input class="set-input" value="+1 (912) 555-0147">
+                </div>
+
+                <div class="set-actions">
+                    <button class="set-save-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Guardar Empresa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

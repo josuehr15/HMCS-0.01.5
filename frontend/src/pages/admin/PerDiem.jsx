@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
-    Plus, X, ChevronDown, ChevronUp, CheckCircle,
+    Plus, X, CheckCircle,
     AlertTriangle, Wallet, Search, Trash2, Eye,
     ArrowRight, Clock, DollarSign, Hash, Building2,
-    Info, ChevronsUpDown,
+    Info,
 } from 'lucide-react';
 import useApi from '../../hooks/useApi';
 import './PerDiem.css';
@@ -40,10 +40,82 @@ function StatusChip({ status }) {
     );
 }
 
-/* ─── SortIcon ─────────────────────────────────────────────────────────── */
-function SortIcon({ col, sortCol, sortDir }) {
-    if (sortCol !== col) return <ChevronsUpDown size={12} />;
-    return sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
+/* ─── Avatar color ─────────────────────────────────────────────────────── */
+const AVATAR_COLORS = [
+    '#2A6C95', '#08543D', '#7C3AED', '#D97706', '#DC2626',
+    '#059669', '#0891B2', '#9333EA', '#C2410C', '#0369A1',
+];
+const avatarColor = (id) => AVATAR_COLORS[(id || 0) % AVATAR_COLORS.length];
+
+/* ─── PerDiemCard ──────────────────────────────────────────────────────── */
+function PerDiemCard({ pd, onView, onDelete, onMarkPaid, markingId }) {
+    const wFirst = pd.worker?.first_name || '';
+    const wLast = pd.worker?.last_name || '';
+    const workerName = `${wFirst} ${wLast}`.trim() || '—';
+    const workerCode = pd.worker?.worker_code || '';
+    const projectName = pd.assignment?.project?.name || '—';
+    const isPaid = pd.status === 'paid';
+
+    return (
+        <div className={`pd2-card pd2-card--${isPaid ? 'paid' : 'pending'}`}>
+            <div className="pd2-card__main">
+                <div className="pd2-card__left">
+                    <div className="pd2-avatar" style={{ background: avatarColor(pd.worker?.id) }}>
+                        {initials(wFirst, wLast)}
+                    </div>
+                    <div className="pd2-worker-info">
+                        <div className="pd2-worker-name">{workerName}</div>
+                        {workerCode && <div className="pd2-worker-code">{workerCode}</div>}
+                    </div>
+                </div>
+
+                <div className="pd2-card__center">
+                    <div className="pd2-project-name">
+                        <Building2 size={13} /> {projectName}
+                    </div>
+                    <div className="pd2-week-range">
+                        {fmtDate(pd.week_start_date)}&nbsp;→&nbsp;{fmtDate(pd.week_end_date)}
+                    </div>
+                </div>
+
+                <div className="pd2-card__right">
+                    <div className="pd2-amount">{fmt(pd.amount)}</div>
+                    <div className="pd2-amount-label">viático</div>
+                </div>
+            </div>
+
+            <div className="pd2-card__footer">
+                <div className="pd2-desc">
+                    {pd.description
+                        ? pd.description
+                        : <span className="pd2-muted">Sin descripción</span>}
+                </div>
+                <div className="pd2-card__actions">
+                    <StatusChip status={pd.status} />
+                    {!isPaid && (
+                        <button
+                            className="pd2-pay-btn"
+                            onClick={() => onMarkPaid(pd)}
+                            disabled={markingId === pd.id}
+                        >
+                            <CheckCircle size={13} />
+                            {markingId === pd.id ? '...' : 'Marcar Pagado'}
+                        </button>
+                    )}
+                    <button className="pd2-icon-btn" onClick={() => onView(pd)} title="Ver detalle">
+                        <Eye size={15} />
+                    </button>
+                    <button
+                        className="pd2-icon-btn pd2-icon-btn--danger"
+                        onClick={() => onDelete(pd)}
+                        title="Eliminar"
+                    >
+                        <Trash2 size={15} />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -466,10 +538,6 @@ export default function PerDiem() {
     const [sortCol, setSortCol] = useState('week_start_date');
     const [sortDir, setSortDir] = useState('desc');
 
-    /* menus */
-    const [openMenuId, setOpenMenuId] = useState(null);
-    const menuRef = useRef(null);
-
     /* modals */
     const [createOpen, setCreateOpen] = useState(false);
     const [detailPd, setDetailPd] = useState(null);
@@ -509,15 +577,6 @@ export default function PerDiem() {
 
     useEffect(() => { loadWorkers(); }, [loadWorkers]);
     useEffect(() => { loadPerDiems(); }, [loadPerDiems]);
-
-    /* close menu on outside click */
-    useEffect(() => {
-        const handler = (e) => {
-            if (menuRef.current && !menuRef.current.contains(e.target)) setOpenMenuId(null);
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, []);
 
     /* ── KPIs ─────────────────────────────────────────────────────── */
     const kpis = useMemo(() => {
@@ -698,138 +757,42 @@ export default function PerDiem() {
                 </div>
             )}
 
-            {/* ── Table ── */}
+            {/* ── Card List ── */}
             {loading ? (
-                <div className="pd-empty">
-                    <div className="pd-spinner" />
+                <div className="pd2-empty">
+                    <div className="pd2-spinner" />
                     <p>Cargando Per Diem...</p>
                 </div>
             ) : visible.length === 0 ? (
-                <div className="pd-card">
-                    <div className="pd-empty">
-                        <Wallet size={48} />
-                        <h3>{perDiems.length === 0 ? 'Sin Per Diem registrados' : 'Sin resultados'}</h3>
-                        <p>
-                            {perDiems.length === 0
-                                ? 'Crea el primer Per Diem para este período.'
-                                : 'Ajusta los filtros para ver más registros.'}
-                        </p>
-                        {perDiems.length === 0 && (
-                            <button className="pd-btn pd-btn--primary" onClick={() => setCreateOpen(true)}>
-                                <Plus size={15} /> Crear el primero
-                            </button>
-                        )}
-                    </div>
+                <div className="pd2-empty pd2-empty--bordered">
+                    <Wallet size={48} />
+                    <h3>{perDiems.length === 0 ? 'Sin Per Diem registrados' : 'Sin resultados'}</h3>
+                    <p>
+                        {perDiems.length === 0
+                            ? 'Crea el primer Per Diem para este período.'
+                            : 'Ajusta los filtros para ver más registros.'}
+                    </p>
+                    {perDiems.length === 0 && (
+                        <button className="pd-btn pd-btn--primary" onClick={() => setCreateOpen(true)}>
+                            <Plus size={15} /> Crear el primero
+                        </button>
+                    )}
                 </div>
             ) : (
-                <div className="pd-card">
-                    <div className="pd-table-wrap">
-                        <table className="pd-table">
-                            <thead>
-                                <tr>
-                                    <th
-                                        className={`pd-th--sortable ${sortCol === 'worker' ? 'pd-th--active' : ''}`}
-                                        onClick={() => toggleSort('worker')}
-                                    >
-                                        <span>Worker <SortIcon col="worker" sortCol={sortCol} sortDir={sortDir} /></span>
-                                    </th>
-                                    <th>Proyecto</th>
-                                    <th
-                                        className={`pd-th--sortable ${sortCol === 'week_start_date' ? 'pd-th--active' : ''}`}
-                                        onClick={() => toggleSort('week_start_date')}
-                                    >
-                                        <span>Semana <SortIcon col="week_start_date" sortCol={sortCol} sortDir={sortDir} /></span>
-                                    </th>
-                                    <th
-                                        className={`pd-th--sortable pd-th--right ${sortCol === 'amount' ? 'pd-th--active' : ''}`}
-                                        onClick={() => toggleSort('amount')}
-                                    >
-                                        <span>Monto <SortIcon col="amount" sortCol={sortCol} sortDir={sortDir} /></span>
-                                    </th>
-                                    <th>Descripción</th>
-                                    <th>Estado</th>
-                                    <th className="pd-th-actions">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {visible.map((pd) => {
-                                    const wFirst = pd.worker?.first_name || '';
-                                    const wLast = pd.worker?.last_name || '';
-                                    const workerName = `${wFirst} ${wLast}`.trim() || '—';
-                                    const workerCode = pd.worker?.worker_code || '';
-                                    const projectName = pd.assignment?.project?.name || '—';
-
-                                    return (
-                                        <tr key={pd.id} className="pd-row">
-                                            {/* Worker */}
-                                            <td>
-                                                <div className="pd-worker-cell">
-                                                    <div className="pd-avatar">{initials(wFirst, wLast)}</div>
-                                                    <div>
-                                                        <div className="pd-worker-name">{workerName}</div>
-                                                        {workerCode && <div className="pd-worker-code">{workerCode}</div>}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            {/* Project */}
-                                            <td>
-                                                <span className="pd-project-cell">
-                                                    <Building2 size={13} /> {projectName}
-                                                </span>
-                                            </td>
-                                            {/* Week */}
-                                            <td className="pd-week-cell">
-                                                {fmtDate(pd.week_start_date)}<br />
-                                                <span style={{ color: '#9CA3AF', fontSize: 12 }}>→ {fmtDate(pd.week_end_date)}</span>
-                                            </td>
-                                            {/* Amount */}
-                                            <td className="pd-amount-cell">{fmt(pd.amount)}</td>
-                                            {/* Description */}
-                                            <td className="pd-desc-cell">
-                                                {pd.description
-                                                    ? <span title={pd.description}>{pd.description}</span>
-                                                    : <span className="pd-muted">Sin descripción</span>}
-                                            </td>
-                                            {/* Status */}
-                                            <td><StatusChip status={pd.status} /></td>
-                                            {/* Actions */}
-                                            <td className="pd-actions-cell">
-                                                <div className="pd-actions">
-                                                    <button
-                                                        className="pd-icon-btn"
-                                                        title="Ver detalle"
-                                                        onClick={() => setDetailPd(pd)}
-                                                    >
-                                                        <Eye size={15} />
-                                                    </button>
-                                                    {pd.status === 'pending' && (
-                                                        <button
-                                                            className="pd-btn pd-btn--success pd-btn--sm"
-                                                            title="Marcar pagado"
-                                                            onClick={() => markPaid(pd)}
-                                                            disabled={markingId === pd.id}
-                                                        >
-                                                            <CheckCircle size={13} />
-                                                            {markingId === pd.id ? '...' : 'Pagar'}
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        className="pd-icon-btn"
-                                                        title="Eliminar"
-                                                        style={{ color: '#EF4444' }}
-                                                        onClick={() => setDeletePd(pd)}
-                                                    >
-                                                        <Trash2 size={15} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                <>
+                    <div className="pd2-list">
+                        {visible.map((pd) => (
+                            <PerDiemCard
+                                key={pd.id}
+                                pd={pd}
+                                onView={setDetailPd}
+                                onDelete={setDeletePd}
+                                onMarkPaid={markPaid}
+                                markingId={markingId}
+                            />
+                        ))}
                     </div>
-                    <div className="pd-footer-bar">
+                    <div className="pd2-footer-bar">
                         <span>
                             Mostrando <strong>{visible.length}</strong> de <strong>{perDiems.length}</strong> registros
                         </span>
@@ -837,7 +800,7 @@ export default function PerDiem() {
                             Total visible: <strong>{fmt(visible.reduce((s, p) => s + parseFloat(p.amount || 0), 0))}</strong>
                         </span>
                     </div>
-                </div>
+                </>
             )}
 
             {/* ── Modals ── */}

@@ -624,9 +624,16 @@ function GenerateModal({ clients, onClose, onGenerated, showToast }) {
     const [loadingWeeks, setLoadingWeeks] = useState(false);
     const [generating, setGenerating] = useState(false);
     const [error, setError] = useState('');
+    const [perDiemSuggestion, setPerDiemSuggestion] = useState(null);
+    const [perDiemLoading, setPerDiemLoading] = useState(false);
+    const [perDiemTotal, setPerDiemTotal] = useState('0');
 
     useEffect(() => {
-        if (!clientId) { setProjects([]); setProjectId(''); setWeeks([]); setWeekIdx(''); return; }
+        if (!clientId) {
+            setProjects([]); setProjectId(''); setWeeks([]); setWeekIdx('');
+            setPerDiemSuggestion(null); setPerDiemTotal('0');
+            return;
+        }
         setLoadingProj(true);
         get(`/projects?client_id=${clientId}`)
             .then(r => setProjects(r.data?.data || r.data || r))
@@ -644,6 +651,31 @@ function GenerateModal({ clients, onClose, onGenerated, showToast }) {
     }, [projectId]);
 
     const selectedWeek = weeks[parseInt(weekIdx)];
+
+    useEffect(() => {
+        const w = selectedWeek;
+        if (!clientId || !w?.week_start_date || !w?.week_end_date) {
+            setPerDiemSuggestion(null);
+            return;
+        }
+        setPerDiemLoading(true);
+        const qs = new URLSearchParams({
+            client_id: clientId,
+            week_start_date: w.week_start_date,
+            week_end_date: w.week_end_date,
+            status: 'pending',
+        }).toString();
+        get(`/per-diem?${qs}`)
+            .then(r => {
+                const entries = r.data?.data || r.data || [];
+                const total = Array.isArray(entries)
+                    ? entries.reduce((s, e) => s + parseFloat(e.amount || 0), 0)
+                    : 0;
+                setPerDiemSuggestion(total > 0 ? parseFloat(total.toFixed(2)) : null);
+            })
+            .catch(() => setPerDiemSuggestion(null))
+            .finally(() => setPerDiemLoading(false));
+    }, [clientId, selectedWeek?.week_start_date, selectedWeek?.week_end_date]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleGenerate = async () => {
         if (!clientId || !projectId || weekIdx === '') return setError('Selecciona cliente, proyecto y semana.');
@@ -722,6 +754,33 @@ function GenerateModal({ clients, onClose, onGenerated, showToast }) {
                         <div className="inv-gen-preview">
                             <div className="inv-gen-preview__title">
                                 <Calendar size={14} /> {selectedWeek.label}
+                            </div>
+                            <div className="inv-field" style={{ marginTop: 12 }}>
+                                <label>Per Diem ($)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={perDiemTotal}
+                                    onChange={e => setPerDiemTotal(e.target.value)}
+                                />
+                                <span className="inv-field__hint">Passthrough — no afecta márgenes</span>
+                                {perDiemLoading ? (
+                                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Buscando Per Diem pendiente...</div>
+                                ) : perDiemSuggestion !== null ? (
+                                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                        <span>Per Diem pendiente de este cliente en este período: <strong>{fmt$(perDiemSuggestion)}</strong> — ¿Incluir?</span>
+                                        <button
+                                            type="button"
+                                            className="inv-refresh-btn"
+                                            style={{ padding: '4px 10px', height: 28 }}
+                                            onClick={() => setPerDiemTotal(perDiemSuggestion.toFixed(2))}
+                                            title="Incluir"
+                                        >
+                                            Incluir
+                                        </button>
+                                    </div>
+                                ) : null}
                             </div>
                             {selectedWeek.workers?.length > 0 && (
                                 <>

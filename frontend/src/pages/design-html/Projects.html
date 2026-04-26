@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMCS - Gestion de Proyectos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F1F5F9;
+            --bg-card: #ffffff;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --text-faint: #94A3B8;
+            --border: #E2E8F0;
+            --hover: #F8FAFC;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ─── Page layout ─── */
+        .projects-page {
+            padding: 28px 32px;
+            max-width: 100%;
+            min-height: 100vh;
+        }
+
+        /* ─── Header ─── */
+        .pj-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 28px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .pj-header__title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            margin: 0 0 4px 0;
+        }
+
+        .pj-header__subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pj-btn-new {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #2A6C95 0%, #1E5270 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(42, 108, 149, 0.3);
+            white-space: nowrap;
+        }
+
+        .pj-btn-new:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(42, 108, 149, 0.4);
+        }
+
+        /* ─── KPI Cards ─── */
+        .pj-kpis {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 900px) { .pj-kpis { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px) { .pj-kpis { grid-template-columns: 1fr; } }
+
+        .pj-kpi {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+
+        .pj-kpi:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06), 0 12px 24px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .pj-kpi__icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .pj-kpi__body { flex: 1; min-width: 0; }
+
+        .pj-kpi__value {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1;
+            letter-spacing: -1px;
+            margin: 0 0 4px 0;
+        }
+
+        .pj-kpi__label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+        }
+
+        /* ─── Toolbar ─── */
+        .pj-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pj-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-card);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 0 14px;
+            height: 40px;
+            flex: 1;
+            max-width: 360px;
+            transition: all 0.2s;
+        }
+
+        .pj-search:focus-within {
+            border-color: #2A6C95;
+            box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.1);
+        }
+
+        .pj-search__input {
+            border: none;
+            background: none;
+            outline: none;
+            font-size: 0.875rem;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            flex: 1;
+        }
+
+        .pj-search__input::placeholder { color: var(--text-faint); }
+
+        .pj-results {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+
+        /* ─── Select wrapper ─── */
+        .workers-select-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .workers-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background: var(--bg-card);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 32px 8px 14px;
+            font-size: 0.82rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+            height: 40px;
+        }
+
+        .workers-select:focus {
+            border-color: #2A6C95;
+            box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.1);
+        }
+
+        .workers-select__arrow {
+            position: absolute;
+            right: 10px;
+            pointer-events: none;
+            color: var(--text-muted);
+        }
+
+        /* ─── View toggle ─── */
+        .workers-view-toggle {
+            display: flex;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: var(--bg-card);
+        }
+
+        .workers-view-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .workers-view-btn--active {
+            background: #2A6C95;
+            color: white;
+        }
+
+        /* ─── Status Badges ─── */
+        .pj-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pj-badge--active    { background: rgba(16, 185, 129, 0.12); color: #059669; }
+        .pj-badge--paused    { background: rgba(245, 158, 11, 0.12);  color: #D97706; }
+        .pj-badge--completed { background: rgba(100, 116, 139, 0.12); color: #64748B; }
+
+        /* ─── Project Card Grid ─── */
+        .pj-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 1100px) { .pj-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 640px)  { .pj-grid { grid-template-columns: 1fr; } }
+
+        /* ─── Project Card ─── */
+        .pj-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .pj-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.07), 0 12px 28px rgba(0, 0, 0, 0.1);
+            transform: translateY(-3px);
+            border-color: rgba(42, 108, 149, 0.25);
+        }
+
+        .pj-card--inactive { opacity: 0.72; }
+
+        .pj-card__map {
+            width: 100%;
+            height: 160px;
+            position: relative;
+            overflow: hidden;
+            background: var(--hover);
+        }
+
+        .pj-card__map-bg {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #e8f0f5 0%, #d1dfe8 50%, #c5d6e3 100%);
+            position: relative;
+        }
+
+        .pj-card__map-bg svg {
+            opacity: 0.18;
+        }
+
+        .pj-card__status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .pj-card__status-badge--active    { background: rgba(16, 185, 129, 0.85); color: white; }
+        .pj-card__status-badge--paused    { background: rgba(245, 158, 11, 0.85);  color: white; }
+        .pj-card__status-badge--completed { background: rgba(100, 116, 139, 0.85); color: white; }
+
+        .pj-card__body { padding: 14px 16px; }
+
+        .pj-card__head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .pj-card__name {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 3px 0;
+            line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pj-card__client {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+        }
+
+        .pj-card__actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .pj-card:hover .pj-card__actions { opacity: 1; }
+
+        .pj-card__action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .pj-card__action-btn:hover { background: var(--hover); color: var(--text); }
+        .pj-card__action-btn--pause:hover {
+            background: rgba(245, 158, 11, 0.08);
+            color: #D97706;
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .pj-card__info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pj-card__info-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .pj-card__info-row span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pj-card__footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .pj-card__gps-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(42, 108, 149, 0.06);
+            border: 1px solid rgba(42, 108, 149, 0.15);
+            color: #2A6C95;
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pj-card__workers {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ─── Detail Panel ─── */
+        .pj-detail-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 500;
+            backdrop-filter: blur(1.5px);
+            -webkit-backdrop-filter: blur(1.5px);
+        }
+
+        .pj-detail-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: 65%;
+            max-width: 900px;
+            min-width: 600px;
+            background: var(--bg);
+            border-left: 1px solid var(--border);
+            box-shadow: -12px 0 48px rgba(0, 0, 0, 0.2);
+            z-index: 501;
+            display: flex;
+            flex-direction: column;
+            animation: pjDetailIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        @keyframes pjDetailIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
+        }
+
+        .pj-detail__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 28px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .pj-detail__header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .pj-detail__icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 13px;
+            background: linear-gradient(135deg, #2A6C95 0%, #08543D 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .pj-detail__name {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 3px 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pj-detail__client {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pj-detail__header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .pj-detail__hrs-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #2A6C95;
+            background: rgba(42, 108, 149, 0.1);
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+
+        .pj-detail__close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            line-height: 1;
+        }
+
+        .pj-detail__close:hover { background: var(--hover); color: var(--text); }
+
+        .pj-detail__quick-actions {
+            display: flex;
+            gap: 8px;
+            padding: 12px 28px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .pj-detail__qa-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border);
+            background: none;
+            color: var(--text);
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .pj-detail__qa-btn:hover { background: var(--hover); }
+
+        .pj-detail__qa-btn--primary {
+            background: linear-gradient(135deg, #2A6C95 0%, #1E5270 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 2px 8px rgba(42, 108, 149, 0.3);
+        }
+
+        .pj-detail__qa-btn--primary:hover {
+            box-shadow: 0 4px 12px rgba(42, 108, 149, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .pj-detail__qa-btn--danger { color: #EF4444; border-color: rgba(239, 68, 68, 0.2); }
+        .pj-detail__qa-btn--danger:hover { background: rgba(239, 68, 68, 0.06); }
+
+        .pj-detail__content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .pj-detail__left {
+            overflow-y: auto;
+            padding: 20px 24px;
+            border-right: 1px solid var(--border);
+        }
+
+        .pj-detail__left::-webkit-scrollbar { width: 4px; }
+        .pj-detail__left::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .pj-detail__section { margin-bottom: 24px; }
+
+        .pj-detail__section-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #2A6C95;
+            font-family: 'Inter', sans-serif;
+            margin: 0 0 12px 0;
+        }
+
+        .pj-detail__section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .pj-detail__rows { display: flex; flex-direction: column; gap: 8px; }
+
+        .pj-detail__row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            font-size: 0.82rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pj-detail__row-label {
+            color: var(--text-muted);
+            font-weight: 500;
+            min-width: 64px;
+            flex-shrink: 0;
+        }
+
+        .pj-detail__row-value { color: var(--text); font-weight: 500; }
+
+        .pj-detail__gps-info {
+            background: var(--hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+
+        .pj-detail__gps-coords {
+            font-size: 0.78rem;
+            font-family: 'Inter', monospace;
+            color: var(--text);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .pj-detail__map-link {
+            margin-left: 6px;
+            font-size: 0.75rem;
+            color: #2A6C95;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .pj-detail__map-link:hover { text-decoration: underline; }
+
+        .pj-detail__gps-radius {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pj-detail__rules { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .pj-detail__rule-chip {
+            background: var(--hover);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pj-detail__workers-list { display: flex; flex-direction: column; gap: 6px; }
+
+        .pj-detail__worker-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            background: var(--hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: all 0.15s;
+        }
+
+        .pj-detail__worker-row:hover { border-color: rgba(42, 108, 149, 0.2); }
+        .pj-detail__worker-row--done { opacity: 0.65; }
+
+        .pj-detail__worker-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #2A6C95, #08543D);
+            color: white;
+            font-size: 0.68rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .pj-detail__worker-info { flex: 1; min-width: 0; }
+
+        .pj-detail__worker-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pj-detail__worker-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pj-detail__worker-status {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .pj-detail__worker-status--active    { background: rgba(16, 185, 129, 0.1); color: #059669; }
+        .pj-detail__worker-status--completed { background: rgba(100, 116, 139, 0.1); color: #64748B; }
+
+        .pj-detail__assign-btn {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #2A6C95;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            padding: 0;
+            white-space: nowrap;
+        }
+
+        .pj-detail__assign-btn:hover { text-decoration: underline; }
+
+        .pj-detail__end-btn {
+            width: 26px;
+            height: 26px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 6px;
+            background: rgba(16, 185, 129, 0.08);
+            color: #059669;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .pj-detail__end-btn:hover { background: rgba(16, 185, 129, 0.15); }
+
+        .pj-detail__right {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .pj-detail__map-container {
+            flex: 1;
+            position: relative;
+            min-height: 300px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e0ecf4 0%, #c6d9e6 50%, #b8cdd9 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pj-detail__map-container svg { opacity: 0.15; }
+
+        .pj-detail__map-label {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #2A6C95;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            pointer-events: none;
+        }
+
+        /* ─── Map placeholder visual ─── */
+        .map-visual {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-visual__grid {
+            position: absolute;
+            inset: 0;
+            opacity: 0.08;
+        }
+
+        .map-visual__pin {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            z-index: 2;
+        }
+
+        .map-visual__radius {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px dashed rgba(42, 108, 149, 0.3);
+            background: rgba(42, 108, 149, 0.05);
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 900px) {
+            .pj-detail-panel {
+                width: 100%;
+                min-width: unset;
+            }
+            .pj-detail__content {
+                grid-template-columns: 1fr;
+            }
+            .pj-detail__right {
+                min-height: 260px;
+                max-height: 260px;
+                border-left: none;
+                border-top: 1px solid var(--border);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .projects-page { padding: 16px; }
+            .pj-header { flex-direction: column; }
+        }
+
+        /* ─── Inline icon helper ─── */
+        .icon-inline {
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="projects-page">
+
+    <!-- ══════ Header ══════ -->
+    <div class="pj-header">
+        <div>
+            <h1 class="pj-header__title">Gestion de Proyectos</h1>
+            <p class="pj-header__subtitle">Administra proyectos, GPS y asignaciones de workers</p>
+        </div>
+        <button class="pj-btn-new">
+            <svg class="icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuevo Proyecto
+        </button>
+    </div>
+
+    <!-- ══════ KPI Cards ══════ -->
+    <div class="pj-kpis">
+        <!-- Total -->
+        <div class="pj-kpi">
+            <div class="pj-kpi__icon" style="background: rgba(42,108,149,0.08); color: #2A6C95;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="pj-kpi__body">
+                <p class="pj-kpi__value">12</p>
+                <p class="pj-kpi__label">Total</p>
+            </div>
+        </div>
+        <!-- Activos -->
+        <div class="pj-kpi">
+            <div class="pj-kpi__icon" style="background: rgba(16,185,129,0.08); color: #10B981;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="pj-kpi__body">
+                <p class="pj-kpi__value">6</p>
+                <p class="pj-kpi__label">Activos</p>
+            </div>
+        </div>
+        <!-- En Pausa -->
+        <div class="pj-kpi">
+            <div class="pj-kpi__icon" style="background: rgba(245,158,11,0.08); color: #F59E0B;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            </div>
+            <div class="pj-kpi__body">
+                <p class="pj-kpi__value">2</p>
+                <p class="pj-kpi__label">En Pausa</p>
+            </div>
+        </div>
+        <!-- Workers -->
+        <div class="pj-kpi">
+            <div class="pj-kpi__icon" style="background: rgba(139,92,246,0.08); color: #8B5CF6;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="pj-kpi__body">
+                <p class="pj-kpi__value">24</p>
+                <p class="pj-kpi__label">Workers Asig.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════ Toolbar ══════ -->
+    <div class="pj-toolbar">
+        <div class="pj-search">
+            <svg class="icon-inline" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="pj-search__input" placeholder="Buscar por nombre, direccion o cliente..." />
+        </div>
+        <div class="workers-select-wrapper">
+            <select class="workers-select">
+                <option value="">Todos los clientes</option>
+                <option>Turner Construction</option>
+                <option>Riverside Developers</option>
+                <option>Metro City Gov</option>
+                <option>Coastal Homes LLC</option>
+            </select>
+            <svg class="workers-select__arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="workers-select-wrapper">
+            <select class="workers-select">
+                <option value="active">Activos</option>
+                <option value="on_hold">En Pausa</option>
+                <option value="completed">Completados</option>
+                <option value="all">Todos</option>
+            </select>
+            <svg class="workers-select__arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <span class="pj-results">6 resultados</span>
+        <div class="workers-view-toggle">
+            <button class="workers-view-btn workers-view-btn--active">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </button>
+            <button class="workers-view-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ══════ Project Cards Grid ══════ -->
+    <div class="pj-grid">
+
+        <!-- Card 1: Riverside Renovation -->
+        <div class="pj-card" onclick="document.getElementById('detail-panel').style.display='flex'; document.getElementById('detail-overlay').style.display='block';">
+            <div class="pj-card__map">
+                <div class="pj-card__map-bg">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2A6C95" stroke-width="1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <span class="pj-card__status-badge pj-card__status-badge--active">Activo</span>
+            </div>
+            <div class="pj-card__body">
+                <div class="pj-card__head">
+                    <div>
+                        <p class="pj-card__name">Riverside Renovation</p>
+                        <p class="pj-card__client">Turner Construction</p>
+                    </div>
+                    <div class="pj-card__actions">
+                        <button class="pj-card__action-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                        <button class="pj-card__action-btn pj-card__action-btn--pause"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+                    </div>
+                </div>
+                <div class="pj-card__info">
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span>245 Bull St, Savannah, GA 31401</span>
+                    </div>
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>Mar 15, 2026</span>
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        <span>Sep 30, 2026</span>
+                    </div>
+                </div>
+                <div class="pj-card__footer">
+                    <span class="pj-card__gps-chip">
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                        500m
+                    </span>
+                    <span class="pj-card__workers">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        8 workers
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Harbor Bridge Expansion -->
+        <div class="pj-card">
+            <div class="pj-card__map">
+                <div class="pj-card__map-bg">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2A6C95" stroke-width="1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <span class="pj-card__status-badge pj-card__status-badge--active">Activo</span>
+            </div>
+            <div class="pj-card__body">
+                <div class="pj-card__head">
+                    <div>
+                        <p class="pj-card__name">Harbor Bridge Expansion</p>
+                        <p class="pj-card__client">Metro City Gov</p>
+                    </div>
+                    <div class="pj-card__actions">
+                        <button class="pj-card__action-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                        <button class="pj-card__action-btn pj-card__action-btn--pause"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+                    </div>
+                </div>
+                <div class="pj-card__info">
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span>1200 Bay St, Savannah, GA 31401</span>
+                    </div>
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>Jan 10, 2026</span>
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        <span>Dec 20, 2026</span>
+                    </div>
+                </div>
+                <div class="pj-card__footer">
+                    <span class="pj-card__gps-chip">
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                        750m
+                    </span>
+                    <span class="pj-card__workers">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        5 workers
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Coastal Villas Phase II -->
+        <div class="pj-card">
+            <div class="pj-card__map">
+                <div class="pj-card__map-bg">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2A6C95" stroke-width="1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <span class="pj-card__status-badge pj-card__status-badge--active">Activo</span>
+            </div>
+            <div class="pj-card__body">
+                <div class="pj-card__head">
+                    <div>
+                        <p class="pj-card__name">Coastal Villas Phase II</p>
+                        <p class="pj-card__client">Coastal Homes LLC</p>
+                    </div>
+                    <div class="pj-card__actions">
+                        <button class="pj-card__action-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                        <button class="pj-card__action-btn pj-card__action-btn--pause"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+                    </div>
+                </div>
+                <div class="pj-card__info">
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span>88 Tybee Island Dr, Tybee Island, GA 31328</span>
+                    </div>
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>Apr 1, 2026</span>
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        <span>Nov 15, 2026</span>
+                    </div>
+                </div>
+                <div class="pj-card__footer">
+                    <span class="pj-card__gps-chip">
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                        400m
+                    </span>
+                    <span class="pj-card__workers">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        4 workers
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Downtown Office Tower -->
+        <div class="pj-card pj-card--inactive">
+            <div class="pj-card__map">
+                <div class="pj-card__map-bg">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2A6C95" stroke-width="1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <span class="pj-card__status-badge pj-card__status-badge--paused">En Pausa</span>
+            </div>
+            <div class="pj-card__body">
+                <div class="pj-card__head">
+                    <div>
+                        <p class="pj-card__name">Downtown Office Tower</p>
+                        <p class="pj-card__client">Riverside Developers</p>
+                    </div>
+                    <div class="pj-card__actions">
+                        <button class="pj-card__action-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                        <button class="pj-card__action-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+                    </div>
+                </div>
+                <div class="pj-card__info">
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span>501 Drayton St, Savannah, GA 31401</span>
+                    </div>
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>Feb 1, 2026</span>
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        <span>Aug 30, 2026</span>
+                    </div>
+                </div>
+                <div class="pj-card__footer">
+                    <span class="pj-card__gps-chip">
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                        600m
+                    </span>
+                    <span class="pj-card__workers">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        3 workers
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 5: Midtown Medical Center -->
+        <div class="pj-card">
+            <div class="pj-card__map">
+                <div class="pj-card__map-bg">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2A6C95" stroke-width="1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <span class="pj-card__status-badge pj-card__status-badge--active">Activo</span>
+            </div>
+            <div class="pj-card__body">
+                <div class="pj-card__head">
+                    <div>
+                        <p class="pj-card__name">Midtown Medical Center</p>
+                        <p class="pj-card__client">Turner Construction</p>
+                    </div>
+                    <div class="pj-card__actions">
+                        <button class="pj-card__action-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                        <button class="pj-card__action-btn pj-card__action-btn--pause"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+                    </div>
+                </div>
+                <div class="pj-card__info">
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span>340 Abercorn St, Savannah, GA 31401</span>
+                    </div>
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>Mar 1, 2026</span>
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        <span>En curso</span>
+                    </div>
+                </div>
+                <div class="pj-card__footer">
+                    <span class="pj-card__gps-chip">
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                        500m
+                    </span>
+                    <span class="pj-card__workers">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        2 workers
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 6: Forsyth Park Pavilion -->
+        <div class="pj-card pj-card--inactive">
+            <div class="pj-card__map">
+                <div class="pj-card__map-bg">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2A6C95" stroke-width="1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <span class="pj-card__status-badge pj-card__status-badge--completed">Completado</span>
+            </div>
+            <div class="pj-card__body">
+                <div class="pj-card__head">
+                    <div>
+                        <p class="pj-card__name">Forsyth Park Pavilion</p>
+                        <p class="pj-card__client">Metro City Gov</p>
+                    </div>
+                    <div class="pj-card__actions">
+                        <button class="pj-card__action-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                        <button class="pj-card__action-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+                    </div>
+                </div>
+                <div class="pj-card__info">
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span>Forsyth Park, Savannah, GA 31401</span>
+                    </div>
+                    <div class="pj-card__info-row">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>Oct 1, 2025</span>
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        <span>Mar 10, 2026</span>
+                    </div>
+                </div>
+                <div class="pj-card__footer">
+                    <span class="pj-card__gps-chip">
+                        <svg class="icon-inline" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                        300m
+                    </span>
+                    <span class="pj-card__workers">
+                        <svg class="icon-inline" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        2 workers
+                    </span>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /pj-grid -->
+
+</div><!-- /projects-page -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     DETAIL PANEL (visible by default for demonstration)
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="detail-overlay" class="pj-detail-overlay" onclick="this.style.display='none'; document.getElementById('detail-panel').style.display='none';"></div>
+
+<div id="detail-panel" class="pj-detail-panel" style="display: flex;">
+
+    <!-- Header -->
+    <div class="pj-detail__header">
+        <div class="pj-detail__header-left">
+            <div class="pj-detail__icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div>
+                <h2 class="pj-detail__name">Riverside Renovation</h2>
+                <p class="pj-detail__client">Turner Construction</p>
+            </div>
+        </div>
+        <div class="pj-detail__header-right">
+            <span class="pj-badge pj-badge--active">Activo</span>
+            <span class="pj-detail__hrs-badge">186h</span>
+            <button class="pj-detail__close" onclick="document.getElementById('detail-panel').style.display='none'; document.getElementById('detail-overlay').style.display='none';">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="pj-detail__quick-actions">
+        <button class="pj-detail__qa-btn pj-detail__qa-btn--primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Editar
+        </button>
+        <button class="pj-detail__qa-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            Pausar
+        </button>
+        <button class="pj-detail__qa-btn pj-detail__qa-btn--danger">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Eliminar
+        </button>
+    </div>
+
+    <!-- Content: 2 columns -->
+    <div class="pj-detail__content">
+
+        <!-- LEFT COLUMN -->
+        <div class="pj-detail__left">
+
+            <!-- Informacion -->
+            <div class="pj-detail__section">
+                <h3 class="pj-detail__section-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    INFORMACION
+                </h3>
+                <div class="pj-detail__rows">
+                    <div class="pj-detail__row">
+                        <span class="pj-detail__row-label">Direccion</span>
+                        <span class="pj-detail__row-value">245 Bull St, Savannah, GA 31401</span>
+                    </div>
+                    <div class="pj-detail__row">
+                        <span class="pj-detail__row-label">Inicio</span>
+                        <span class="pj-detail__row-value">Mar 15, 2026</span>
+                    </div>
+                    <div class="pj-detail__row">
+                        <span class="pj-detail__row-label">Fin</span>
+                        <span class="pj-detail__row-value">Sep 30, 2026</span>
+                    </div>
+                    <div class="pj-detail__row">
+                        <span class="pj-detail__row-label">Notas</span>
+                        <span class="pj-detail__row-value" style="color: var(--text-muted);">Renovacion completa del edificio historico. Coordinar con preservacion.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GPS -->
+            <div class="pj-detail__section">
+                <h3 class="pj-detail__section-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                    CONFIGURACION GPS
+                </h3>
+                <div class="pj-detail__gps-info">
+                    <div class="pj-detail__gps-coords">
+                        32.080900, -81.091200
+                        <a href="#" class="pj-detail__map-link">&#8599;</a>
+                    </div>
+                    <div class="pj-detail__gps-radius">Radio: 500m</div>
+                </div>
+            </div>
+
+            <!-- Reglas de Jornada -->
+            <div class="pj-detail__section">
+                <h3 class="pj-detail__section-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                    REGLAS DE JORNADA
+                </h3>
+                <div class="pj-detail__rules">
+                    <div class="pj-detail__rule-chip">Almuerzo: Pagado (60 min)</div>
+                    <div class="pj-detail__rule-chip">9.0h trabajo / dia</div>
+                    <div class="pj-detail__rule-chip">10.0h pagadas / dia</div>
+                    <div class="pj-detail__rule-chip" style="background: #E0E7FF; color: #3730A3;">Horario: 07:00 a 17:00</div>
+                </div>
+            </div>
+
+            <!-- Workers Asignados -->
+            <div class="pj-detail__section">
+                <div class="pj-detail__section-header">
+                    <h3 class="pj-detail__section-title" style="margin: 0;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        WORKERS ASIGNADOS (6)
+                    </h3>
+                    <button class="pj-detail__assign-btn">+ Asignar</button>
+                </div>
+                <div class="pj-detail__workers-list">
+                    <!-- Worker 1 -->
+                    <div class="pj-detail__worker-row">
+                        <div class="pj-detail__worker-avatar">JR</div>
+                        <div class="pj-detail__worker-info">
+                            <div class="pj-detail__worker-name">Juan Rodriguez</div>
+                            <div class="pj-detail__worker-meta">Carpintero &middot; Desde Mar 15, 2026</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="pj-detail__worker-status pj-detail__worker-status--active">Activo</span>
+                            <button class="pj-detail__end-btn">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Worker 2 -->
+                    <div class="pj-detail__worker-row">
+                        <div class="pj-detail__worker-avatar">ML</div>
+                        <div class="pj-detail__worker-info">
+                            <div class="pj-detail__worker-name">Maria Lopez</div>
+                            <div class="pj-detail__worker-meta">Electricista &middot; Desde Mar 18, 2026</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="pj-detail__worker-status pj-detail__worker-status--active">Activo</span>
+                            <button class="pj-detail__end-btn">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Worker 3 -->
+                    <div class="pj-detail__worker-row">
+                        <div class="pj-detail__worker-avatar">CP</div>
+                        <div class="pj-detail__worker-info">
+                            <div class="pj-detail__worker-name">Carlos Perez</div>
+                            <div class="pj-detail__worker-meta">Plomero &middot; Desde Mar 20, 2026</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="pj-detail__worker-status pj-detail__worker-status--active">Activo</span>
+                            <button class="pj-detail__end-btn">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Worker 4 -->
+                    <div class="pj-detail__worker-row">
+                        <div class="pj-detail__worker-avatar">AG</div>
+                        <div class="pj-detail__worker-info">
+                            <div class="pj-detail__worker-name">Ana Garcia</div>
+                            <div class="pj-detail__worker-meta">Pintor &middot; Desde Apr 1, 2026</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="pj-detail__worker-status pj-detail__worker-status--active">Activo</span>
+                            <button class="pj-detail__end-btn">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Worker 5 - completed -->
+                    <div class="pj-detail__worker-row pj-detail__worker-row--done">
+                        <div class="pj-detail__worker-avatar">RM</div>
+                        <div class="pj-detail__worker-info">
+                            <div class="pj-detail__worker-name">Roberto Martinez</div>
+                            <div class="pj-detail__worker-meta">Albanil &middot; Desde Mar 15, 2026</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="pj-detail__worker-status pj-detail__worker-status--completed">Finalizado</span>
+                        </div>
+                    </div>
+                    <!-- Worker 6 -->
+                    <div class="pj-detail__worker-row">
+                        <div class="pj-detail__worker-avatar">LS</div>
+                        <div class="pj-detail__worker-info">
+                            <div class="pj-detail__worker-name">Luis Sanchez</div>
+                            <div class="pj-detail__worker-meta">Soldador &middot; Desde Apr 5, 2026</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="pj-detail__worker-status pj-detail__worker-status--active">Activo</span>
+                            <button class="pj-detail__end-btn">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN - Map -->
+        <div class="pj-detail__right">
+            <div class="pj-detail__map-container">
+                <!-- Map placeholder with visual elements -->
+                <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#2A6C95" stroke-width="0.8">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <!-- Grid lines for map feel -->
+                <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.06;" viewBox="0 0 400 600" preserveAspectRatio="none">
+                    <defs>
+                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#2A6C95" stroke-width="0.5"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)"/>
+                    <!-- Road lines -->
+                    <line x1="0" y1="200" x2="400" y2="200" stroke="#2A6C95" stroke-width="2"/>
+                    <line x1="0" y1="400" x2="400" y2="400" stroke="#2A6C95" stroke-width="1.5"/>
+                    <line x1="150" y1="0" x2="150" y2="600" stroke="#2A6C95" stroke-width="2"/>
+                    <line x1="300" y1="0" x2="300" y2="600" stroke="#2A6C95" stroke-width="1"/>
+                    <!-- Dashed radius circle -->
+                    <circle cx="200" cy="300" r="60" fill="rgba(42,108,149,0.04)" stroke="#2A6C95" stroke-width="1.5" stroke-dasharray="6,4"/>
+                    <!-- Pin -->
+                    <circle cx="200" cy="300" r="6" fill="#2A6C95" opacity="0.6"/>
+                    <circle cx="200" cy="300" r="3" fill="white" opacity="0.8"/>
+                </svg>
+                <div class="pj-detail__map-label">Radio GPS: 500m</div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

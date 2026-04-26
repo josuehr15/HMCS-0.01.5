@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMCS - Gestion de Trabajadores</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F1F5F9;
+            --bg-card: #ffffff;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --hover: #F8FAFC;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        h1, h2, h3 { font-family: 'Montserrat', 'Inter', sans-serif; }
+
+        /* ── Page ── */
+        .workers-page {
+            padding: 32px;
+            background: transparent;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* ── Header ── */
+        .workers-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .workers-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 3px;
+        }
+        .workers-subtitle {
+            font-size: 13px;
+            color: #6B7280;
+            margin: 0;
+        }
+
+        /* ── Buttons ── */
+        .workers-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 20px;
+            background: #2A6C95;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .workers-btn-primary:hover {
+            background: #1E5A7A;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(42, 108, 149, 0.3);
+        }
+        .workers-btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 20px;
+            background: transparent;
+            color: #2A6C95;
+            border: 1.5px solid #2A6C95;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+        .workers-btn-outline:hover { background: #EFF6FF; }
+        .workers-btn-danger {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 20px;
+            background: #DC2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+        .workers-btn-danger:hover { background: #B91C1C; }
+
+        /* ── Gear button ── */
+        .workers-gear-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            background: white;
+            color: #6B7280;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .workers-gear-btn:hover {
+            border-color: #2A6C95;
+            color: #2A6C95;
+            background: #EFF6FF;
+        }
+
+        /* ── Stats Cards ── */
+        .workers-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+        .workers-stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #F3F4F6;
+            transition: box-shadow 0.2s;
+        }
+        .workers-stat-card:hover { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.09); }
+        .workers-stat-card__icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .workers-stat-card__icon--blue { background: rgba(42, 108, 149, 0.10); color: #2A6C95; }
+        .workers-stat-card__icon--green { background: rgba(16, 185, 129, 0.10); color: #059669; }
+        .workers-stat-card__icon--teal { background: rgba(8, 84, 61, 0.10); color: #08543D; }
+        .workers-stat-card__icon--orange { background: rgba(245, 158, 11, 0.10); color: #D97706; }
+        .workers-stat-card__value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 2px;
+            line-height: 1;
+        }
+        .workers-stat-card__label {
+            font-size: 12px;
+            color: #6B7280;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        /* ── Filters ── */
+        .workers-filters {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .workers-search {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+            max-width: 340px;
+        }
+        .workers-search__icon {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9CA3AF;
+            pointer-events: none;
+        }
+        .workers-search__input {
+            width: 100%;
+            padding: 9px 12px 9px 34px;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+            color: #111827;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .workers-search__input:focus {
+            outline: none;
+            border-color: #2A6C95;
+            box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.1);
+        }
+        .workers-filter-trade-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .workers-select-wrapper { position: relative; }
+        .workers-select {
+            appearance: none;
+            padding: 9px 30px 9px 12px;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+            color: #111827;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+        .workers-select:focus { outline: none; border-color: #2A6C95; }
+        .workers-select__arrow {
+            position: absolute;
+            right: 9px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6B7280;
+            pointer-events: none;
+        }
+        .workers-count {
+            font-size: 12px;
+            color: #9CA3AF;
+            white-space: nowrap;
+            margin-left: auto;
+        }
+
+        /* ── View Toggle ── */
+        .workers-view-toggle {
+            display: flex;
+            gap: 2px;
+            background: #F3F4F6;
+            padding: 3px;
+            border-radius: 9px;
+        }
+        .workers-view-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 30px;
+            border: none;
+            background: transparent;
+            border-radius: 7px;
+            cursor: pointer;
+            color: #9CA3AF;
+            transition: all 0.18s;
+        }
+        .workers-view-btn--active {
+            background: white;
+            color: #2A6C95;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .workers-view-btn:hover:not(.workers-view-btn--active) { color: #6B7280; }
+
+        /* ── Cards Grid ── */
+        .workers-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            animation: fadeInGrid 0.25s ease;
+        }
+        @keyframes fadeInGrid {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Worker Card ── */
+        .worker-card {
+            background: white;
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: box-shadow 0.2s, transform 0.2s;
+            cursor: pointer;
+        }
+        .worker-card:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .worker-card--inactive { opacity: 0.72; background: #FAFAFA; }
+        .worker-card__top {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .worker-card__identity { flex: 1; min-width: 0; }
+        .worker-card__name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .worker-card__actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+        .wc-icon-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #E5E7EB;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #F9FAFB;
+            color: #6B7280;
+            transition: all 0.18s;
+            flex-shrink: 0;
+        }
+        .wc-icon-btn--edit:hover { background: #DBEAFE; border-color: #2A6C95; color: #2A6C95; }
+        .wc-icon-btn--pause:hover { background: #FEE2E2; border-color: #DC2626; color: #DC2626; }
+        .worker-card__body { display: flex; flex-direction: column; gap: 7px; }
+        .worker-card__row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #374151;
+        }
+        .worker-card__ico { color: #9CA3AF; flex-shrink: 0; }
+        .worker-card__rate { font-weight: 700; color: #065F46; }
+        .worker-card__badges { display: flex; gap: 6px; flex-wrap: wrap; }
+        .worker-card__stats { margin-top: 2px; padding-top: 10px; border-top: 1px solid #F3F4F6; }
+        .worker-card__stat-bar { height: 5px; background: #F3F4F6; border-radius: 3px; overflow: hidden; margin-bottom: 5px; }
+        .worker-card__stat-fill { height: 100%; background: linear-gradient(90deg, #2A6C95, #10B981); border-radius: 3px; transition: width 0.6s ease; min-width: 3px; }
+        .worker-card__stat-text { display: flex; justify-content: space-between; font-size: 11px; color: #9CA3AF; font-weight: 500; }
+
+        /* ── Avatar ── */
+        .workers-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2A6C95, #08543D);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+        .workers-avatar--lg { width: 46px; height: 46px; font-size: 15px; border-radius: 12px; }
+        .workers-avatar--xl { width: 58px; height: 58px; font-size: 18px; border-radius: 14px; }
+        .workers-avatar--grey { background: linear-gradient(135deg, #9CA3AF, #6B7280) !important; }
+
+        /* ── Badges ── */
+        .workers-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge--active { background: #D1FAE5; color: #065F46; }
+        .badge--inactive { background: #F3F4F6; color: #6B7280; }
+        .badge--available { background: #D1FAE5; color: #065F46; }
+        .badge--assigned { background: #DBEAFE; color: #1E40AF; }
+        .badge--unavailable { background: #FEE2E2; color: #991B1B; }
+
+        /* ── Code ── */
+        .workers-code {
+            background: #F3F4F6;
+            color: #374151;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        /* ── Drawer Overlay ── */
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 900;
+        }
+        .worker-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 480px;
+            height: 100vh;
+            background: white;
+            z-index: 910;
+            box-shadow: -8px 0 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .drawer-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 34px;
+            height: 34px;
+            border: none;
+            background: #F3F4F6;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6B7280;
+            transition: all 0.18s;
+            z-index: 20;
+        }
+        .drawer-close:hover { background: #E5E7EB; color: #111827; }
+        .drawer-hero {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 28px 24px 20px;
+            background: linear-gradient(135deg, #F0F9FF, #E0F2FE);
+            border-bottom: 1px solid #E5E7EB;
+            flex-shrink: 0;
+        }
+        .drawer-hero__info { flex: 1; min-width: 0; }
+        .drawer-hero__name { font-size: 18px; font-weight: 700; color: #111827; margin: 0 0 4px; padding-right: 40px; }
+        .drawer-hero__badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .drawer-body { flex: 1; overflow-y: auto; padding: 0 24px 28px; scrollbar-width: thin; }
+        .drawer-section { border-bottom: 1px solid #F3F4F6; padding: 16px 0; }
+        .drawer-section:last-of-type { border-bottom: none; }
+        .drawer-section__title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #2A6C95;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin: 0 0 10px;
+        }
+        .drawer-field {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 13px;
+            color: #374151;
+            padding: 4px 0;
+        }
+        .drawer-field svg { color: #9CA3AF; flex-shrink: 0; margin-top: 1px; }
+        .drawer-field__label { font-weight: 600; color: #6B7280; min-width: 80px; flex-shrink: 0; }
+        .drawer-field__rate { font-weight: 700; color: #065F46; }
+        .drawer-notes {
+            font-size: 13px;
+            color: #374151;
+            line-height: 1.6;
+            background: #F9FAFB;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        .drawer-location-placeholder {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #9CA3AF;
+            padding: 14px;
+            background: #F9FAFB;
+            border-radius: 10px;
+        }
+        .drawer-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 20px; }
+        .drawer-action-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            border: 1.5px solid transparent;
+            text-align: left;
+            font-family: inherit;
+        }
+        .drawer-action-btn--edit { background: #EFF6FF; color: #2A6C95; border-color: #DBEAFE; }
+        .drawer-action-btn--edit:hover { background: #DBEAFE; }
+        .drawer-action-btn--key { background: #F0FDF4; color: #065F46; border-color: #BBF7D0; }
+        .drawer-action-btn--key:hover { background: #D1FAE5; }
+        .drawer-action-btn--toggle-off { background: #FFF7ED; color: #C2410C; border-color: #FED7AA; }
+        .drawer-action-btn--toggle-off:hover { background: #FED7AA; }
+        .drawer-action-btn--delete { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+        .drawer-action-btn--delete:hover { background: #FEE2E2; }
+
+        /* ── Responsive ── */
+        @media (max-width: 1400px) { .workers-cards-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 1100px) {
+            .workers-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 1024px) { .workers-cards-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) {
+            .workers-page { padding: 18px 16px; }
+            .workers-header { flex-direction: column; align-items: flex-start; }
+            .workers-stats { grid-template-columns: repeat(2, 1fr); }
+            .workers-filters { flex-direction: column; align-items: stretch; }
+            .workers-search { max-width: 100%; }
+            .workers-view-toggle { align-self: flex-end; }
+        }
+        @media (max-width: 640px) { .workers-cards-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 520px) {
+            .worker-drawer { width: 100%; }
+        }
+
+        /* SVG icon helper */
+        .icon-inline { vertical-align: -2px; }
+    </style>
+</head>
+<body>
+<div class="workers-page">
+
+    <!-- ══════════ HEADER ══════════ -->
+    <div class="workers-header">
+        <div class="workers-header__left">
+            <h1 class="workers-title">Gestion de Trabajadores</h1>
+            <p class="workers-subtitle">Administra el equipo de HM Construction Staffing</p>
+        </div>
+        <button class="workers-btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar Trabajador
+        </button>
+    </div>
+
+    <!-- ══════════ STATS ══════════ -->
+    <div class="workers-stats">
+        <div class="workers-stat-card">
+            <div class="workers-stat-card__icon workers-stat-card__icon--blue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+                <p class="workers-stat-card__value">8</p>
+                <p class="workers-stat-card__label">Total</p>
+            </div>
+        </div>
+        <div class="workers-stat-card">
+            <div class="workers-stat-card__icon workers-stat-card__icon--green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div>
+                <p class="workers-stat-card__value">6</p>
+                <p class="workers-stat-card__label">Activos</p>
+            </div>
+        </div>
+        <div class="workers-stat-card">
+            <div class="workers-stat-card__icon workers-stat-card__icon--teal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+                <p class="workers-stat-card__value">3</p>
+                <p class="workers-stat-card__label">Disponibles</p>
+            </div>
+        </div>
+        <div class="workers-stat-card">
+            <div class="workers-stat-card__icon workers-stat-card__icon--orange">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
+            <div>
+                <p class="workers-stat-card__value">3</p>
+                <p class="workers-stat-card__label">Asignados</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ FILTERS ══════════ -->
+    <div class="workers-filters">
+        <div class="workers-search">
+            <svg class="workers-search__icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Buscar por nombre, codigo o email..." class="workers-search__input">
+        </div>
+        <div class="workers-filter-trade-group">
+            <div class="workers-select-wrapper">
+                <select class="workers-select">
+                    <option value="">Todos los oficios</option>
+                    <option>Electricidad</option>
+                    <option>Plomeria</option>
+                    <option>HVAC</option>
+                    <option>Carpinteria</option>
+                    <option>Pintura</option>
+                </select>
+                <svg class="workers-select__arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <button class="workers-gear-btn" title="Gestionar oficios">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+        </div>
+        <div class="workers-select-wrapper">
+            <select class="workers-select">
+                <option value="active">Activos</option>
+                <option value="inactive">Inactivos</option>
+                <option value="all">Todos</option>
+            </select>
+            <svg class="workers-select__arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <span class="workers-count">8 resultados</span>
+        <div class="workers-view-toggle">
+            <button class="workers-view-btn workers-view-btn--active" title="Vista tarjetas">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </button>
+            <button class="workers-view-btn" title="Vista tabla">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ══════════ CARDS GRID ══════════ -->
+    <div class="workers-cards-grid">
+
+        <!-- Card 1 — Carlos Rivera (selected, opens drawer) -->
+        <div class="worker-card" onclick="document.getElementById('drawer-overlay').style.display='block'; document.getElementById('worker-drawer').style.display='flex';">
+            <div class="worker-card__top">
+                <div class="workers-avatar workers-avatar--lg">CR</div>
+                <div class="worker-card__identity">
+                    <p class="worker-card__name">Carlos Rivera</p>
+                    <code class="workers-code">WK-001</code>
+                </div>
+                <div class="worker-card__actions">
+                    <button class="wc-icon-btn wc-icon-btn--edit" title="Editar">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="wc-icon-btn wc-icon-btn--pause" title="Desactivar">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="worker-card__body">
+                <div class="worker-card__row">
+                    <svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <span>Electricidad</span>
+                </div>
+                <div class="worker-card__row">
+                    <svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <span class="worker-card__rate">$28.50/hr</span>
+                </div>
+                <div class="worker-card__row">
+                    <svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <span>+1 (912) 555-0101</span>
+                </div>
+            </div>
+            <div class="worker-card__badges">
+                <span class="workers-badge badge--active">Activo</span>
+                <span class="workers-badge badge--assigned">Asignado</span>
+            </div>
+            <div class="worker-card__stats">
+                <div class="worker-card__stat-bar"><div class="worker-card__stat-fill" style="width:72%"></div></div>
+                <div class="worker-card__stat-text"><span>115h este mes</span><span>$3,277.50</span></div>
+            </div>
+        </div>
+
+        <!-- Card 2 — Maria Lopez -->
+        <div class="worker-card">
+            <div class="worker-card__top">
+                <div class="workers-avatar workers-avatar--lg">ML</div>
+                <div class="worker-card__identity">
+                    <p class="worker-card__name">Maria Lopez</p>
+                    <code class="workers-code">WK-002</code>
+                </div>
+                <div class="worker-card__actions">
+                    <button class="wc-icon-btn wc-icon-btn--edit" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="wc-icon-btn wc-icon-btn--pause" title="Desactivar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+                </div>
+            </div>
+            <div class="worker-card__body">
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Plomeria</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="worker-card__rate">$26.00/hr</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>+1 (912) 555-0202</span></div>
+            </div>
+            <div class="worker-card__badges">
+                <span class="workers-badge badge--active">Activo</span>
+                <span class="workers-badge badge--available">Disponible</span>
+            </div>
+            <div class="worker-card__stats">
+                <div class="worker-card__stat-bar"><div class="worker-card__stat-fill" style="width:45%"></div></div>
+                <div class="worker-card__stat-text"><span>72h este mes</span><span>$1,872.00</span></div>
+            </div>
+        </div>
+
+        <!-- Card 3 — Juan Hernandez -->
+        <div class="worker-card">
+            <div class="worker-card__top">
+                <div class="workers-avatar workers-avatar--lg">JH</div>
+                <div class="worker-card__identity">
+                    <p class="worker-card__name">Juan Hernandez</p>
+                    <code class="workers-code">WK-003</code>
+                </div>
+                <div class="worker-card__actions">
+                    <button class="wc-icon-btn wc-icon-btn--edit" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="wc-icon-btn wc-icon-btn--pause" title="Desactivar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+                </div>
+            </div>
+            <div class="worker-card__body">
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>HVAC</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="worker-card__rate">$32.00/hr</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>+1 (912) 555-0303</span></div>
+            </div>
+            <div class="worker-card__badges">
+                <span class="workers-badge badge--active">Activo</span>
+                <span class="workers-badge badge--assigned">Asignado</span>
+            </div>
+            <div class="worker-card__stats">
+                <div class="worker-card__stat-bar"><div class="worker-card__stat-fill" style="width:88%"></div></div>
+                <div class="worker-card__stat-text"><span>140h este mes</span><span>$4,480.00</span></div>
+            </div>
+        </div>
+
+        <!-- Card 4 — Ana Garcia -->
+        <div class="worker-card">
+            <div class="worker-card__top">
+                <div class="workers-avatar workers-avatar--lg">AG</div>
+                <div class="worker-card__identity">
+                    <p class="worker-card__name">Ana Garcia</p>
+                    <code class="workers-code">WK-004</code>
+                </div>
+                <div class="worker-card__actions">
+                    <button class="wc-icon-btn wc-icon-btn--edit" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="wc-icon-btn wc-icon-btn--pause" title="Desactivar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+                </div>
+            </div>
+            <div class="worker-card__body">
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Electricidad</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="worker-card__rate">$27.00/hr</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>+1 (912) 555-0404</span></div>
+            </div>
+            <div class="worker-card__badges">
+                <span class="workers-badge badge--active">Activo</span>
+                <span class="workers-badge badge--available">Disponible</span>
+            </div>
+            <div class="worker-card__stats">
+                <div class="worker-card__stat-bar"><div class="worker-card__stat-fill" style="width:30%"></div></div>
+                <div class="worker-card__stat-text"><span>48h este mes</span><span>$1,296.00</span></div>
+            </div>
+        </div>
+
+        <!-- Card 5 — Pedro Martinez -->
+        <div class="worker-card">
+            <div class="worker-card__top">
+                <div class="workers-avatar workers-avatar--lg">PM</div>
+                <div class="worker-card__identity">
+                    <p class="worker-card__name">Pedro Martinez</p>
+                    <code class="workers-code">WK-005</code>
+                </div>
+                <div class="worker-card__actions">
+                    <button class="wc-icon-btn wc-icon-btn--edit" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="wc-icon-btn wc-icon-btn--pause" title="Desactivar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+                </div>
+            </div>
+            <div class="worker-card__body">
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Carpinteria</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="worker-card__rate">$24.00/hr</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>+1 (912) 555-0505</span></div>
+            </div>
+            <div class="worker-card__badges">
+                <span class="workers-badge badge--active">Activo</span>
+                <span class="workers-badge badge--assigned">Asignado</span>
+            </div>
+            <div class="worker-card__stats">
+                <div class="worker-card__stat-bar"><div class="worker-card__stat-fill" style="width:60%"></div></div>
+                <div class="worker-card__stat-text"><span>96h este mes</span><span>$2,304.00</span></div>
+            </div>
+        </div>
+
+        <!-- Card 6 — Laura Sanchez -->
+        <div class="worker-card">
+            <div class="worker-card__top">
+                <div class="workers-avatar workers-avatar--lg">LS</div>
+                <div class="worker-card__identity">
+                    <p class="worker-card__name">Laura Sanchez</p>
+                    <code class="workers-code">WK-006</code>
+                </div>
+                <div class="worker-card__actions">
+                    <button class="wc-icon-btn wc-icon-btn--edit" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="wc-icon-btn wc-icon-btn--pause" title="Desactivar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+                </div>
+            </div>
+            <div class="worker-card__body">
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Pintura</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="worker-card__rate">$22.00/hr</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>+1 (912) 555-0606</span></div>
+            </div>
+            <div class="worker-card__badges">
+                <span class="workers-badge badge--active">Activo</span>
+                <span class="workers-badge badge--available">Disponible</span>
+            </div>
+            <div class="worker-card__stats">
+                <div class="worker-card__stat-bar"><div class="worker-card__stat-fill" style="width:18%"></div></div>
+                <div class="worker-card__stat-text"><span>29h este mes</span><span>$638.00</span></div>
+            </div>
+        </div>
+
+        <!-- Card 7 — Roberto Diaz (INACTIVE) -->
+        <div class="worker-card worker-card--inactive">
+            <div class="worker-card__top">
+                <div class="workers-avatar workers-avatar--lg workers-avatar--grey">RD</div>
+                <div class="worker-card__identity">
+                    <p class="worker-card__name">Roberto Diaz</p>
+                    <code class="workers-code">WK-007</code>
+                </div>
+                <div class="worker-card__actions">
+                    <button class="wc-icon-btn wc-icon-btn--edit" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="wc-icon-btn" style="color:#059669;border-color:#D1FAE5;background:#F0FDF4" title="Reactivar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+                </div>
+            </div>
+            <div class="worker-card__body">
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>HVAC</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="worker-card__rate">$30.00/hr</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>+1 (912) 555-0707</span></div>
+            </div>
+            <div class="worker-card__badges">
+                <span class="workers-badge badge--inactive">Inactivo</span>
+                <span class="workers-badge badge--unavailable">No disponible</span>
+            </div>
+            <div class="worker-card__stats">
+                <div class="worker-card__stat-bar"><div class="worker-card__stat-fill" style="width:0%"></div></div>
+                <div class="worker-card__stat-text"><span>0h este mes</span><span>$0.00</span></div>
+            </div>
+        </div>
+
+        <!-- Card 8 — Sofia Torres (INACTIVE) -->
+        <div class="worker-card worker-card--inactive">
+            <div class="worker-card__top">
+                <div class="workers-avatar workers-avatar--lg workers-avatar--grey">ST</div>
+                <div class="worker-card__identity">
+                    <p class="worker-card__name">Sofia Torres</p>
+                    <code class="workers-code">WK-008</code>
+                </div>
+                <div class="worker-card__actions">
+                    <button class="wc-icon-btn wc-icon-btn--edit" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="wc-icon-btn" style="color:#059669;border-color:#D1FAE5;background:#F0FDF4" title="Reactivar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+                </div>
+            </div>
+            <div class="worker-card__body">
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Plomeria</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span class="worker-card__rate">$25.00/hr</span></div>
+                <div class="worker-card__row"><svg width="12" height="12" class="worker-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>+1 (912) 555-0808</span></div>
+            </div>
+            <div class="worker-card__badges">
+                <span class="workers-badge badge--inactive">Inactivo</span>
+                <span class="workers-badge badge--unavailable">No disponible</span>
+            </div>
+            <div class="worker-card__stats">
+                <div class="worker-card__stat-bar"><div class="worker-card__stat-fill" style="width:0%"></div></div>
+                <div class="worker-card__stat-text"><span>0h este mes</span><span>$0.00</span></div>
+            </div>
+        </div>
+
+    </div><!-- end cards grid -->
+
+    <!-- ══════════ WORKER DRAWER (Carlos Rivera) ══════════ -->
+    <div id="drawer-overlay" class="drawer-overlay" style="display:none;" onclick="this.style.display='none'; document.getElementById('worker-drawer').style.display='none';"></div>
+    <aside id="worker-drawer" class="worker-drawer" style="display:none;" role="dialog" aria-label="Perfil del trabajador">
+        <button class="drawer-close" title="Cerrar" onclick="document.getElementById('drawer-overlay').style.display='none'; document.getElementById('worker-drawer').style.display='none';">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        <!-- Hero -->
+        <div class="drawer-hero">
+            <div class="workers-avatar workers-avatar--xl">CR</div>
+            <div class="drawer-hero__info">
+                <h2 class="drawer-hero__name">Carlos Rivera</h2>
+                <code class="workers-code">WK-001</code>
+                <div class="drawer-hero__badges">
+                    <span class="workers-badge badge--active">Activo</span>
+                    <span class="workers-badge badge--assigned">Asignado</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="drawer-body">
+            <!-- Personal info -->
+            <div class="drawer-section">
+                <p class="drawer-section__title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Informacion Personal
+                </p>
+                <div class="drawer-field">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <span class="drawer-field__label">Email:</span>
+                    <span>carlos.rivera@hmcs.com</span>
+                </div>
+                <div class="drawer-field">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <span class="drawer-field__label">Telefono:</span>
+                    <span>+1 (912) 555-0101</span>
+                </div>
+                <div class="drawer-field">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span class="drawer-field__label">Direccion:</span>
+                    <span>1234 Elm Street, Savannah, GA 31401</span>
+                </div>
+            </div>
+
+            <!-- Work info -->
+            <div class="drawer-section">
+                <p class="drawer-section__title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    Informacion Laboral
+                </p>
+                <div class="drawer-field">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <span class="drawer-field__label">Oficio:</span>
+                    <span>Electricidad</span>
+                </div>
+                <div class="drawer-field">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <span class="drawer-field__label">Tarifa:</span>
+                    <span class="drawer-field__rate">$28.50/hr</span>
+                </div>
+                <div class="drawer-field">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span class="drawer-field__label">Codigo:</span>
+                    <code class="workers-code">WK-001</code>
+                </div>
+            </div>
+
+            <!-- Emergency contact -->
+            <div class="drawer-section">
+                <p class="drawer-section__title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Contacto de Emergencia
+                </p>
+                <div class="drawer-field">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span class="drawer-field__label">Nombre:</span>
+                    <span>Elena Rivera</span>
+                </div>
+                <div class="drawer-field">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <span class="drawer-field__label">Telefono:</span>
+                    <span>+1 (912) 555-9999</span>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="drawer-section">
+                <p class="drawer-section__title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    Notas
+                </p>
+                <p class="drawer-notes">Electricista certificado con 8 anos de experiencia en instalaciones comerciales. Disponible para turnos nocturnos.</p>
+            </div>
+
+            <!-- Active location -->
+            <div class="drawer-section">
+                <p class="drawer-section__title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Ubicacion Actual
+                </p>
+                <div class="drawer-location-placeholder">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Sin ubicacion activa -- no esta en horario</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="drawer-actions">
+                <button class="drawer-action-btn drawer-action-btn--edit">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Editar Perfil
+                </button>
+                <button class="drawer-action-btn drawer-action-btn--key">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                    Resetear Contrasena
+                </button>
+                <button class="drawer-action-btn drawer-action-btn--toggle-off">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    Desactivar
+                </button>
+                <button class="drawer-action-btn drawer-action-btn--delete">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    Eliminar Perfil
+                </button>
+            </div>
+        </div>
+    </aside>
+
+</div><!-- end workers-page -->
+</body>
+</html>

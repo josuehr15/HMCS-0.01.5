@@ -47,6 +47,11 @@ const Client = sequelize.define('Client', {
         type: DataTypes.TEXT,
         allowNull: true,
     },
+    logo_url: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null,
+    },
     is_active: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

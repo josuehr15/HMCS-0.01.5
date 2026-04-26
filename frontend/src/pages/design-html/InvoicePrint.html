@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Print - HMCS</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F1F5F9;
+  --bg-card: #ffffff;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --hover: #F8FAFC;
+  --hmcs-green: #08543D;
+  --hmcs-blue: #2A6C95;
+  --hmcs-green-light: #e6f5ef;
+  --color-border: #e5e5e5;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.ip-page {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text);
+  padding-bottom: 60px;
+}
+
+/* TOOLBAR */
+.ip-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.ip-back-btn {
+  background: none;
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #475569;
+  transition: all 0.2s;
+}
+.ip-back-btn:hover { background: var(--hover); color: var(--text); }
+
+.ip-toolbar-right { display: flex; gap: 12px; align-items: center; }
+
+.ip-status-badge {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 12px;
+}
+
+.ip-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+.ip-btn--approve { background: #059669; }
+.ip-btn--send { background: #2A6C95; }
+.ip-btn--pay { background: #08543D; }
+.ip-btn--print { background: #475569; }
+.ip-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+
+/* PRINTABLE DOCUMENT */
+.invoice-print-wrapper {
+  background: white;
+  width: 8.5in;
+  min-height: 11in;
+  margin: 40px auto;
+  padding: 0.5in 0.5in;
+  box-sizing: border-box;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  position: relative;
+  border-top: 3px solid transparent;
+  border-image: linear-gradient(to right, #2A6C95, #08543D) 1;
+  --font-title: 22px;
+  --font-company: 13px;
+  --font-body: 12px;
+  --font-header: 9px;
+  --font-table: 11.5px;
+  --font-amount: 14px;
+}
+
+/* HEADER */
+.ip-doc__header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 25px;
+}
+.ip-doc__header-left { display: flex; flex-direction: column; }
+
+.invoice-title {
+  font-size: var(--font-title);
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: #2A6C95;
+  margin-bottom: 15px;
+}
+
+.company-name {
+  font-size: var(--font-company);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.body-text {
+  font-size: var(--font-body);
+  color: #475569;
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.bill-to-section { margin-top: 25px; }
+.bill-to-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #08543D;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.bill-to-value {
+  font-size: var(--font-body);
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.ip-doc__header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.invoice-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+  margin-left: auto;
+  margin-bottom: 25px;
+  border-radius: 8px;
+  background: #f1f5f9;
+}
+
+.ip-doc__invoice-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ip-doc__meta-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-body);
+  min-width: 180px;
+}
+.ip-doc__meta-row span { color: var(--text-muted); }
+.ip-doc__meta-row strong {
+  color: var(--text);
+  font-weight: 500;
+  text-align: right;
+  max-width: 250px;
+}
+
+/* DIVIDER */
+.ip-doc__divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, #2A6C95, #08543D, transparent);
+  margin: 25px 0 20px;
+  opacity: 0.4;
+  border: none;
+}
+
+/* TABLE */
+.ip-doc__table-container { margin-bottom: 30px; }
+.ip-doc__table { width: 100%; border-collapse: collapse; }
+
+.ip-doc__table thead th {
+  padding: 8px 10px;
+  font-size: var(--font-header);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ip-doc__table tbody td {
+  padding: 10px 10px;
+  font-size: var(--font-table);
+  color: var(--text);
+  border-bottom: 1px dashed var(--border);
+}
+
+.ip-doc__table th.text-left, .ip-doc__table td.text-left { text-align: left; }
+.ip-doc__table th.text-center, .ip-doc__table td.text-center { text-align: center; }
+.ip-doc__table th.text-right, .ip-doc__table td.text-right { text-align: right; }
+.ip-doc__table td.muted-text { color: #94a3b8; }
+.ip-doc__table .contractor-name { font-weight: 500; }
+.ip-doc__table th.border-left, .ip-doc__table td.border-left {
+  border-left: 0.5px solid rgba(42,108,149,0.25) !important;
+}
+.ip-doc__table td.amount-cell { font-weight: 600; }
+
+.ip-doc__table tr.group-header th {
+  border-bottom: none;
+  padding-bottom: 4px;
+  background-color: transparent;
+  color: #2A6C95;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 5px 7px;
+  font-weight: 600;
+}
+.ip-doc__table tr.group-header th:empty { background-color: transparent; }
+
+.ip-doc__table tr.column-header th {
+  padding-top: 4px;
+  background-color: rgba(42,108,149,0.08);
+  color: #2A6C95;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 7px 7px;
+  border-bottom: 1px solid rgba(42,108,149,0.2);
+}
+
+/* TOTALS */
+.ip-doc__totals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 40px;
+}
+.ip-doc__total-row {
+  display: flex;
+  justify-content: space-between;
+  width: 250px;
+  font-size: var(--font-body);
+  color: #2A6C95;
+  font-weight: 500;
+}
+.ip-doc__total-row.grand-total {
+  font-size: var(--font-amount);
+  font-weight: 600;
+  color: var(--text);
+  border-top: 1.5px solid #2A6C95;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+/* FOOTER */
+.ip-doc__footer { margin-top: 40px; }
+.week-worked-label {
+  font-size: var(--font-body);
+  color: #475569;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.tracker-row, .tracker-dates {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.tracker-pill {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 6px 0;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+.tracker-pill.active {
+  background: var(--hmcs-green);
+  color: var(--hmcs-green-light);
+}
+.tracker-date {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+  padding: 8px 0;
+  border-radius: 4px;
+  background: white;
+  border: 1px solid var(--color-border);
+  color: #64748b;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.tracker-date.active {
+  background: var(--hmcs-green-light);
+  border-color: var(--hmcs-green);
+  color: var(--hmcs-green);
+  font-weight: 500;
+}
+.tracker-date strong {
+  font-size: 14px;
+  color: inherit;
+}
+
+.payment-terms-text {
+  margin-top: 25px;
+  font-size: var(--font-body);
+  color: #64748b;
+}
+
+/* PAID STAMP */
+.ip-doc__paid-stamp {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-15deg);
+  border: 4px solid #059669;
+  color: #059669;
+  border-radius: 8px;
+  padding: 10px 20px;
+  text-align: center;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 10;
+}
+.ip-doc__paid-label {
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  line-height: 1;
+}
+.ip-doc__paid-date {
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.ip-doc__paid-info {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #059669;
+  padding: 10px 14px;
+  background: rgba(16,185,129,0.06);
+  border-radius: 6px;
+  border: 1px solid rgba(16,185,129,0.15);
+}
+
+/* Logo placeholder */
+.logo-placeholder {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #2A6C95, #08543D);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  margin-left: auto;
+  margin-bottom: 25px;
+  letter-spacing: 1px;
+}
+
+@media print {
+  body * { visibility: hidden; }
+  .invoice-print-wrapper, .invoice-print-wrapper * { visibility: visible; }
+  .invoice-print-wrapper { position: absolute; left: 0; top: 0; width: 100%; border: none; box-shadow: none; margin: 0; padding: 0.25in; }
+  .no-print { display: none !important; }
+
+  .ip-doc__table .group-header th {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    background-color: transparent !important; color: #2A6C95 !important;
+  }
+  .ip-doc__table .column-header th {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    background-color: rgba(42,108,149,0.08) !important;
+  }
+  .tracker-pill.active {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    background-color: #08543D !important; color: #e6f5ef !important;
+  }
+  .tracker-date.active {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    color: #08543D !important; border-color: #08543D !important; background-color: #e6f5ef !important;
+  }
+}
+</style>
+</head>
+<body>
+<div class="ip-page">
+
+  <!-- TOOLBAR -->
+  <div class="ip-toolbar no-print">
+    <button class="ip-back-btn">&#8592; Volver a Facturas</button>
+    <div class="ip-toolbar-right">
+      <div class="ip-status-badge" style="background: rgba(42,108,149,0.1); color: #2A6C95;">Enviada</div>
+      <button class="ip-btn ip-btn--pay">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Registrar Pago
+      </button>
+      <button class="ip-btn ip-btn--send" style="background:#2A6C95;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar por Email
+      </button>
+      <button class="ip-btn ip-btn--print" onclick="window.print()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Descargar PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- PRINTABLE DOCUMENT -->
+  <div class="invoice-print-wrapper">
+
+    <!-- PAID STAMP -->
+    <div class="ip-doc__paid-stamp">
+      <div class="ip-doc__paid-label">PAID</div>
+      <div class="ip-doc__paid-date">4/18/2026</div>
+    </div>
+
+    <!-- HEADER -->
+    <div class="ip-doc__header">
+      <div class="ip-doc__header-left">
+        <div class="invoice-title">INVOICE</div>
+        <div class="company-name">HM Construction Staffing LLLP</div>
+        <div class="body-text">500 Lucas Dr, Savannah, GA 31406-9435</div>
+        <div class="body-text">hmconstruction.staffing@gmail.com</div>
+
+        <div class="bill-to-section">
+          <div class="bill-to-label">BILL TO</div>
+          <div class="company-name">Coastal Builders Inc.</div>
+          <div class="bill-to-value">1200 Bay Street, Suite 400</div>
+          <div class="bill-to-value">Savannah, GA, 31401</div>
+          <div class="bill-to-value">United States</div>
+        </div>
+      </div>
+
+      <div class="ip-doc__header-right">
+        <div class="logo-placeholder">HMCS</div>
+        <div class="ip-doc__invoice-meta">
+          <div class="ip-doc__meta-row">
+            <span>Invoice no.</span>
+            <strong>INV-2026-0047</strong>
+          </div>
+          <div class="ip-doc__meta-row">
+            <span>Invoice date</span>
+            <strong>4/14/2026</strong>
+          </div>
+          <div class="ip-doc__meta-row">
+            <span>Due date</span>
+            <strong>4/28/2026</strong>
+          </div>
+          <div class="ip-doc__meta-row">
+            <span>Project</span>
+            <strong>Savannah Port Expansion</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="ip-doc__divider"></div>
+
+    <!-- TABLE -->
+    <div class="ip-doc__table-container">
+      <table class="ip-doc__table">
+        <thead>
+          <tr class="group-header">
+            <th></th>
+            <th></th>
+            <th colspan="4" class="text-center border-left">LABOR</th>
+            <th colspan="2" class="text-center border-left">PER DIEM</th>
+            <th></th>
+          </tr>
+          <tr class="column-header">
+            <th class="text-left">Contractor</th>
+            <th class="text-left">Trade</th>
+            <th class="text-right border-left">Reg hrs</th>
+            <th class="text-right">OT hrs</th>
+            <th class="text-right">Rate</th>
+            <th class="text-right">OT rate</th>
+            <th class="text-right border-left">Rate/day</th>
+            <th class="text-right">Days</th>
+            <th class="text-right border-left">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left contractor-name">Carlos Mendoza</td>
+            <td class="text-left muted-text">Electrician</td>
+            <td class="text-right border-left">40.0</td>
+            <td class="text-right">8.0</td>
+            <td class="text-right">$32.00</td>
+            <td class="text-right">$48.00</td>
+            <td class="text-right border-left">$55.00</td>
+            <td class="text-right">5</td>
+            <td class="text-right border-left amount-cell">$1,939.00</td>
+          </tr>
+          <tr>
+            <td class="text-left contractor-name">Miguel Rivera</td>
+            <td class="text-left muted-text">Plumber</td>
+            <td class="text-right border-left">40.0</td>
+            <td class="text-right">4.0</td>
+            <td class="text-right">$30.00</td>
+            <td class="text-right">$45.00</td>
+            <td class="text-right border-left">$55.00</td>
+            <td class="text-right">5</td>
+            <td class="text-right border-left amount-cell">$1,655.00</td>
+          </tr>
+          <tr>
+            <td class="text-left contractor-name">Jose Hernandez</td>
+            <td class="text-left muted-text">Carpenter</td>
+            <td class="text-right border-left">40.0</td>
+            <td class="text-right muted-text">&mdash;</td>
+            <td class="text-right">$28.00</td>
+            <td class="text-right muted-text">&mdash;</td>
+            <td class="text-right border-left">$55.00</td>
+            <td class="text-right">5</td>
+            <td class="text-right border-left amount-cell">$1,395.00</td>
+          </tr>
+          <tr>
+            <td class="text-left contractor-name">Luis Garcia</td>
+            <td class="text-left muted-text">Laborer</td>
+            <td class="text-right border-left">40.0</td>
+            <td class="text-right muted-text">&mdash;</td>
+            <td class="text-right">$22.00</td>
+            <td class="text-right muted-text">&mdash;</td>
+            <td class="text-right border-left">&mdash;</td>
+            <td class="text-right">&mdash;</td>
+            <td class="text-right border-left amount-cell">$880.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TOTALS -->
+    <div class="ip-doc__totals">
+      <div class="ip-doc__total-row">
+        <span>Subtotal (labor):</span>
+        <span>$5,044.00</span>
+      </div>
+      <div class="ip-doc__total-row">
+        <span>Per Diem (passthrough):</span>
+        <span>$825.00</span>
+      </div>
+      <div class="ip-doc__total-row grand-total">
+        <span>TOTAL:</span>
+        <span>$5,869.00</span>
+      </div>
+    </div>
+
+    <div class="ip-doc__divider"></div>
+
+    <!-- FOOTER -->
+    <div class="ip-doc__footer">
+      <div class="week-worked-label">
+        Week worked from 4/6/2026 to 4/12/2026
+      </div>
+
+      <div style="max-width: 400px;">
+        <div class="tracker-row">
+          <div class="tracker-pill">Sun</div>
+          <div class="tracker-pill active">Mon</div>
+          <div class="tracker-pill active">Tue</div>
+          <div class="tracker-pill active">Wed</div>
+          <div class="tracker-pill active">Thu</div>
+          <div class="tracker-pill active">Fri</div>
+          <div class="tracker-pill">Sat</div>
+        </div>
+        <div class="tracker-dates">
+          <div class="tracker-date"><strong>5</strong>Apr</div>
+          <div class="tracker-date active"><strong>6</strong>Apr</div>
+          <div class="tracker-date active"><strong>7</strong>Apr</div>
+          <div class="tracker-date active"><strong>8</strong>Apr</div>
+          <div class="tracker-date active"><strong>9</strong>Apr</div>
+          <div class="tracker-date active"><strong>10</strong>Apr</div>
+          <div class="tracker-date"><strong>11</strong>Apr</div>
+        </div>
+      </div>
+
+      <div class="payment-terms-text">
+        Payment terms: Net 14 days
+      </div>
+    </div>
+
+    <!-- PAID INFO -->
+    <div class="ip-doc__paid-info">
+      <strong>Payment received</strong> via Check &mdash; Check #4872 on 4/18/2026
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

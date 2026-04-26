@@ -396,9 +396,29 @@ const deleteClientRate = async (req, res) => {
     }
 };
 
+/**
+ * POST /api/clients/:id/logo
+ * Upload or replace client logo.
+ */
+const uploadClientLogo = async (req, res) => {
+    try {
+        const client = await Client.findByPk(req.params.id);
+        if (!client) return errorResponse(res, 'Client not found.', 404);
+        if (!req.file) return errorResponse(res, 'No image file provided.', 400);
+
+        const logo_url = `/uploads/logos/${req.file.filename}`;
+        await client.update({ logo_url });
+        return successResponse(res, { logo_url }, 'Logo uploaded successfully.');
+    } catch (error) {
+        console.error('uploadClientLogo error:', error);
+        return errorResponse(res, 'Failed to upload logo.', 500);
+    }
+};
+
 module.exports = {
     getAllClients, getClientById, getClientLinkedData,
     createClient, updateClient, deleteClient,
     toggleClientStatus, forceDeleteClient, resetClientPassword,
     addClientRate, updateClientRate, deleteClientRate,
+    uploadClientLogo,
 };

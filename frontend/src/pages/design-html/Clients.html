@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMCS - Gestion de Clientes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Root ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --bg: #F1F5F9;
+    --bg-card: #ffffff;
+    --text: #1E293B;
+    --text-muted: #64748B;
+    --text-faint: #94A3B8;
+    --border: #E2E8F0;
+    --hover: #F8FAFC;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── Fade In ───────────────────────────────────────────────────── */
+.fade-in {
+    animation: fadeIn 0.35s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Clients.css  —  HMCS Admin - Pagina de Clientes
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Layout Principal ──────────────────────────────────────────── */
+.clients-page {
+    padding: 28px 32px;
+    max-width: 100%;
+    min-height: 100vh;
+}
+
+/* ── Header ────────────────────────────────────────────────────── */
+.cl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+}
+
+.cl-header__title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    margin: 0 0 4px 0;
+}
+
+.cl-header__subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Boton Nuevo Cliente */
+.cl-btn-new {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #2A6C95 0%, #1E5270 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(42, 108, 149, 0.3);
+    white-space: nowrap;
+}
+
+.cl-btn-new:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(42, 108, 149, 0.4);
+}
+
+/* ── KPI Cards ─────────────────────────────────────────────────── */
+.cl-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.cl-kpi {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.cl-kpi:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06), 0 12px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.cl-kpi__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cl-kpi__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.cl-kpi__value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+    letter-spacing: -1px;
+    margin: 0 0 4px 0;
+}
+
+.cl-kpi__label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+}
+
+@media (max-width: 900px) {
+    .cl-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Toolbar ───────────────────────────────────────────────────── */
+.cl-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.cl-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0 14px;
+    height: 40px;
+    flex: 1;
+    max-width: 360px;
+    transition: all 0.2s;
+}
+
+.cl-search:focus-within {
+    border-color: #2A6C95;
+    box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.1);
+}
+
+.cl-search__input {
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 0.875rem;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    flex: 1;
+}
+
+.cl-search__input::placeholder { color: var(--text-faint); }
+
+.cl-results {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 16px;
+}
+
+/* Status badge */
+.cl-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+}
+
+.cl-badge--active  { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.cl-badge--inactive { background: rgba(156, 163, 175, 0.15); color: #6B7280; }
+
+/* ── Grid de Cards ─────────────────────────────────────────────── */
+.cl-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+@media (max-width: 1100px) { .cl-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px)  { .cl-grid { grid-template-columns: 1fr; } }
+
+/* ── Card Individual ───────────────────────────────────────────── */
+.cl-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.cl-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.07), 0 12px 28px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: rgba(42, 108, 149, 0.2);
+}
+
+.cl-card--selected {
+    border-color: #2A6C95;
+    box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.cl-card--inactive { opacity: 0.72; }
+
+/* Card header */
+.cl-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.cl-card__identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Avatar */
+.cl-card__avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    font-family: 'Montserrat', sans-serif;
+    flex-shrink: 0;
+}
+
+.cl-card__name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 2px 0;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cl-card__contact {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Action buttons */
+.cl-card__actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.cl-card:hover .cl-card__actions { opacity: 1; }
+
+.cl-card__action-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.cl-card__action-btn:hover {
+    background: var(--hover);
+    color: var(--text);
+}
+
+/* Info section */
+.cl-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.cl-card__info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+}
+
+.cl-card__info-row svg { flex-shrink: 0; color: var(--text-faint); }
+
+/* Footer */
+.cl-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.cl-card__stats {
+    display: flex;
+    gap: 10px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    align-items: center;
+}
+
+/* Rate chips */
+.cl-card__rates {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.cl-rate-chip {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(42, 108, 149, 0.06);
+    border: 1px solid rgba(42, 108, 149, 0.15);
+    color: #2A6C95;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ── Select / View Toggle (shared workers styles) ──────────────── */
+.workers-select-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.workers-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0 32px 0 14px;
+    height: 40px;
+    font-size: 0.85rem;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.workers-select:focus { border-color: #2A6C95; }
+
+.workers-select__arrow {
+    position: absolute;
+    right: 10px;
+    pointer-events: none;
+    color: var(--text-muted);
+}
+
+.workers-view-toggle {
+    display: flex;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-left: auto;
+}
+
+.workers-view-btn {
+    width: 38px;
+    height: 38px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.workers-view-btn:hover { background: var(--hover); color: var(--text); }
+
+.workers-view-btn--active {
+    background: rgba(42, 108, 149, 0.1);
+    color: #2A6C95;
+}
+
+/* ── Detail Panel (Drawer) ─────────────────────────────────────── */
+.cl-detail-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 500;
+    backdrop-filter: blur(1.5px);
+    -webkit-backdrop-filter: blur(1.5px);
+}
+
+.cl-detail-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 400px;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border);
+    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.2);
+    z-index: 501;
+    display: flex;
+    flex-direction: column;
+    animation: clDetailSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+@keyframes clDetailSlideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+
+/* Panel Header */
+.cl-detail__header {
+    padding: 24px 20px 20px;
+    background: linear-gradient(135deg,
+        rgba(42, 108, 149, 0.08) 0%,
+        rgba(8, 84, 61, 0.05) 100%);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.cl-detail__header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.cl-detail__avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.cl-detail__name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+}
+
+.cl-detail__contact-name {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0 0 10px 0;
+}
+
+.cl-detail__close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.cl-detail__close:hover { background: var(--hover); color: var(--text); }
+
+/* Panel Body */
+.cl-detail__body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.cl-detail__body::-webkit-scrollbar { width: 4px; }
+.cl-detail__body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Sections */
+.cl-detail__section {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.cl-detail__section:last-child { border-bottom: none; }
+
+.cl-detail__section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #2A6C95;
+    font-family: 'Inter', sans-serif;
+    margin: 0 0 14px 0;
+}
+
+.cl-detail__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 0.82rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.cl-detail__row svg {
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.cl-detail__row-label {
+    color: var(--text-muted);
+    min-width: 72px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.cl-detail__row-value {
+    color: var(--text);
+    font-weight: 500;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Action footer */
+.cl-detail__actions {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.cl-detail__action-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+    text-align: left;
+}
+
+.cl-detail__action-btn:hover { background: var(--hover); }
+
+.cl-detail__action-btn--danger {
+    color: #EF4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.cl-detail__action-btn--danger:hover { background: rgba(239, 68, 68, 0.06); }
+
+/* ── Rates in drawer ───────────────────────────────────────────── */
+.cl-detail__rate-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    padding: 4px 0;
+}
+
+.cl-detail__rate-name {
+    color: var(--text);
+}
+
+.cl-detail__rate-value {
+    font-weight: 700;
+    color: #2A6C95;
+}
+
+.cl-detail__rate-ot {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+}
+
+/* ── Projects in drawer ────────────────────────────────────────── */
+.cl-detail__project-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    padding: 3px 0;
+}
+
+.cl-detail__project-row svg {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.cl-detail__project-name {
+    flex: 1;
+    color: var(--text);
+}
+
+/* ── Documents placeholder ─────────────────────────────────────── */
+.cl-detail__docs-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 0;
+    color: var(--text-faint);
+    font-size: 0.8rem;
+}
+
+.cl-detail__docs-placeholder svg {
+    color: var(--text-faint);
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .clients-page { padding: 16px 16px; }
+    .cl-detail-panel { width: 100%; }
+    .cl-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+    .cl-header { flex-direction: column; gap: 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="clients-page fade-in">
+
+    <!-- ══════════════════════════════════════════════════════════════
+         HEADER
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="cl-header">
+        <div>
+            <h1 class="cl-header__title">Gestion de Clientes</h1>
+            <p class="cl-header__subtitle">Administra tus clientes, tarifas y contratos</p>
+        </div>
+        <button class="cl-btn-new">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuevo Cliente
+        </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         KPI CARDS
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="cl-kpis">
+        <!-- Total Clientes -->
+        <div class="cl-kpi">
+            <div class="cl-kpi__icon" style="background: rgba(42,108,149,0.09); color: #2A6C95;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>
+            </div>
+            <div class="cl-kpi__body">
+                <p class="cl-kpi__value">12</p>
+                <p class="cl-kpi__label">TOTAL CLIENTES</p>
+            </div>
+        </div>
+        <!-- Activos -->
+        <div class="cl-kpi">
+            <div class="cl-kpi__icon" style="background: rgba(16,185,129,0.09); color: #10B981;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="cl-kpi__body">
+                <p class="cl-kpi__value">9</p>
+                <p class="cl-kpi__label">ACTIVOS</p>
+            </div>
+        </div>
+        <!-- Con Proyectos -->
+        <div class="cl-kpi">
+            <div class="cl-kpi__icon" style="background: rgba(245,158,11,0.09); color: #F59E0B;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+            </div>
+            <div class="cl-kpi__body">
+                <p class="cl-kpi__value">7</p>
+                <p class="cl-kpi__label">CON PROYECTOS</p>
+            </div>
+        </div>
+        <!-- Facturado -->
+        <div class="cl-kpi">
+            <div class="cl-kpi__icon" style="background: rgba(139,92,246,0.09); color: #8B5CF6;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+            </div>
+            <div class="cl-kpi__body">
+                <p class="cl-kpi__value">$0.00</p>
+                <p class="cl-kpi__label">FACTURADO (MES)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TOOLBAR
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="cl-toolbar">
+        <div class="cl-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="cl-search__input" placeholder="Buscar empresa, contacto..." />
+        </div>
+        <div class="workers-select-wrapper">
+            <select class="workers-select">
+                <option value="active" selected>Activos</option>
+                <option value="inactive">Inactivos</option>
+                <option value="all">Todos</option>
+            </select>
+            <svg class="workers-select__arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="workers-view-toggle" style="margin-left: auto;">
+            <button class="workers-view-btn workers-view-btn--active" title="Tarjetas">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </button>
+            <button class="workers-view-btn" title="Tabla">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+        </div>
+    </div>
+    <p class="cl-results">6 resultados</p>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         CARD GRID (6 clients)
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="cl-grid">
+
+        <!-- Card 1 - Selected -->
+        <div class="cl-card cl-card--selected">
+            <div class="cl-card__head">
+                <div class="cl-card__identity">
+                    <div class="cl-card__avatar" style="background: #2A6C95;">AC</div>
+                    <div style="min-width:0">
+                        <p class="cl-card__name">ABC Construction LLC</p>
+                        <p class="cl-card__contact">John Smith</p>
+                    </div>
+                </div>
+                <div class="cl-card__actions" style="opacity:1;">
+                    <button class="cl-card__action-btn" title="Editar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    </button>
+                    <button class="cl-card__action-btn" title="Desactivar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="cl-card__info">
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">john@abcconstruction.com</span>
+                </div>
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+                    <span>(912) 555-0101</span>
+                </div>
+            </div>
+            <div class="cl-card__footer">
+                <span class="cl-badge cl-badge--active">Activo</span>
+                <div class="cl-card__stats">
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>3 proy.
+                    </span>
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>4 tar.
+                    </span>
+                </div>
+            </div>
+            <div class="cl-card__rates">
+                <span class="cl-rate-chip">Electricista &middot; $45.00/hr</span>
+                <span class="cl-rate-chip">Plomero &middot; $42.00/hr</span>
+                <span class="cl-rate-chip" style="opacity:0.65">+2</span>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="cl-card">
+            <div class="cl-card__head">
+                <div class="cl-card__identity">
+                    <div class="cl-card__avatar" style="background: #0D6B5E;">SR</div>
+                    <div style="min-width:0">
+                        <p class="cl-card__name">Southern Remodeling Inc</p>
+                        <p class="cl-card__contact">Maria Garcia</p>
+                    </div>
+                </div>
+                <div class="cl-card__actions">
+                    <button class="cl-card__action-btn" title="Editar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    </button>
+                    <button class="cl-card__action-btn" title="Desactivar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="cl-card__info">
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">maria@southernremodeling.com</span>
+                </div>
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+                    <span>(912) 555-0202</span>
+                </div>
+            </div>
+            <div class="cl-card__footer">
+                <span class="cl-badge cl-badge--active">Activo</span>
+                <div class="cl-card__stats">
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>2 proy.
+                    </span>
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>3 tar.
+                    </span>
+                </div>
+            </div>
+            <div class="cl-card__rates">
+                <span class="cl-rate-chip">Carpintero &middot; $38.00/hr</span>
+                <span class="cl-rate-chip">Pintor &middot; $32.00/hr</span>
+                <span class="cl-rate-chip" style="opacity:0.65">+1</span>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="cl-card">
+            <div class="cl-card__head">
+                <div class="cl-card__identity">
+                    <div class="cl-card__avatar" style="background: #7C3AED;">CG</div>
+                    <div style="min-width:0">
+                        <p class="cl-card__name">Coastal General Contractors</p>
+                        <p class="cl-card__contact">Robert Johnson</p>
+                    </div>
+                </div>
+                <div class="cl-card__actions">
+                    <button class="cl-card__action-btn" title="Editar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    </button>
+                    <button class="cl-card__action-btn" title="Desactivar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="cl-card__info">
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">robert@coastalgc.com</span>
+                </div>
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+                    <span>(912) 555-0303</span>
+                </div>
+            </div>
+            <div class="cl-card__footer">
+                <span class="cl-badge cl-badge--active">Activo</span>
+                <div class="cl-card__stats">
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>5 proy.
+                    </span>
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>5 tar.
+                    </span>
+                </div>
+            </div>
+            <div class="cl-card__rates">
+                <span class="cl-rate-chip">Soldador &middot; $52.00/hr</span>
+                <span class="cl-rate-chip">Electricista &middot; $48.00/hr</span>
+                <span class="cl-rate-chip" style="opacity:0.65">+3</span>
+            </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="cl-card">
+            <div class="cl-card__head">
+                <div class="cl-card__identity">
+                    <div class="cl-card__avatar" style="background: #B45309;">PD</div>
+                    <div style="min-width:0">
+                        <p class="cl-card__name">Peach Development Group</p>
+                        <p class="cl-card__contact">Laura Martinez</p>
+                    </div>
+                </div>
+                <div class="cl-card__actions">
+                    <button class="cl-card__action-btn" title="Editar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    </button>
+                    <button class="cl-card__action-btn" title="Desactivar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="cl-card__info">
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">laura@peachdev.com</span>
+                </div>
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+                    <span>(912) 555-0404</span>
+                </div>
+            </div>
+            <div class="cl-card__footer">
+                <span class="cl-badge cl-badge--active">Activo</span>
+                <div class="cl-card__stats">
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>1 proy.
+                    </span>
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>2 tar.
+                    </span>
+                </div>
+            </div>
+            <div class="cl-card__rates">
+                <span class="cl-rate-chip">Pintor &middot; $35.00/hr</span>
+                <span class="cl-rate-chip">Albanil &middot; $40.00/hr</span>
+            </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="cl-card">
+            <div class="cl-card__head">
+                <div class="cl-card__identity">
+                    <div class="cl-card__avatar" style="background: #047857;">HB</div>
+                    <div style="min-width:0">
+                        <p class="cl-card__name">Hilton Head Builders</p>
+                        <p class="cl-card__contact">David Wilson</p>
+                    </div>
+                </div>
+                <div class="cl-card__actions">
+                    <button class="cl-card__action-btn" title="Editar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    </button>
+                    <button class="cl-card__action-btn" title="Desactivar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="cl-card__info">
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">david@hiltonheadbuilders.com</span>
+                </div>
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+                    <span>(843) 555-0505</span>
+                </div>
+            </div>
+            <div class="cl-card__footer">
+                <span class="cl-badge cl-badge--active">Activo</span>
+                <div class="cl-card__stats">
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>4 proy.
+                    </span>
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>3 tar.
+                    </span>
+                </div>
+            </div>
+            <div class="cl-card__rates">
+                <span class="cl-rate-chip">Techador &middot; $44.00/hr</span>
+                <span class="cl-rate-chip">Plomero &middot; $46.00/hr</span>
+                <span class="cl-rate-chip" style="opacity:0.65">+1</span>
+            </div>
+        </div>
+
+        <!-- Card 6 - Inactive -->
+        <div class="cl-card cl-card--inactive">
+            <div class="cl-card__head">
+                <div class="cl-card__identity">
+                    <div class="cl-card__avatar" style="background: #9CA3AF;">TS</div>
+                    <div style="min-width:0">
+                        <p class="cl-card__name">Tidewater Solutions</p>
+                        <p class="cl-card__contact">Angela Brown</p>
+                    </div>
+                </div>
+                <div class="cl-card__actions">
+                    <button class="cl-card__action-btn" title="Editar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    </button>
+                    <button class="cl-card__action-btn" title="Reactivar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="cl-card__info">
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">angela@tidewaters.com</span>
+                </div>
+                <div class="cl-card__info-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+                    <span>(912) 555-0606</span>
+                </div>
+            </div>
+            <div class="cl-card__footer">
+                <span class="cl-badge cl-badge--inactive">Inactivo</span>
+                <div class="cl-card__stats">
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>0 proy.
+                    </span>
+                    <span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>1 tar.
+                    </span>
+                </div>
+            </div>
+            <div class="cl-card__rates">
+                <span class="cl-rate-chip">Carpintero &middot; $36.00/hr</span>
+            </div>
+        </div>
+
+    </div><!-- /cl-grid -->
+
+</div><!-- /clients-page -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     DETAIL DRAWER (for Card 1 - ABC Construction LLC)
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="cl-detail-overlay"></div>
+<aside class="cl-detail-panel" role="dialog" aria-label="Perfil del cliente">
+
+    <!-- Header -->
+    <div class="cl-detail__header">
+        <div class="cl-detail__header-top">
+            <div class="cl-detail__avatar" style="background: #2A6C95;">AC</div>
+            <button class="cl-detail__close" title="Cerrar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <h2 class="cl-detail__name">ABC Construction LLC</h2>
+        <p class="cl-detail__contact-name">John Smith</p>
+        <span class="cl-badge cl-badge--active">Activo</span>
+    </div>
+
+    <!-- Body -->
+    <div class="cl-detail__body">
+
+        <!-- Contact Section -->
+        <div class="cl-detail__section">
+            <p class="cl-detail__section-title">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Contacto
+            </p>
+            <div class="cl-detail__row">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <span class="cl-detail__row-label">Email:</span>
+                <span class="cl-detail__row-value">john@abcconstruction.com</span>
+            </div>
+            <div class="cl-detail__row">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+                <span class="cl-detail__row-label">Telefono:</span>
+                <span class="cl-detail__row-value">(912) 555-0101</span>
+            </div>
+            <div class="cl-detail__row">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span class="cl-detail__row-label">Direccion:</span>
+                <span class="cl-detail__row-value">456 Industrial Blvd, Savannah, GA 31401</span>
+            </div>
+            <div class="cl-detail__row">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+                <span class="cl-detail__row-label">Login:</span>
+                <span class="cl-detail__row-value">admin@abcconstruction.com</span>
+            </div>
+        </div>
+
+        <!-- Rates Section -->
+        <div class="cl-detail__section">
+            <p class="cl-detail__section-title">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Tarifas por Oficio
+            </p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <div class="cl-detail__rate-row">
+                    <span class="cl-detail__rate-name">Electricista</span>
+                    <span class="cl-detail__rate-value">$45.00/hr</span>
+                    <span class="cl-detail__rate-ot">1.5x OT</span>
+                </div>
+                <div class="cl-detail__rate-row">
+                    <span class="cl-detail__rate-name">Plomero</span>
+                    <span class="cl-detail__rate-value">$42.00/hr</span>
+                    <span class="cl-detail__rate-ot">1.5x OT</span>
+                </div>
+                <div class="cl-detail__rate-row">
+                    <span class="cl-detail__rate-name">Carpintero</span>
+                    <span class="cl-detail__rate-value">$38.00/hr</span>
+                    <span class="cl-detail__rate-ot">1.5x OT</span>
+                </div>
+                <div class="cl-detail__rate-row">
+                    <span class="cl-detail__rate-name">Soldador</span>
+                    <span class="cl-detail__rate-value">$50.00/hr</span>
+                    <span class="cl-detail__rate-ot">2.0x OT</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Section -->
+        <div class="cl-detail__section">
+            <p class="cl-detail__section-title">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+                Proyectos (3)
+            </p>
+            <div style="display:flex;flex-direction:column;gap:6px">
+                <div class="cl-detail__project-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span class="cl-detail__project-name">Savannah Mall Renovation</span>
+                    <span class="cl-badge cl-badge--active">Activo</span>
+                </div>
+                <div class="cl-detail__project-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span class="cl-detail__project-name">River Walk Phase 2</span>
+                    <span class="cl-badge cl-badge--active">Activo</span>
+                </div>
+                <div class="cl-detail__project-row">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span class="cl-detail__project-name">Downtown Office Complex</span>
+                    <span class="cl-badge cl-badge--active">Activo</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documents Section -->
+        <div class="cl-detail__section">
+            <p class="cl-detail__section-title">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Documentos
+            </p>
+            <div class="cl-detail__docs-placeholder">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                <span>Arrastra archivos o haz clic para subir</span>
+                <span style="font-size:0.72rem;color:var(--text-faint)">PDF, Word, imagenes &middot; max. 10 MB</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Action Footer -->
+    <div class="cl-detail__actions">
+        <button class="cl-detail__action-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+            Editar Cliente
+        </button>
+        <button class="cl-detail__action-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            Desactivar
+        </button>
+        <button class="cl-detail__action-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            Resetear Contrasena
+        </button>
+        <button class="cl-detail__action-btn cl-detail__action-btn--danger">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            Eliminar Cliente
+        </button>
+    </div>
+
+</aside>
+
+</body>
+</html>

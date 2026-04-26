@@ -237,7 +237,9 @@ const generatePayroll = async (req, res) => {
             where: { worker_id: { [Op.in]: workerIds }, week_start_date, is_active: true },
         }).catch(() => []);
         const perDiemMap = {};
-        perDiems.forEach(pd => { perDiemMap[pd.worker_id] = parseFloat(pd.amount || 0); });
+        perDiems.forEach(pd => {
+            perDiemMap[pd.worker_id] = (perDiemMap[pd.worker_id] || 0) + parseFloat(pd.amount || 0);
+        });
 
         // LOGICA-004: read OT threshold from company_settings
         const settings = await CompanySettings.findOne();
@@ -911,10 +913,90 @@ const getVoucherView = async (req, res) => {
     }
 };
 
-module.exports = {
-    getAllPayrolls, getPayrollStats, getPendingWeeks, getPayrollById,
-    generatePayroll, updatePayrollStatus, deletePayroll,
-    markWorkerPaid, updatePayrollLine, getPayrollLineById,
-    approvePayroll, getPayrollReview,
-    uploadPaymentScreenshot, confirmPaymentData, getVoucherView, getMyPayrollLines,
+/**
+ * PATCH /api/payroll/lines/:id/per-diem
+ * Update per_diem_amount on an existing payroll line and recalculate totals.
+ */
+const updatePayrollLinePerDiem = async (req, res) => {
+    const t = await sequelize.transaction();
+    try {
+        const { id } = req.params;
+        const { per_diem_amount } = req.body;
+
+        if (per_diem_amount === undefined || parseFloat(per_diem_amount) < 0) {
+            await t.rollback();
+            return errorResponse(res, 'per_diem_amount must be >= 0.', 400);
+        }
+
+        const line = await PayrollLine.findByPk(id, { transaction: t });
+        if (!line) {
+            await t.rollback();
+            return errorResponse(res, 'Payroll line not found.', 404);
+        }
+        if (line.status === 'paid') {
+            await t.rollback();
+            return errorResponse(res, 'Cannot edit a paid payroll line.', 400);
+        }
+
+        const newPerDiem = new Decimal(per_diem_amount).toDecimalPlaces(2);
+        const netPay = new Decimal(line.net_pay || 0);
+        const newTransfer = netPay.plus(newPerDiem).toDecimalPlaces(2);
+
+        await line.update({
+            per_diem_amount: newPerDiem.toNumber(),
+            total_to_transfer: newTransfer.toNumber(),
+        }, { transaction: t });
+
+        // Recalculate payroll header totals
+        const allLines = await PayrollLine.findAll({
+            where: { payroll_id: line.payroll_id },
+            transaction: t,
+        });
+        const totalPerDiem = allLines.reduce((s, l) => {
+            const amt = l.id === parseInt(id)
+                ? newPerDiem.toNumber()
+                : parseFloat(l.per_diem_amount || 0);
+            return s + amt;
+        }, 0);
+        const totalNet = allLines.reduce((s, l) => s + parseFloat(l.net_pay || 0), 0);
+        const totalAmount = parseFloat((totalNet + totalPerDiem).toFixed(2));
+
+        await Payroll.update(
+            { total_per_diem: totalPerDiem, total_amount: totalAmount },
+            { where: { id: line.payroll_id }, transaction: t }
+        );
+
+        await t.commit();
+
+        const updated = await PayrollLine.findByPk(parseInt(id), {
+            include: [
+                { model: Worker, as: 'worker', include: [{ model: Trade, as: 'trade' }] },
+            ],
+        });
+        return successResponse(res, updated, 'Per diem updated.');
+    } catch (error) {
+        await t.rollback();
+        console.error('updatePayrollLinePerDiem error:', error);
+        return errorResponse(res, 'Failed to update per diem.', 500);
+    }
 };
+
+module.exports = {
+    getAllPayrolls,
+    getPayrollStats,
+    getPendingWeeks,
+    getPayrollById,
+    generatePayroll,
+    updatePayrollStatus,
+    deletePayroll,
+    markWorkerPaid,
+    updatePayrollLine,
+    getPayrollLineById,
+    approvePayroll,
+    uploadPaymentScreenshot,
+    confirmPaymentData,
+    getVoucherView,
+    getMyPayrollLines,
+    updatePayrollLinePerDiem,
+};
+ 

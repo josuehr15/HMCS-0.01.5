@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMCS Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════
+   CSS Variables — Light Theme
+   ═══════════════════════════════════════════════════════ */
+:root {
+    --bg: #F1F5F9;
+    --bg-card: #ffffff;
+    --text: #1E293B;
+    --text-muted: #64748B;
+    --border: #E2E8F0;
+    --hover: #F8FAFC;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+.dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 32px 48px;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   HMCS Dashboard v2 — Full CSS
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Header ─── */
+.ds-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+.ds-header__greeting {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+    margin: 0 0 2px 0;
+    line-height: 1.2;
+}
+
+.ds-header__date {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 0;
+    font-weight: 400;
+}
+
+/* ─── Gear Button ─── */
+.ds-gear {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+
+.ds-gear:hover {
+    background: var(--hover);
+    color: var(--text);
+    border-color: #2A6C95;
+}
+
+/* ═══════════════════════════════════════════════════════
+   GRID — 4-column layout
+   ═══════════════════════════════════════════════════════ */
+.ds-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    align-items: stretch;
+}
+
+.ds-card--s { grid-column: span 1; }
+.ds-card--m { grid-column: span 2; }
+.ds-card--l { grid-column: span 3; }
+
+@media (max-width: 1280px) {
+    .ds-grid { grid-template-columns: repeat(3, 1fr); }
+    .ds-card--l { grid-column: span 3; }
+}
+
+@media (max-width: 1024px) {
+    .ds-grid { grid-template-columns: repeat(2, 1fr); }
+    .ds-card--m { grid-column: span 2; }
+    .ds-card--l { grid-column: span 2; }
+}
+
+@media (max-width: 640px) {
+    .ds-grid { grid-template-columns: 1fr; }
+    .ds-card--s, .ds-card--m, .ds-card--l { grid-column: span 1; }
+    .dashboard { padding: 16px; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   CARD
+   ═══════════════════════════════════════════════════════ */
+.ds-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 22px 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.ds-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.06), 0 12px 28px rgba(0,0,0,0.09);
+    transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════
+   TYPOGRAPHY & UTILITY
+   ═══════════════════════════════════════════════════════ */
+.ds-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.ds-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.ds-big-num {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.8px;
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+.ds-num {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.ds-num--orange { color: #EA580C; }
+.ds-num--green  { color: #059669; }
+
+.ds-fw600 {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text);
+}
+
+.ds-fw700 {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--text);
+}
+
+.ds-muted-xs {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.ds-link {
+    font-size: 0.75rem;
+    color: #2A6C95;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.ds-link:hover { text-decoration: underline; }
+
+.ds-divider {
+    border-top: 1px solid var(--border);
+    margin: 14px 0;
+}
+
+/* Badges */
+.ds-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.ds-badge--green { color: #059669; }
+.ds-badge--green-bg {
+    color: #059669;
+    background: rgba(5,150,105,0.08);
+    margin-bottom: 12px;
+    margin-top: 2px;
+}
+
+/* Dots */
+.ds-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-right: 4px;
+}
+.ds-dot--teal { background: #0D9488; }
+.ds-dot--gray { background: var(--border); }
+
+/* Progress */
+.ds-progress { margin-bottom: 10px; }
+.ds-progress__labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+.ds-progress__track {
+    height: 6px;
+    background: var(--hover);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.ds-progress__fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease;
+}
+
+/* Bar split */
+.ds-bar-split {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    gap: 2px;
+    margin-top: 12px;
+}
+.ds-bar-split__s { border-radius: 4px; }
+.ds-bar-split__s--orange { background: #EA580C; }
+.ds-bar-split__s--green  { background: #059669; }
+
+/* ═══════════════════════════════════════════════════════
+   WIDGET-SPECIFIC
+   ═══════════════════════════════════════════════════════ */
+
+/* Bank */
+.ds-bank-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.ds-bank-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+.ds-bank-icon--teal {
+    background: rgba(13,148,136,0.12);
+    color: #0D9488;
+}
+.ds-bank-icon--green {
+    background: rgba(5,150,105,0.12);
+    color: #059669;
+}
+
+/* Payroll */
+.ds-payroll-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+}
+.ds-payroll-box {
+    padding: 12px;
+    background: var(--hover);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.ds-alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    background: #FFFBEB;
+    border: 1px solid #FEF3C7;
+    color: #92400E;
+}
+.ds-alert__btn {
+    font-weight: 600;
+    cursor: pointer;
+    background: #FDE68A;
+    padding: 2px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* Workforce */
+.ds-wf-stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 14px;
+}
+.ds-worker-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.ds-worker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: 8px;
+    transition: background 0.1s;
+}
+.ds-worker:hover { background: var(--hover); }
+
+.ds-worker__av {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.65rem;
+    flex-shrink: 0;
+}
+.ds-worker__av--teal { background: linear-gradient(135deg, #0D9488, #08543D); }
+.ds-worker__av--blue { background: linear-gradient(135deg, #2A6C95, #08543D); }
+
+.ds-dot-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #D1D5DB;
+    flex-shrink: 0;
+}
+.ds-dot-status--on { background: #10B981; }
+
+/* Activity */
+.ds-activity-list {
+    display: flex;
+    flex-direction: column;
+}
+.ds-activity {
+    display: flex;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+}
+.ds-activity:last-child { border-bottom: none; }
+.ds-activity__icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: var(--hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Projects */
+.ds-projects-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+.ds-project {
+    padding: 14px;
+    background: var(--hover);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+.ds-pct {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    height: fit-content;
+}
+.ds-project__bar {
+    height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.ds-project__bar > div {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CSS BAR CHART (Cashflow)
+   ═══════════════════════════════════════════════════════ */
+.ds-css-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    height: 180px;
+    padding: 12px 0 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+}
+.ds-css-chart__col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    position: relative;
+}
+.ds-css-chart__bar {
+    width: 100%;
+    max-width: 42px;
+    border-radius: 6px 6px 0 0;
+    background: linear-gradient(180deg, #059669 0%, rgba(5,150,105,0.3) 100%);
+    transition: height 0.5s ease;
+    position: relative;
+    min-height: 4px;
+}
+.ds-css-chart__bar:hover {
+    background: linear-gradient(180deg, #0D9488 0%, rgba(13,148,136,0.4) 100%);
+}
+.ds-css-chart__val {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+    white-space: nowrap;
+}
+.ds-css-chart__label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-weight: 500;
+}
+
+/* Grid lines for chart */
+.ds-css-chart-wrap {
+    position: relative;
+}
+.ds-css-chart-grid {
+    position: absolute;
+    top: 12px;
+    left: 0;
+    right: 0;
+    bottom: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+}
+.ds-css-chart-grid__line {
+    border-top: 1px dashed var(--border);
+    position: relative;
+}
+.ds-css-chart-grid__line span {
+    position: absolute;
+    left: -4px;
+    top: -8px;
+    font-size: 0.58rem;
+    color: var(--text-muted);
+    transform: translateX(-100%);
+    padding-right: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Funnel v2
+   ═══════════════════════════════════════════════════════ */
+.ds-funnel-v2 {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 4px;
+}
+.ds-funnel-v2__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.ds-funnel-v2__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.ds-funnel-v2__body { flex: 1; min-width: 0; }
+.ds-funnel-v2__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+}
+.ds-funnel-v2__label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+}
+.ds-funnel-v2__amount {
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: -0.3px;
+}
+.ds-funnel-v2__bar-wrap {
+    height: 5px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.ds-funnel-v2__bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.6s ease;
+    min-width: 4px;
+}
+
+/* Quick Actions */
+.ds-qa-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.ds-qa-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    width: 100%;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+}
+.ds-qa-btn:hover {
+    background: rgba(13,148,136,0.04);
+    border-color: #0D9488;
+    color: #0D9488;
+}
+
+/* Margin (CSS donut) */
+.ds-margin {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.ds-margin__chart {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    flex-shrink: 0;
+}
+.ds-margin__pct {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+}
+.ds-margin__legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Client Summary */
+.ds-client-list {
+    display: flex;
+    flex-direction: column;
+}
+.ds-client-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--border);
+}
+.ds-client-row:last-child { border-bottom: none; }
+.ds-client-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* SVG donut for margin */
+.donut-ring { fill: none; stroke: var(--border); stroke-width: 12; }
+.donut-segment { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dasharray 0.6s ease; }
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+
+    <!-- ═══════════════ HEADER ═══════════════ -->
+    <div class="ds-header">
+        <div>
+            <h1 class="ds-header__greeting">Buenos dias, Admin!</h1>
+            <span class="ds-header__date">viernes, 25 de abril de 2026</span>
+        </div>
+        <button class="ds-gear" title="Personalizar">
+            <!-- Settings icon -->
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- ═══════════════ WIDGETS GRID ═══════════════ -->
+    <div class="ds-grid">
+
+        <!-- ────────── 1. BANK ACCOUNTS ────────── -->
+        <div class="ds-card ds-card--s">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Cuentas Bancarias</h3>
+                <span class="ds-muted-xs">Hoy</span>
+            </div>
+            <p class="ds-muted-xs" style="margin-bottom:4px">Saldo bancario actual</p>
+            <div class="ds-big-num">$124,850</div>
+            <div class="ds-divider"></div>
+            <div class="ds-bank-row">
+                <div class="ds-bank-icon ds-bank-icon--teal">
+                    <!-- Landmark icon -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/>
+                    </svg>
+                </div>
+                <div style="flex:1">
+                    <div class="ds-fw600">Cuenta Principal</div>
+                    <div class="ds-muted-xs">Chase Business ****4821</div>
+                </div>
+                <div style="text-align:right">
+                    <div class="ds-fw700">$98,350</div>
+                    <span class="ds-badge ds-badge--green">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Activa
+                    </span>
+                </div>
+            </div>
+            <div class="ds-bank-row">
+                <div class="ds-bank-icon ds-bank-icon--green">
+                    <!-- Banknote icon -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>
+                    </svg>
+                </div>
+                <div style="flex:1"><div class="ds-fw600">Efectivo</div><div class="ds-muted-xs">En mano</div></div>
+                <div class="ds-fw700">$26,500</div>
+            </div>
+        </div>
+
+        <!-- ────────── 2. INVOICES ────────── -->
+        <div class="ds-card ds-card--s">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Facturas</h3>
+                <span class="ds-link">Ver todas →</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px">
+                <div>
+                    <div class="ds-muted-xs">Pendientes</div>
+                    <div class="ds-num ds-num--orange">$38,420</div>
+                    <div class="ds-muted-xs" style="color:#EA580C">7 facturas</div>
+                </div>
+                <div>
+                    <div class="ds-muted-xs">Pagadas</div>
+                    <div class="ds-num ds-num--green">$86,430</div>
+                    <div class="ds-muted-xs" style="color:#059669">12 facturas</div>
+                </div>
+            </div>
+            <div class="ds-bar-split">
+                <div class="ds-bar-split__s ds-bar-split__s--orange" style="flex:38420"></div>
+                <div class="ds-bar-split__s ds-bar-split__s--green" style="flex:86430"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px">
+                <div>
+                    <div class="ds-muted-xs">Vencidas</div>
+                    <div class="ds-num" style="color:#DC2626">$12,150</div>
+                    <div class="ds-muted-xs" style="color:#DC2626">3 facturas</div>
+                </div>
+                <div>
+                    <div class="ds-muted-xs">Total facturado</div>
+                    <div class="ds-num">$137,000</div>
+                    <div class="ds-muted-xs">22 facturas</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ────────── 3. P&L ────────── -->
+        <div class="ds-card ds-card--s">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Perdidas y Ganancias</h3>
+                <span class="ds-muted-xs">Este mes</span>
+            </div>
+            <div class="ds-big-num" style="color:#059669">$41,570</div>
+            <span class="ds-badge ds-badge--green-bg">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                +12.4% vs mes anterior
+            </span>
+            <div class="ds-progress">
+                <div class="ds-progress__labels">
+                    <span class="ds-muted-xs">Ingresos facturados</span>
+                    <span class="ds-fw600">$137,000</span>
+                </div>
+                <div class="ds-progress__track">
+                    <div class="ds-progress__fill" style="width:100%;background:#059669"></div>
+                </div>
+            </div>
+            <div class="ds-progress">
+                <div class="ds-progress__labels">
+                    <span class="ds-muted-xs">Gastos operativos</span>
+                    <span class="ds-fw600">$95,430</span>
+                </div>
+                <div class="ds-progress__track">
+                    <div class="ds-progress__fill" style="width:69.7%;background:#DC2626"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ────────── 4. PAYROLL ────────── -->
+        <div class="ds-card ds-card--s">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Nomina</h3>
+            </div>
+            <div class="ds-payroll-grid">
+                <div class="ds-payroll-box">
+                    <div class="ds-muted-xs">Pendiente</div>
+                    <div class="ds-num">$24,800</div>
+                </div>
+                <div class="ds-payroll-box">
+                    <div class="ds-muted-xs">Overtime</div>
+                    <div class="ds-num ds-num--orange">42.5h</div>
+                </div>
+                <div class="ds-payroll-box">
+                    <div class="ds-muted-xs">Per Diem</div>
+                    <div class="ds-num">$3,150</div>
+                </div>
+            </div>
+            <div class="ds-alert">
+                <!-- AlertTriangle icon -->
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Nomina pendiente de aprobacion</span>
+                <span class="ds-alert__btn">Revisar</span>
+            </div>
+        </div>
+
+        <!-- ────────── 5. WORKFORCE ────────── -->
+        <div class="ds-card ds-card--s">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Equipo de Trabajo</h3>
+            </div>
+            <div class="ds-wf-stats">
+                <div><span class="ds-num">18</span> <span class="ds-muted-xs">Activos</span></div>
+                <div><span class="ds-num">14</span> <span class="ds-muted-xs">Clock-In</span></div>
+                <div><span class="ds-num">642</span> <span class="ds-muted-xs">Horas</span></div>
+            </div>
+            <div class="ds-worker-list">
+                <div class="ds-worker">
+                    <div class="ds-worker__av ds-worker__av--teal">JR</div>
+                    <div style="flex:1">
+                        <div class="ds-fw600">Juan Rivera</div>
+                        <div class="ds-muted-xs">W-001</div>
+                    </div>
+                    <div class="ds-dot-status ds-dot-status--on"></div>
+                </div>
+                <div class="ds-worker">
+                    <div class="ds-worker__av ds-worker__av--blue">ML</div>
+                    <div style="flex:1">
+                        <div class="ds-fw600">Maria Lopez</div>
+                        <div class="ds-muted-xs">W-002</div>
+                    </div>
+                    <div class="ds-dot-status ds-dot-status--on"></div>
+                </div>
+                <div class="ds-worker">
+                    <div class="ds-worker__av ds-worker__av--teal">CP</div>
+                    <div style="flex:1">
+                        <div class="ds-fw600">Carlos Perez</div>
+                        <div class="ds-muted-xs">W-003</div>
+                    </div>
+                    <div class="ds-dot-status ds-dot-status--on"></div>
+                </div>
+                <div class="ds-worker">
+                    <div class="ds-worker__av ds-worker__av--blue">AG</div>
+                    <div style="flex:1">
+                        <div class="ds-fw600">Ana Garcia</div>
+                        <div class="ds-muted-xs">W-004</div>
+                    </div>
+                    <div class="ds-dot-status"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ────────── 6. CASHFLOW CHART ────────── -->
+        <div class="ds-card ds-card--m">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Flujo de Caja</h3>
+                <span class="ds-muted-xs">7 meses</span>
+            </div>
+            <div style="margin-bottom:12px">
+                <div class="ds-muted-xs">Saldo actual</div>
+                <div class="ds-big-num">$124,850</div>
+            </div>
+            <div class="ds-css-chart-wrap" style="position:relative;padding-left:40px">
+                <div class="ds-css-chart">
+                    <div class="ds-css-chart__col">
+                        <span class="ds-css-chart__val">$68K</span>
+                        <div class="ds-css-chart__bar" style="height:45%"></div>
+                        <span class="ds-css-chart__label">Sep</span>
+                    </div>
+                    <div class="ds-css-chart__col">
+                        <span class="ds-css-chart__val">$82K</span>
+                        <div class="ds-css-chart__bar" style="height:54%"></div>
+                        <span class="ds-css-chart__label">Oct</span>
+                    </div>
+                    <div class="ds-css-chart__col">
+                        <span class="ds-css-chart__val">$74K</span>
+                        <div class="ds-css-chart__bar" style="height:49%"></div>
+                        <span class="ds-css-chart__label">Nov</span>
+                    </div>
+                    <div class="ds-css-chart__col">
+                        <span class="ds-css-chart__val">$95K</span>
+                        <div class="ds-css-chart__bar" style="height:63%"></div>
+                        <span class="ds-css-chart__label">Dic</span>
+                    </div>
+                    <div class="ds-css-chart__col">
+                        <span class="ds-css-chart__val">$108K</span>
+                        <div class="ds-css-chart__bar" style="height:72%"></div>
+                        <span class="ds-css-chart__label">Ene</span>
+                    </div>
+                    <div class="ds-css-chart__col">
+                        <span class="ds-css-chart__val">$118K</span>
+                        <div class="ds-css-chart__bar" style="height:78%"></div>
+                        <span class="ds-css-chart__label">Feb</span>
+                    </div>
+                    <div class="ds-css-chart__col">
+                        <span class="ds-css-chart__val">$137K</span>
+                        <div class="ds-css-chart__bar" style="height:91%;background:linear-gradient(180deg,#0D9488 0%,rgba(13,148,136,0.35) 100%)"></div>
+                        <span class="ds-css-chart__label">Mar</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ────────── 7. ACTIVITY ────────── -->
+        <div class="ds-card ds-card--s">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Actividad Reciente</h3>
+                <span class="ds-link">Ver todo →</span>
+            </div>
+            <div class="ds-activity-list">
+                <!-- Entry 1 -->
+                <div class="ds-activity">
+                    <span class="ds-activity__icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    </span>
+                    <div style="flex:1">
+                        <div class="ds-fw600" style="font-size:0.82rem">Juan marco entrada</div>
+                        <div class="ds-muted-xs">Riverside Plaza</div>
+                    </div>
+                    <span class="ds-muted-xs">Hoy</span>
+                </div>
+                <!-- Entry 2 -->
+                <div class="ds-activity">
+                    <span class="ds-activity__icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A6C95" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </span>
+                    <div style="flex:1">
+                        <div class="ds-fw600" style="font-size:0.82rem">Factura creada</div>
+                        <div class="ds-muted-xs">$6,850</div>
+                    </div>
+                    <span class="ds-muted-xs">Hoy</span>
+                </div>
+                <!-- Entry 3 -->
+                <div class="ds-activity">
+                    <span class="ds-activity__icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </span>
+                    <div style="flex:1">
+                        <div class="ds-fw600" style="font-size:0.82rem">Maria marco salida</div>
+                        <div class="ds-muted-xs">Riverside Plaza</div>
+                    </div>
+                    <span class="ds-muted-xs">Ayer</span>
+                </div>
+                <!-- Entry 4 -->
+                <div class="ds-activity">
+                    <span class="ds-activity__icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </span>
+                    <div style="flex:1">
+                        <div class="ds-fw600" style="font-size:0.82rem">Factura pagada</div>
+                        <div class="ds-muted-xs">$8,643 depositado</div>
+                    </div>
+                    <span class="ds-muted-xs">Ayer</span>
+                </div>
+                <!-- Entry 5 -->
+                <div class="ds-activity">
+                    <span class="ds-activity__icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </span>
+                    <div style="flex:1">
+                        <div class="ds-fw600" style="font-size:0.82rem">Nueva asignacion</div>
+                        <div class="ds-muted-xs">Carlos → Oak Tower</div>
+                    </div>
+                    <span class="ds-muted-xs">Lun</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ────────── 8. ACTIVE PROJECTS ────────── -->
+        <div class="ds-card ds-card--m">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Proyectos Activos</h3>
+                <span class="ds-link">Ver todos →</span>
+            </div>
+            <div class="ds-projects-row">
+                <!-- Project 1 -->
+                <div class="ds-project">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                        <div>
+                            <div class="ds-fw700" style="font-size:0.85rem">Riverside Plaza</div>
+                            <div class="ds-muted-xs">Thompson Construction</div>
+                        </div>
+                        <span class="ds-pct" style="color:#0D9488;background:rgba(13,148,136,0.08)">68%</span>
+                    </div>
+                    <div class="ds-project__bar"><div style="width:68%;background:#0D9488"></div></div>
+                </div>
+                <!-- Project 2 -->
+                <div class="ds-project">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                        <div>
+                            <div class="ds-fw700" style="font-size:0.85rem">Oak Tower</div>
+                            <div class="ds-muted-xs">Meridian Builders</div>
+                        </div>
+                        <span class="ds-pct" style="color:#2A6C95;background:rgba(42,108,149,0.08)">45%</span>
+                    </div>
+                    <div class="ds-project__bar"><div style="width:45%;background:#2A6C95"></div></div>
+                </div>
+                <!-- Project 3 -->
+                <div class="ds-project">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                        <div>
+                            <div class="ds-fw700" style="font-size:0.85rem">Harbor Walk</div>
+                            <div class="ds-muted-xs">Coastal Dev Group</div>
+                        </div>
+                        <span class="ds-pct" style="color:#7C3AED;background:rgba(124,58,237,0.08)">22%</span>
+                    </div>
+                    <div class="ds-project__bar"><div style="width:22%;background:#7C3AED"></div></div>
+                </div>
+                <!-- Project 4 -->
+                <div class="ds-project">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                        <div>
+                            <div class="ds-fw700" style="font-size:0.85rem">Elm Street Reno</div>
+                            <div class="ds-muted-xs">Summit Properties</div>
+                        </div>
+                        <span class="ds-pct" style="color:#EA580C;background:rgba(234,88,12,0.08)">85%</span>
+                    </div>
+                    <div class="ds-project__bar"><div style="width:85%;background:#EA580C"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ────────── 9. FUNNEL (Embudo de Cobro) ────────── -->
+        <div class="ds-card ds-card--s">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Embudo de Cobro</h3>
+            </div>
+            <div class="ds-funnel-v2">
+                <div class="ds-funnel-v2__row">
+                    <div class="ds-funnel-v2__icon" style="background:rgba(245,158,11,0.12);color:#F59E0B">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div class="ds-funnel-v2__body">
+                        <div class="ds-funnel-v2__top">
+                            <span class="ds-funnel-v2__label">No pagado</span>
+                            <span class="ds-funnel-v2__amount" style="color:#F59E0B">$38,420</span>
+                        </div>
+                        <div class="ds-funnel-v2__bar-wrap">
+                            <div class="ds-funnel-v2__bar-fill" style="width:28%;background:#F59E0B"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ds-funnel-v2__row">
+                    <div class="ds-funnel-v2__icon" style="background:rgba(16,185,129,0.12);color:#10B981">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <div class="ds-funnel-v2__body">
+                        <div class="ds-funnel-v2__top">
+                            <span class="ds-funnel-v2__label">Remunerado</span>
+                            <span class="ds-funnel-v2__amount" style="color:#10B981">$86,430</span>
+                        </div>
+                        <div class="ds-funnel-v2__bar-wrap">
+                            <div class="ds-funnel-v2__bar-fill" style="width:63%;background:#10B981"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ds-funnel-v2__row">
+                    <div class="ds-funnel-v2__icon" style="background:rgba(42,108,149,0.12);color:#2A6C95">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/>
+                        </svg>
+                    </div>
+                    <div class="ds-funnel-v2__body">
+                        <div class="ds-funnel-v2__top">
+                            <span class="ds-funnel-v2__label">Depositado</span>
+                            <span class="ds-funnel-v2__amount" style="color:#2A6C95">$86,430</span>
+                        </div>
+                        <div class="ds-funnel-v2__bar-wrap">
+                            <div class="ds-funnel-v2__bar-fill" style="width:63%;background:#2A6C95"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ────────── 10. QUICK ACTIONS ────────── -->
+        <div class="ds-card ds-card--s">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Acciones Rapidas</h3>
+            </div>
+            <div class="ds-qa-grid">
+                <button class="ds-qa-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <span>Crear factura</span>
+                </button>
+                <button class="ds-qa-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Registrar horas</span>
+                </button>
+                <button class="ds-qa-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    <span>Nueva asignacion</span>
+                </button>
+                <button class="ds-qa-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <span>Aprobar nomina</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ────────── 11. MARGIN ────────── -->
+        <div class="ds-card ds-card--s">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Margen de Ganancia</h3>
+            </div>
+            <div class="ds-margin">
+                <div class="ds-margin__chart">
+                    <svg viewBox="0 0 130 130" width="130" height="130">
+                        <circle class="donut-ring" cx="65" cy="65" r="52"/>
+                        <circle class="donut-segment" cx="65" cy="65" r="52"
+                            stroke="#0D9488"
+                            stroke-dasharray="98.5 228.2"
+                            stroke-dashoffset="81.7"
+                            transform="rotate(-90 65 65)"/>
+                    </svg>
+                    <div class="ds-margin__pct">30.3%</div>
+                </div>
+                <div class="ds-margin__legend">
+                    <div class="ds-muted-xs"><span class="ds-dot ds-dot--teal"></span> Ganancia: $41,570</div>
+                    <div class="ds-muted-xs"><span class="ds-dot ds-dot--gray"></span> Costos: $95,430</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ────────── 12. CLIENT SUMMARY ────────── -->
+        <div class="ds-card ds-card--s">
+            <div class="ds-title-row">
+                <h3 class="ds-title">Resumen por Cliente</h3>
+                <span class="ds-link">Ver todos →</span>
+            </div>
+            <div class="ds-client-list">
+                <div class="ds-client-row">
+                    <div class="ds-client-dot" style="background:#0D9488"></div>
+                    <div style="flex:1"><div class="ds-fw600">Thompson Construction</div><div class="ds-muted-xs">Riverside Plaza</div></div>
+                    <div class="ds-fw700">$48,200</div>
+                </div>
+                <div class="ds-client-row">
+                    <div class="ds-client-dot" style="background:#2A6C95"></div>
+                    <div style="flex:1"><div class="ds-fw600">Meridian Builders</div><div class="ds-muted-xs">Oak Tower</div></div>
+                    <div class="ds-fw700">$35,600</div>
+                </div>
+                <div class="ds-client-row">
+                    <div class="ds-client-dot" style="background:#7C3AED"></div>
+                    <div style="flex:1"><div class="ds-fw600">Coastal Dev Group</div><div class="ds-muted-xs">Harbor Walk</div></div>
+                    <div class="ds-fw700">$28,900</div>
+                </div>
+                <div class="ds-client-row">
+                    <div class="ds-client-dot" style="background:#EA580C"></div>
+                    <div style="flex:1"><div class="ds-fw600">Summit Properties</div><div class="ds-muted-xs">Elm Street Reno</div></div>
+                    <div class="ds-fw700">$24,300</div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /ds-grid -->
+
+</div><!-- /dashboard -->
+
+</body>
+</html>

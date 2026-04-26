@@ -1,7 +1,7 @@
 .payroll-page {
   font-family: 'Inter', system-ui, sans-serif;
   color: #111827;
-  padding: 24px;
+  padding: 16px;
   background-color: #f9fafb;
   min-height: calc(100vh - 64px);
 }
@@ -10,7 +10,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .payroll-header h1 {
   margin: 0;
@@ -63,13 +63,13 @@
 .payroll-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 .metric-card {
   background: white;
   border-radius: 12px;
-  padding: 16px;
+  padding: 14px;
   border: 1px solid #e5e7eb;
 }
 .metric-label {
@@ -90,7 +90,7 @@
 .payroll-body {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
-  gap: 20px;
+  gap: 12px;
   align-items: start;
 }
 
@@ -146,12 +146,12 @@
 .detail-card {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 .detail-header {
-  padding: 20px;
+  padding: 16px 20px;
   border-bottom: 1px solid #f3f4f6;
   display: flex;
   justify-content: space-between;
@@ -163,11 +163,22 @@
 
 /* Alert */
 .alert-warning {
-  margin: 20px;
+  margin: 16px 20px;
   background: #FAEEDA;
   border: 1px solid #EF9F27;
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.alert-info {
+  margin: 16px 20px;
+  background: #E6F1FB;
+  border: 1px solid #85B7EB;
+  border-radius: 8px;
+  padding: 14px;
   display: flex;
   gap: 12px;
   align-items: flex-start;
@@ -203,14 +214,14 @@
   display: grid;
   grid-template-columns: 240px 70px 70px 80px 90px 90px 110px minmax(130px, 1fr);
   align-items: center;
-  padding: 14px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid #f3f4f6;
   gap: 12px;
 }
 .worker-row:last-child { border-bottom: none; }
 .worker-row.thead {
   background: rgba(42, 108, 149, 0.04);
-  padding: 10px 20px;
+  padding: 8px 16px;
   border-bottom: 1px solid #e5e7eb;
 }
 .th {
@@ -256,7 +267,7 @@
 
 /* Footer totales */
 .detail-footer {
-  padding: 16px 20px;
+  padding: 14px 16px;
   border-top: 1px solid #e5e7eb;
   background: #fdfdfd;
   display: flex;
@@ -274,7 +285,7 @@
 .detail-empty {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  min-height: 500px; color: #9ca3af;
+  min-height: 180px; color: #9ca3af;
   border: 1px dashed #d1d5db;
   border-radius: 12px; background: #fafafa;
 }

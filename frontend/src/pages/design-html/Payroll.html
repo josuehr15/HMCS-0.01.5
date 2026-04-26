@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMCS - Nomina</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F1F5F9;
+            --bg-card: #ffffff;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --hover: #F8FAFC;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        h1, h2, h3 { font-family: 'Montserrat', 'Inter', sans-serif; }
+
+        /* ── Page Container ── */
+        .payroll-page {
+            padding: 32px;
+            background: transparent;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* ── Fade in animation ── */
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up {
+            animation: fadeInUp 0.25s ease;
+        }
+
+        /* ── Header ── */
+        .payroll-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .payroll-header h1 {
+            margin: 0 0 3px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+        }
+        .payroll-header p {
+            margin: 0;
+            font-size: 13px;
+            color: #6B7280;
+        }
+        .payroll-header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* ── Buttons ── */
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: white;
+            border: 1px solid #D1D5DB;
+            color: #4B5563;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-outline:hover {
+            background: #f9fafb;
+            border-color: #9CA3AF;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: #2A6C95;
+            border: none;
+            color: white;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-primary:hover {
+            background: #1e5270;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(42, 108, 149, 0.3);
+        }
+
+        /* ── Metric Cards ── */
+        .payroll-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .metric-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            transition: box-shadow 0.2s;
+        }
+        .metric-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .metric-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #111827;
+            font-family: 'Montserrat', 'Inter', sans-serif;
+        }
+        .metric-hint {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        /* ── Body Grid (Sidebar + Detail) ── */
+        .payroll-body {
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+            gap: 14px;
+            align-items: start;
+        }
+
+        /* ── Week Sidebar ── */
+        .week-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sidebar-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #9ca3af;
+            padding: 0 4px;
+            margin-bottom: 6px;
+        }
+        .week-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .week-card:hover {
+            border-color: #2A6C95;
+        }
+        .week-card.active {
+            border-color: #08543D;
+            border-left: 4px solid #08543D;
+            padding-left: 13px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .week-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .week-dates {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .week-meta {
+            font-size: 12px;
+            color: #6b7280;
+            display: flex;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        /* ── Badges ── */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-pending_approval, .badge-pending {
+            background: #FAEEDA;
+            color: #633806;
+        }
+        .badge-paid {
+            background: #E1F5EE;
+            color: #085041;
+        }
+        .badge-approved {
+            background: #E6F1FB;
+            color: #0C447C;
+        }
+        .badge-partial {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        .badge-ungenerated, .badge-draft {
+            background: #f3f4f6;
+            color: #4B5563;
+        }
+
+        /* ── Detail Card ── */
+        .detail-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .detail-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .detail-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            font-family: 'Montserrat', 'Inter', sans-serif;
+        }
+        .detail-sub {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* ── Worker Table ── */
+        .worker-table-wrap {
+            overflow-x: auto;
+        }
+        .worker-row {
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) 70px 70px 70px 80px 80px 90px 140px;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            gap: 12px;
+            transition: background 0.15s;
+        }
+        .worker-row:last-child { border-bottom: none; }
+        .worker-row:not(.thead):hover {
+            background: var(--hover);
+            cursor: pointer;
+        }
+        .worker-row.thead {
+            background: rgba(42, 108, 149, 0.04);
+            padding: 8px 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .th {
+            font-size: 10.5px;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #2A6C95;
+        }
+        .th.r { text-align: right; }
+        .worker-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+        }
+        .worker-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(42, 108, 149, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #2A6C95;
+            flex-shrink: 0;
+        }
+        .worker-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #111827;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .worker-trade {
+            font-size: 12px;
+            color: #6b7280;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+        .num       { font-size: 13px; text-align: right; color: #374151; font-weight: 500; }
+        .num-muted { font-size: 13px; text-align: right; color: #9ca3af; font-weight: 500; }
+        .amount    { font-size: 14px; font-weight: 600; text-align: right; color: #111827; }
+        .amount.green { color: #08543D; }
+        .pay-action { display: flex; justify-content: flex-end; }
+
+        .btn-pay {
+            background: #08543D;
+            color: #e6f5ef;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-pay:hover { background: #06402e; }
+
+        .btn-paid-done {
+            background: #E1F5EE;
+            color: #085041;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: default;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-approve {
+            background: #2A6C95;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-approve:hover { background: #1e5270; }
+
+        .btn-voucher {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: white;
+            color: #6b7280;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .btn-voucher:hover {
+            border-color: #2A6C95;
+            color: #2A6C95;
+        }
+
+        .btn-voucher-upload {
+            display: inline-flex;
+            align-items: center;
+            background: none;
+            border: 1px dashed #d1d5db;
+            border-radius: 4px;
+            padding: 2px 7px;
+            font-size: 10px;
+            color: #6b7280;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+            font-family: inherit;
+        }
+        .btn-voucher-upload:hover {
+            border-color: #08543D;
+            color: #08543D;
+        }
+
+        /* ── Detail Footer ── */
+        .detail-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #e5e7eb;
+            background: #fdfdfd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .footer-note {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .footer-totals {
+            display: flex;
+            gap: 40px;
+        }
+        .ft-item { text-align: right; }
+        .ft-label { font-size: 12px; color: #6b7280; font-weight: 500; }
+        .ft-value {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 4px;
+            color: #111827;
+            font-family: 'Montserrat', 'Inter', sans-serif;
+        }
+        .ft-value.green { color: #08543D; }
+
+        /* ── Empty State ── */
+        .detail-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 280px;
+            color: #9ca3af;
+            border: 1px dashed #d1d5db;
+            border-radius: 12px;
+            background: #fafafa;
+        }
+        .empty-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+            color: #d1d5db;
+            background: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* ── Alert Boxes ── */
+        .alert-warning {
+            margin: 16px 20px;
+            background: #FAEEDA;
+            border: 1px solid #EF9F27;
+            border-radius: 8px;
+            padding: 14px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .alert-info {
+            background: #E6F1FB;
+            border: 1px solid #85B7EB;
+            border-radius: 8px;
+            padding: 14px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .alert-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #EF9F27;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .alert-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #633806;
+            margin-bottom: 2px;
+        }
+        .alert-desc {
+            font-size: 13px;
+            color: #854F0B;
+            line-height: 1.5;
+        }
+        .alert-desc code {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        /* ── Generate Button ── */
+        .btn-generate {
+            background: #08543D;
+            color: #e6f5ef;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            font-family: inherit;
+        }
+        .btn-generate:hover { background: #06402e; }
+
+        /* ── Toast Notification ── */
+        .payroll-toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 9999;
+            min-width: 280px;
+            max-width: 400px;
+            animation: toastIn 0.25s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .payroll-toast--success {
+            background: #E1F5EE;
+            border: 0.5px solid #5DCAA5;
+            color: #085041;
+        }
+        .payroll-toast__icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+            background: #08543D;
+            color: #e6f5ef;
+        }
+        .payroll-toast__message { flex: 1; line-height: 1.4; }
+        .payroll-toast__close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0.5;
+            padding: 2px 4px;
+            color: inherit;
+            flex-shrink: 0;
+        }
+        .payroll-toast__close:hover { opacity: 1; }
+
+        /* ── Responsive ── */
+        @media (max-width: 1100px) {
+            .payroll-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 860px) {
+            .payroll-body {
+                grid-template-columns: 1fr;
+            }
+            .payroll-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 600px) {
+            .payroll-page { padding: 16px; }
+            .payroll-metrics {
+                grid-template-columns: 1fr;
+            }
+            .footer-totals {
+                gap: 20px;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="payroll-page fade-in">
+
+    <!-- ════════════════════════ HEADER ════════════════════════ -->
+    <div class="payroll-header">
+        <div>
+            <h1>Nomina</h1>
+            <p>Gestion de pagos semanales a workers</p>
+        </div>
+        <div class="payroll-header-actions">
+            <button class="btn-outline">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Exportar
+            </button>
+            <button class="btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Generar nomina
+            </button>
+        </div>
+    </div>
+
+    <!-- ════════════════════════ METRICS ════════════════════════ -->
+    <div class="payroll-metrics">
+        <div class="metric-card">
+            <div class="metric-label">
+                <span class="metric-dot" style="background: #E24B4A;"></span>
+                Pendiente de pago
+            </div>
+            <div class="metric-value">$12,480.00</div>
+            <div class="metric-hint">8 workers sin pagar</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">
+                <span class="metric-dot" style="background: #08543D;"></span>
+                Pagado esta semana
+            </div>
+            <div class="metric-value">$6,240.00</div>
+            <div class="metric-hint">pagos realizados</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">
+                <span class="metric-dot" style="background: #2A6C95;"></span>
+                Pagado este mes
+            </div>
+            <div class="metric-value">$34,720.00</div>
+            <div class="metric-hint">acumulado del mes</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">
+                <span class="metric-dot" style="background: #BA7517;"></span>
+                Workers por pagar
+            </div>
+            <div class="metric-value">8</div>
+            <div class="metric-hint">semana seleccionada</div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════ BODY: SIDEBAR + DETAIL ════════════════════════ -->
+    <div class="payroll-body">
+
+        <!-- ──── Week Sidebar ──── -->
+        <div class="week-sidebar">
+            <div class="sidebar-label">Semanas</div>
+
+            <!-- Week 1 - Active / Approved -->
+            <div class="week-card active">
+                <div class="week-card-top">
+                    <span class="week-dates">Apr 14 - Apr 20, 2026</span>
+                    <span class="badge badge-approved">Aprobada</span>
+                </div>
+                <div class="week-meta">
+                    <span>8 workers</span>
+                    <span>$12,480.00</span>
+                </div>
+            </div>
+
+            <!-- Week 2 - Paid -->
+            <div class="week-card">
+                <div class="week-card-top">
+                    <span class="week-dates">Apr 7 - Apr 13, 2026</span>
+                    <span class="badge badge-paid">Pagada</span>
+                </div>
+                <div class="week-meta">
+                    <span>7 workers</span>
+                    <span>$10,850.50</span>
+                </div>
+            </div>
+
+            <!-- Week 3 - Partial -->
+            <div class="week-card">
+                <div class="week-card-top">
+                    <span class="week-dates">Mar 31 - Apr 6, 2026</span>
+                    <span class="badge badge-partial">Parcial</span>
+                </div>
+                <div class="week-meta">
+                    <span>8 workers</span>
+                    <span>$11,320.00</span>
+                </div>
+            </div>
+
+            <!-- Week 4 - Pending -->
+            <div class="week-card">
+                <div class="week-card-top">
+                    <span class="week-dates">Apr 21 - Apr 27, 2026</span>
+                    <span class="badge badge-pending">Pendiente</span>
+                </div>
+                <div class="week-meta">
+                    <span>6 workers</span>
+                    <span>$9,740.00</span>
+                </div>
+            </div>
+
+            <!-- Week 5 - Ungenerated -->
+            <div class="week-card">
+                <div class="week-card-top">
+                    <span class="week-dates">Apr 28 - May 4, 2026</span>
+                    <span class="badge badge-ungenerated">Sin generar</span>
+                </div>
+                <div class="week-meta">
+                    <span>0 workers</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ──── Detail Panel ──── -->
+        <div class="detail-card">
+            <!-- Detail Header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">Apr 14 - Apr 20, 2026</div>
+                    <div class="detail-sub">8 workers &middot; $12,480.00 total bruto</div>
+                </div>
+                <div class="detail-actions">
+                    <span class="badge badge-approved">Aprobada</span>
+                    <button class="btn-approve">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Aprobar nomina
+                    </button>
+                </div>
+            </div>
+
+            <!-- Worker Table -->
+            <div class="worker-table-wrap">
+                <!-- Table Header -->
+                <div class="worker-row thead">
+                    <div class="th">Worker</div>
+                    <div class="th r">Reg hrs</div>
+                    <div class="th r">OT hrs</div>
+                    <div class="th r">Rate</div>
+                    <div class="th r">Gross</div>
+                    <div class="th r">P.Diem</div>
+                    <div class="th r">Total</div>
+                    <div class="th r">Accion</div>
+                </div>
+
+                <!-- Worker 1 - Carlos M. - Paid -->
+                <div class="worker-row">
+                    <div class="worker-info">
+                        <div class="worker-avatar">CM</div>
+                        <div>
+                            <div class="worker-name">Carlos Martinez</div>
+                            <div class="worker-trade">Electrician &middot; $28.00/hr</div>
+                        </div>
+                    </div>
+                    <div class="num">40.0</div>
+                    <div class="num">8.0</div>
+                    <div class="num-muted">$28.00</div>
+                    <div class="num">$1,456.00</div>
+                    <div class="num">$175.00</div>
+                    <div class="amount green">$1,631.00</div>
+                    <div class="pay-action">
+                        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
+                            <div style="display: flex; gap: 4px;">
+                                <button class="btn-paid-done" disabled>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Pagado
+                                </button>
+                                <a href="#" class="btn-voucher" title="Ver Voucher">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <line x1="16" y1="13" x2="8" y2="13"/>
+                                        <line x1="16" y1="17" x2="8" y2="17"/>
+                                    </svg>
+                                </a>
+                            </div>
+                            <span style="font-size: 10px; color: #10b981; font-weight: 600;">VCH-20260414-001</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Worker 2 - Maria R. - Paid -->
+                <div class="worker-row">
+                    <div class="worker-info">
+                        <div class="worker-avatar">MR</div>
+                        <div>
+                            <div class="worker-name">Maria Rodriguez</div>
+                            <div class="worker-trade">Plumber &middot; $32.00/hr</div>
+                        </div>
+                    </div>
+                    <div class="num">40.0</div>
+                    <div class="num">4.5</div>
+                    <div class="num-muted">$32.00</div>
+                    <div class="num">$1,496.00</div>
+                    <div class="num">$150.00</div>
+                    <div class="amount green">$1,646.00</div>
+                    <div class="pay-action">
+                        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
+                            <div style="display: flex; gap: 4px;">
+                                <button class="btn-paid-done" disabled>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Pagado
+                                </button>
+                                <a href="#" class="btn-voucher" title="Ver Voucher">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <line x1="16" y1="13" x2="8" y2="13"/>
+                                        <line x1="16" y1="17" x2="8" y2="17"/>
+                                    </svg>
+                                </a>
+                            </div>
+                            <span style="font-size: 10px; color: #10b981; font-weight: 600;">VCH-20260414-002</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Worker 3 - Juan P. - Unpaid -->
+                <div class="worker-row">
+                    <div class="worker-info">
+                        <div class="worker-avatar">JP</div>
+                        <div>
+                            <div class="worker-name">Juan Perez</div>
+                            <div class="worker-trade">Carpenter &middot; $26.00/hr</div>
+                        </div>
+                    </div>
+                    <div class="num">40.0</div>
+                    <div class="num">6.0</div>
+                    <div class="num-muted">$26.00</div>
+                    <div class="num">$1,274.00</div>
+                    <div class="num-muted">&mdash;</div>
+                    <div class="amount green">$1,274.00</div>
+                    <div class="pay-action">
+                        <button class="btn-pay">Marcar pagado</button>
+                    </div>
+                </div>
+
+                <!-- Worker 4 - Ana L. - Unpaid -->
+                <div class="worker-row">
+                    <div class="worker-info">
+                        <div class="worker-avatar">AL</div>
+                        <div>
+                            <div class="worker-name">Ana Lopez</div>
+                            <div class="worker-trade">Painter &middot; $22.00/hr</div>
+                        </div>
+                    </div>
+                    <div class="num">40.0</div>
+                    <div class="num">12.0</div>
+                    <div class="num-muted">$22.00</div>
+                    <div class="num">$1,276.00</div>
+                    <div class="num">$200.00</div>
+                    <div class="amount green">$1,476.00</div>
+                    <div class="pay-action">
+                        <button class="btn-pay">Marcar pagado</button>
+                    </div>
+                </div>
+
+                <!-- Worker 5 - Roberto G. - Unpaid -->
+                <div class="worker-row">
+                    <div class="worker-info">
+                        <div class="worker-avatar">RG</div>
+                        <div>
+                            <div class="worker-name">Roberto Garcia</div>
+                            <div class="worker-trade">Welder &middot; $35.00/hr</div>
+                        </div>
+                    </div>
+                    <div class="num">40.0</div>
+                    <div class="num-muted">&mdash;</div>
+                    <div class="num-muted">$35.00</div>
+                    <div class="num">$1,400.00</div>
+                    <div class="num">$175.00</div>
+                    <div class="amount green">$1,575.00</div>
+                    <div class="pay-action">
+                        <button class="btn-pay">Marcar pagado</button>
+                    </div>
+                </div>
+
+                <!-- Worker 6 - Sofia H. - Unpaid -->
+                <div class="worker-row">
+                    <div class="worker-info">
+                        <div class="worker-avatar">SH</div>
+                        <div>
+                            <div class="worker-name">Sofia Hernandez</div>
+                            <div class="worker-trade">HVAC Tech &middot; $30.00/hr</div>
+                        </div>
+                    </div>
+                    <div class="num">40.0</div>
+                    <div class="num">5.0</div>
+                    <div class="num-muted">$30.00</div>
+                    <div class="num">$1,425.00</div>
+                    <div class="num-muted">&mdash;</div>
+                    <div class="amount green">$1,425.00</div>
+                    <div class="pay-action">
+                        <button class="btn-pay">Marcar pagado</button>
+                    </div>
+                </div>
+
+                <!-- Worker 7 - Diego V. - Unpaid -->
+                <div class="worker-row">
+                    <div class="worker-info">
+                        <div class="worker-avatar">DV</div>
+                        <div>
+                            <div class="worker-name">Diego Vargas</div>
+                            <div class="worker-trade">Mason &middot; $27.00/hr</div>
+                        </div>
+                    </div>
+                    <div class="num">40.0</div>
+                    <div class="num">10.0</div>
+                    <div class="num-muted">$27.00</div>
+                    <div class="num">$1,485.00</div>
+                    <div class="num">$150.00</div>
+                    <div class="amount green">$1,635.00</div>
+                    <div class="pay-action">
+                        <button class="btn-pay">Marcar pagado</button>
+                    </div>
+                </div>
+
+                <!-- Worker 8 - Luis T. - Paid, no voucher -->
+                <div class="worker-row">
+                    <div class="worker-info">
+                        <div class="worker-avatar">LT</div>
+                        <div>
+                            <div class="worker-name">Luis Torres</div>
+                            <div class="worker-trade">Laborer &middot; $20.00/hr</div>
+                        </div>
+                    </div>
+                    <div class="num">40.0</div>
+                    <div class="num">3.0</div>
+                    <div class="num-muted">$20.00</div>
+                    <div class="num">$890.00</div>
+                    <div class="num">$125.00</div>
+                    <div class="amount green">$1,015.00</div>
+                    <div class="pay-action">
+                        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
+                            <div style="display: flex; gap: 4px;">
+                                <button class="btn-paid-done" disabled>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Pagado
+                                </button>
+                                <a href="#" class="btn-voucher" title="Ver Voucher">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <line x1="16" y1="13" x2="8" y2="13"/>
+                                        <line x1="16" y1="17" x2="8" y2="17"/>
+                                    </svg>
+                                </a>
+                            </div>
+                            <button class="btn-voucher-upload">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                    <circle cx="12" cy="13" r="4"/>
+                                </svg>
+                                Comprobante
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Footer -->
+            <div class="detail-footer">
+                <div class="footer-note">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    Verifica el metodo de transferencia al registrar el pago.
+                </div>
+                <div class="footer-totals">
+                    <div class="ft-item">
+                        <div class="ft-label">Salario Bruto (Labor)</div>
+                        <div class="ft-value">$10,702.00</div>
+                    </div>
+                    <div class="ft-item">
+                        <div class="ft-label">Total Per Diem</div>
+                        <div class="ft-value">$975.00</div>
+                    </div>
+                    <div class="ft-item">
+                        <div class="ft-label">Total a Transferir</div>
+                        <div class="ft-value green">$11,677.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /payroll-body -->
+
+    <!-- ════════════════════════ TOAST (demo) ════════════════════════ -->
+    <div class="payroll-toast payroll-toast--success">
+        <span class="payroll-toast__icon">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        <span class="payroll-toast__message">Nomina aprobada correctamente.</span>
+        <button class="payroll-toast__close">&times;</button>
+    </div>
+
+</div><!-- /payroll-page -->
+
+</body>
+</html>

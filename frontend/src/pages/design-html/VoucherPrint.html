@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voucher Print - HMCS</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F1F5F9;
+  --bg-card: #ffffff;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --hover: #F8FAFC;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { background: #f3f4f6; margin: 0; font-family: 'Inter', sans-serif; }
+
+.vp-page-wrapper {
+  min-height: 100vh;
+  padding: 0 0 48px;
+}
+
+/* ACTION BAR */
+.vp-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 32px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.vp-actions-right { display: flex; gap: 10px; }
+
+.vp-btn-back {
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+  font-family: 'Inter', sans-serif;
+}
+.vp-btn-back:hover { background: #f9fafb; }
+
+.vp-btn-print {
+  background: #08543D;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+.vp-btn-print:hover { background: #065f46; }
+
+.vp-btn-upload {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* VOUCHER CARD */
+.vp-voucher {
+  max-width: 960px;
+  margin: 28px auto;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 28px 32px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+
+/* HEADER */
+.vp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.vp-label-sm {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 5px;
+}
+.vp-company {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 5px;
+}
+.vp-addr {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+.vp-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+.vp-logo-placeholder {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #2A6C95, #08543D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+}
+.vp-header-meta { display: flex; gap: 20px; align-items: flex-start; }
+.vp-meta-block { text-align: right; }
+.vp-meta-val {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-top: 3px;
+}
+.vp-meta-sep { width: 1px; background: #e5e7eb; align-self: stretch; }
+
+/* INFO ROW */
+.vp-info-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+  background: #f9fafb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.vp-info-cell {
+  padding: 14px 16px;
+  border-right: 1px solid #e5e7eb;
+}
+.vp-info-cell:last-child { border-right: none; }
+.vp-cell-label {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.vp-cell-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.4;
+}
+.vp-cell-sub { font-size: 11px; color: #6b7280; margin-top: 3px; }
+
+/* TWO COLUMNS */
+.vp-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.vp-col { padding: 16px 20px; }
+.vp-col-right { border-left: 1px solid #e5e7eb; }
+.vp-col-title {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+/* TABLES */
+.vp-table { width: 100%; border-collapse: collapse; }
+.vp-table thead tr { border-bottom: 1px solid #e5e7eb; }
+.vp-table th {
+  font-size: 10px; color: #9ca3af; text-transform: uppercase;
+  letter-spacing: 0.8px; padding: 4px 6px; text-align: left; font-weight: 500;
+}
+.vp-table th.r, .vp-table td.r { text-align: right; }
+.vp-table td {
+  padding: 8px 6px; color: #374151; font-size: 13px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.vp-table tbody tr:last-child td { border-bottom: none; }
+.vp-table tfoot td {
+  border-top: 1px solid #e5e7eb;
+  font-weight: 600; color: #111827; padding-top: 12px; border-bottom: none;
+}
+.vp-empty-row { color: #9ca3af; font-size: 12px; padding: 12px 6px !important; font-style: italic; }
+.vp-ded { color: #A32D2D; }
+.vp-ytd { color: #9ca3af; font-size: 12px; }
+
+/* PAYMENT PANEL */
+.vp-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 20px; font-size: 12px;
+  font-weight: 600; margin-bottom: 14px; letter-spacing: 0.5px;
+}
+.vp-badge-zelle { background: #6D1ED4; color: #fff; }
+.vp-badge-cash { background: #08543D; color: #fff; }
+.vp-badge-check { background: #2A6C95; color: #fff; }
+
+.vp-pay-row {
+  display: flex; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid #f3f4f6;
+  font-size: 13px; color: #374151;
+}
+.vp-pay-label { color: #6b7280; }
+
+.vp-pay-divider { margin-top: 14px; padding-top: 12px; }
+.vp-pay-divider-zelle { border-top: 2px solid #08543D; }
+.vp-net-label {
+  font-size: 11px; color: #9ca3af; text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 4px;
+}
+.vp-net-amt {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 28px; font-weight: 700;
+}
+.vp-net-zelle { color: #10b981; }
+
+/* SCREENSHOT AREA */
+.vp-screenshot-empty {
+  border: 1.5px dashed #d1d5db;
+  border-radius: 8px;
+  min-height: 180px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: #9ca3af; font-size: 12px; gap: 8px;
+  cursor: pointer; text-align: center; padding: 20px;
+  background: #f9fafb;
+}
+.vp-screenshot-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+/* FOOTER */
+.vp-footer {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-top: 20px;
+  padding-top: 16px; border-top: 1px solid #e5e7eb;
+}
+.vp-footer-left {
+  font-size: 11px; color: #9ca3af; line-height: 1.6;
+}
+.vp-paid-badge {
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  color: #08543D; border-radius: 20px;
+  padding: 6px 16px; font-size: 12px; font-weight: 600;
+}
+
+@media print {
+  .vp-page-wrapper, .vp-page-wrapper * { visibility: visible !important; }
+  .no-print { display: none !important; visibility: hidden !important; }
+  .vp-page-wrapper { position: absolute; left: 0; top: 0; width: 100%; padding: 0; background: #fff; }
+  .vp-voucher {
+    margin: 0; border-radius: 0; border: none; box-shadow: none;
+    padding: 20px 24px; max-width: 100%;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .vp-badge-zelle { background: #6D1ED4 !important; -webkit-print-color-adjust: exact; }
+  .vp-info-row { background: #f9fafb !important; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<div class="vp-page-wrapper">
+
+  <!-- ACTION BAR -->
+  <div class="vp-actions no-print">
+    <button class="vp-btn-back">&#8592; Volver a Nomina</button>
+    <div class="vp-actions-right">
+      <button class="vp-btn-upload">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Subir Comprobante
+      </button>
+      <button class="vp-btn-print" onclick="window.print()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir / PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- VOUCHER -->
+  <div class="vp-voucher">
+
+    <!-- HEADER -->
+    <div class="vp-header">
+      <div class="vp-header-left">
+        <div class="vp-label-sm">Earnings Statement</div>
+        <h1 class="vp-company">HM Construction Staffing LLLP</h1>
+        <div class="vp-addr">
+          500 Lucas Dr, Savannah, GA<br>
+          hmcs@hmconstructionlllp.com
+        </div>
+      </div>
+      <div class="vp-header-right">
+        <div class="vp-logo-placeholder">HMCS</div>
+        <div class="vp-header-meta">
+          <div class="vp-meta-block">
+            <div class="vp-label-sm">Statement #</div>
+            <div class="vp-meta-val">VCH-2026-0193</div>
+          </div>
+          <div class="vp-meta-sep"></div>
+          <div class="vp-meta-block">
+            <div class="vp-label-sm">Issue Date</div>
+            <div class="vp-meta-val">04/18/2026</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFO ROW -->
+    <div class="vp-info-row">
+      <div class="vp-info-cell">
+        <div class="vp-cell-label">Worker</div>
+        <div class="vp-cell-val">Carlos Mendoza</div>
+        <div class="vp-cell-sub">W-1042</div>
+      </div>
+      <div class="vp-info-cell">
+        <div class="vp-cell-label">Address</div>
+        <div class="vp-cell-val">310 Habersham St, Savannah GA</div>
+      </div>
+      <div class="vp-info-cell">
+        <div class="vp-cell-label">SSN (Last 4)</div>
+        <div class="vp-cell-val">XXX-XX-7834</div>
+      </div>
+      <div class="vp-info-cell">
+        <div class="vp-cell-label">Pay Period</div>
+        <div class="vp-cell-val">04/06/2026 &ndash; 04/12/2026</div>
+        <div class="vp-cell-sub">2026 &middot; Week 15</div>
+      </div>
+      <div class="vp-info-cell">
+        <div class="vp-cell-label">Project / Client</div>
+        <div class="vp-cell-val">Coastal Builders Inc.</div>
+        <div class="vp-cell-sub">Savannah Port Expansion &middot; Electrician</div>
+      </div>
+    </div>
+
+    <!-- DEDUCTIONS + EARNINGS -->
+    <div class="vp-two-col">
+      <div class="vp-col">
+        <div class="vp-col-title">Deductions</div>
+        <table class="vp-table">
+          <thead>
+            <tr><th>Description</th><th class="r">Amount</th><th class="r">YTD</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Tool rental</td>
+              <td class="r vp-ded">&ndash; $25.00</td>
+              <td class="r vp-ytd">&ndash; $150.00</td>
+            </tr>
+            <tr>
+              <td>Safety equipment</td>
+              <td class="r vp-ded">&ndash; $15.00</td>
+              <td class="r vp-ytd">&ndash; $90.00</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total Deductions</td>
+              <td class="r vp-ded">&ndash; $40.00</td>
+              <td class="r vp-ytd">&ndash; $240.00</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="vp-col vp-col-right">
+        <div class="vp-col-title">Earnings</div>
+        <table class="vp-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th class="r">Hrs</th>
+              <th class="r">Rate</th>
+              <th class="r">Amt</th>
+              <th class="r">YTD</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Regular Time</td>
+              <td class="r">40.0</td>
+              <td class="r">$25.00</td>
+              <td class="r">$1,000.00</td>
+              <td class="r vp-ytd">$14,000.00</td>
+            </tr>
+            <tr>
+              <td>Overtime 1.5x</td>
+              <td class="r">8.0</td>
+              <td class="r">$37.50</td>
+              <td class="r">$300.00</td>
+              <td class="r vp-ytd">$1,800.00</td>
+            </tr>
+            <tr>
+              <td>Per Diem</td>
+              <td class="r">5d</td>
+              <td class="r">$55.00</td>
+              <td class="r">$275.00</td>
+              <td class="r vp-ytd">$3,850.00</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3">Gross Earnings</td>
+              <td class="r">$1,575.00</td>
+              <td class="r vp-ytd">$15,800.00</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAYMENT INFO + SCREENSHOT -->
+    <div class="vp-two-col">
+      <div class="vp-col">
+        <span class="vp-badge vp-badge-zelle">&#10003; PAID VIA ZELLE</span>
+        <div class="vp-pay-row"><span class="vp-pay-label">Sent to</span><span>Carlos Mendoza</span></div>
+        <div class="vp-pay-row"><span class="vp-pay-label">Registered as</span><span>carlos.mendoza@gmail.com</span></div>
+        <div class="vp-pay-row"><span class="vp-pay-label">From account</span><span>Wells Fargo ***4821</span></div>
+        <div class="vp-pay-row"><span class="vp-pay-label">Confirmation #</span><span>ZEL-98374621</span></div>
+        <div class="vp-pay-row"><span class="vp-pay-label">Date &amp; Time</span><span>04/18/2026</span></div>
+        <div class="vp-pay-row"><span class="vp-pay-label">Bank</span><span>Wells Fargo</span></div>
+        <div class="vp-pay-divider vp-pay-divider-zelle">
+          <div class="vp-net-label">NET TRANSFER</div>
+          <div class="vp-net-amt vp-net-zelle">$1,535.00</div>
+        </div>
+      </div>
+      <div class="vp-col vp-col-right">
+        <div class="vp-col-title">Payment Screenshot</div>
+        <div class="vp-screenshot-empty">
+          <svg width="36" height="36" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span>Subir captura de Zelle o recibo</span>
+          <span class="vp-screenshot-sub">La IA extrae automaticamente<br>monto &middot; confirmacion &middot; fecha</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="vp-footer">
+      <div class="vp-footer-left">
+        HM Construction Staffing LLLP &mdash; Independent Contractor (1099)<br>
+        No se retienen impuestos federales ni estatales.
+      </div>
+      <div class="vp-paid-badge">&#9679; Pagado &middot; 04/18/2026</div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Payments - HMCS</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F1F5F9;
+  --bg-card: #ffffff;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --hover: #F8FAFC;
+  --text-primary: #111827;
+  --bg-secondary: #f9fafb;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mp-page {
+  padding: 16px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.mp-page-header { margin-bottom: 20px; }
+.mp-page-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.mp-page-header p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.mp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mp-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.mp-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mp-period-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #9ca3af;
+  margin-bottom: 3px;
+}
+
+.mp-period-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mp-project {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.mp-card-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.mp-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.mp-badge-zelle { background: #6D1ED4; color: #fff; }
+.mp-badge-cash { background: #08543D; color: #fff; }
+.mp-badge-check { background: #2A6C95; color: #fff; }
+
+.mp-status { font-size: 11px; font-weight: 600; }
+.mp-status-paid { color: #10b981; }
+.mp-status-pending { color: #f59e0b; }
+
+.mp-card-body { padding: 12px 16px; }
+
+.mp-money-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.mp-money-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mp-money-net { margin-left: auto; }
+
+.mp-money-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  letter-spacing: 0.6px;
+}
+
+.mp-money-val {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mp-deduction { color: #ef4444; }
+
+.mp-net {
+  font-size: 20px;
+  font-weight: 700;
+  color: #08543D;
+}
+
+.mp-paid-at {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 8px;
+}
+
+.mp-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+}
+
+.mp-voucher-num {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.mp-btn-voucher {
+  background: #08543D;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.mp-btn-voucher:hover { background: #065f46; }
+</style>
+</head>
+<body>
+<div class="mp-page fade-in">
+  <div class="mp-page-header">
+    <h2>Mis Pagos</h2>
+    <p>Historial de nominas y comprobantes</p>
+  </div>
+
+  <div class="mp-list">
+
+    <!-- CARD 1 - Zelle Paid -->
+    <div class="mp-card">
+      <div class="mp-card-top">
+        <div class="mp-card-period">
+          <div class="mp-period-label">Periodo de pago</div>
+          <div class="mp-period-val">04/06/2026 &ndash; 04/12/2026</div>
+          <div class="mp-project">Coastal Builders Inc. &middot; Savannah Port Expansion</div>
+        </div>
+        <div class="mp-card-status">
+          <span class="mp-badge mp-badge-zelle">Zelle</span>
+          <span class="mp-status mp-status-paid">&#9679; Pagado</span>
+        </div>
+      </div>
+      <div class="mp-card-body">
+        <div class="mp-money-row">
+          <div class="mp-money-item">
+            <div class="mp-money-label">Bruto</div>
+            <div class="mp-money-val">$1,575.00</div>
+          </div>
+          <div class="mp-money-item">
+            <div class="mp-money-label">Deducciones</div>
+            <div class="mp-money-val mp-deduction">&ndash; $40.00</div>
+          </div>
+          <div class="mp-money-item">
+            <div class="mp-money-label">Per Diem</div>
+            <div class="mp-money-val">$275.00</div>
+          </div>
+          <div class="mp-money-item mp-money-net">
+            <div class="mp-money-label">Neto</div>
+            <div class="mp-money-val mp-net">$1,810.00</div>
+          </div>
+        </div>
+        <div class="mp-paid-at">Pagado el 04/18/2026</div>
+      </div>
+      <div class="mp-card-footer">
+        <span class="mp-voucher-num">VCH-2026-0193</span>
+        <button class="mp-btn-voucher">Ver Comprobante &rarr;</button>
+      </div>
+    </div>
+
+    <!-- CARD 2 - Check Paid -->
+    <div class="mp-card">
+      <div class="mp-card-top">
+        <div class="mp-card-period">
+          <div class="mp-period-label">Periodo de pago</div>
+          <div class="mp-period-val">03/30/2026 &ndash; 04/05/2026</div>
+          <div class="mp-project">Coastal Builders Inc. &middot; Savannah Port Expansion</div>
+        </div>
+        <div class="mp-card-status">
+          <span class="mp-badge mp-badge-check">Check</span>
+          <span class="mp-status mp-status-paid">&#9679; Pagado</span>
+        </div>
+      </div>
+      <div class="mp-card-body">
+        <div class="mp-money-row">
+          <div class="mp-money-item">
+            <div class="mp-money-label">Bruto</div>
+            <div class="mp-money-val">$1,300.00</div>
+          </div>
+          <div class="mp-money-item">
+            <div class="mp-money-label">Deducciones</div>
+            <div class="mp-money-val mp-deduction">&ndash; $25.00</div>
+          </div>
+          <div class="mp-money-item">
+            <div class="mp-money-label">Per Diem</div>
+            <div class="mp-money-val">$275.00</div>
+          </div>
+          <div class="mp-money-item mp-money-net">
+            <div class="mp-money-label">Neto</div>
+            <div class="mp-money-val mp-net">$1,550.00</div>
+          </div>
+        </div>
+        <div class="mp-paid-at">Pagado el 04/11/2026</div>
+      </div>
+      <div class="mp-card-footer">
+        <span class="mp-voucher-num">VCH-2026-0178</span>
+        <button class="mp-btn-voucher">Ver Comprobante &rarr;</button>
+      </div>
+    </div>
+
+    <!-- CARD 3 - Cash Paid -->
+    <div class="mp-card">
+      <div class="mp-card-top">
+        <div class="mp-card-period">
+          <div class="mp-period-label">Periodo de pago</div>
+          <div class="mp-period-val">03/23/2026 &ndash; 03/29/2026</div>
+          <div class="mp-project">Turner Construction &middot; Tybee Island Resort</div>
+        </div>
+        <div class="mp-card-status">
+          <span class="mp-badge mp-badge-cash">Cash</span>
+          <span class="mp-status mp-status-paid">&#9679; Pagado</span>
+        </div>
+      </div>
+      <div class="mp-card-body">
+        <div class="mp-money-row">
+          <div class="mp-money-item">
+            <div class="mp-money-label">Bruto</div>
+            <div class="mp-money-val">$1,000.00</div>
+          </div>
+          <div class="mp-money-item mp-money-net">
+            <div class="mp-money-label">Neto</div>
+            <div class="mp-money-val mp-net">$1,000.00</div>
+          </div>
+        </div>
+        <div class="mp-paid-at">Pagado el 04/04/2026</div>
+      </div>
+      <div class="mp-card-footer">
+        <span class="mp-voucher-num">VCH-2026-0162</span>
+        <button class="mp-btn-voucher">Ver Comprobante &rarr;</button>
+      </div>
+    </div>
+
+    <!-- CARD 4 - Pending -->
+    <div class="mp-card">
+      <div class="mp-card-top">
+        <div class="mp-card-period">
+          <div class="mp-period-label">Periodo de pago</div>
+          <div class="mp-period-val">04/13/2026 &ndash; 04/19/2026</div>
+          <div class="mp-project">Coastal Builders Inc. &middot; Savannah Port Expansion</div>
+        </div>
+        <div class="mp-card-status">
+          <span class="mp-status mp-status-pending">&#9675; Pendiente</span>
+        </div>
+      </div>
+      <div class="mp-card-body">
+        <div class="mp-money-row">
+          <div class="mp-money-item">
+            <div class="mp-money-label">Bruto</div>
+            <div class="mp-money-val">$1,375.00</div>
+          </div>
+          <div class="mp-money-item">
+            <div class="mp-money-label">Per Diem</div>
+            <div class="mp-money-val">$275.00</div>
+          </div>
+          <div class="mp-money-item mp-money-net">
+            <div class="mp-money-label">Neto</div>
+            <div class="mp-money-val mp-net">$1,650.00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

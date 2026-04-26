@@ -62,9 +62,12 @@ function ClientCard({ client, onEdit, onToggle, onCardClick, selected }) {
                 <div className="cl-card__identity">
                     <div
                         className="cl-card__avatar"
-                        style={{ background: isActive ? bgColor : '#9CA3AF' }}
+                        style={{ background: client.logo_url ? 'transparent' : (isActive ? bgColor : '#9CA3AF'), padding: client.logo_url ? 0 : undefined, overflow: 'hidden' }}
                     >
-                        {initials(client.company_name)}
+                        {client.logo_url
+                            ? <img src={`http://localhost:5000${client.logo_url}`} alt={client.company_name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                            : initials(client.company_name)
+                        }
                     </div>
                     <div style={{ minWidth: 0 }}>
                         <p className="cl-card__name" title={client.company_name}>{client.company_name}</p>
@@ -210,9 +213,12 @@ function ClientDrawer({ client, api, showToast, onClose, onEdit, onDeleted, onTo
                     <div className="cl-detail__header-top">
                         <div
                             className="cl-detail__avatar"
-                            style={{ background: isActive ? avatarColor(client.company_name) : '#9CA3AF' }}
+                            style={{ background: client.logo_url ? 'transparent' : (isActive ? avatarColor(client.company_name) : '#9CA3AF'), overflow: 'hidden', padding: 0 }}
                         >
-                            {initials(client.company_name)}
+                            {client.logo_url
+                                ? <img src={`http://localhost:5000${client.logo_url}`} alt={client.company_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                : initials(client.company_name)
+                            }
                         </div>
                         <button className="cl-detail__close" onClick={onClose} title="Cerrar"><X size={18} /></button>
                     </div>
@@ -517,6 +523,8 @@ export default function Clients() {
     const [editingId, setEditingId] = useState(null);
     const [formError, setFormError] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [logoUploading, setLogoUploading] = useState(false);
+    const [logoPreview, setLogoPreview] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('active');
 
@@ -581,6 +589,7 @@ export default function Clients() {
     // ── CRUD ───────────────────────────────────────────────────────
     const openCreate = () => {
         setFormData(EMPTY_FORM); setFormRates([]); setFormError('');
+        setLogoPreview(null);
         setEditingId(null); setModalMode('create'); setModalOpen(true);
     };
     const openEdit = c => {
@@ -596,8 +605,35 @@ export default function Clients() {
             hourly_rate: String(r.hourly_rate),
             overtime_multiplier: String(r.overtime_multiplier || '1.50'),
         })));
-        setFormError(''); setEditingId(c.id);
+        setFormError('');
+        setLogoPreview(c.logo_url ? `http://localhost:5000${c.logo_url}` : null);
+        setEditingId(c.id);
         setModalMode('edit'); setModalOpen(true);
+    };
+
+    const handleLogoUpload = async (file) => {
+        if (!file || !editingId) return;
+        setLogoUploading(true);
+        try {
+            const formDataObj = new FormData();
+            formDataObj.append('logo', file);
+            const res = await fetch(`http://localhost:5000/api/clients/${editingId}/logo`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formDataObj,
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.message || 'Error');
+            const url = json.data?.logo_url || json.logo_url;
+            setLogoPreview(`http://localhost:5000${url}`);
+            setClients(prev => prev.map(c => c.id === editingId ? { ...c, logo_url: url } : c));
+            if (drawerClient?.id === editingId) setDrawerClient(d => ({ ...d, logo_url: url }));
+            showToast('Logo actualizado.');
+        } catch (err) {
+            showToast(err.message || 'Error al subir logo.', 'error');
+        } finally {
+            setLogoUploading(false);
+        }
     };
 
     const handleSave = async () => {
@@ -829,6 +865,34 @@ export default function Clients() {
                         <div className="cl-modal__body">
                             {formError && <div className="wf-error">{formError}</div>}
 
+                            {/* Logo upload — solo en modo editar */}
+                            {modalMode === 'edit' && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, padding: '14px 16px', background: 'var(--bg-secondary, #F9FAFB)', borderRadius: 10, border: '1px solid var(--border-color, #E5E7EB)' }}>
+                                    <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', background: logoPreview ? 'transparent' : '#E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border-color, #E5E7EB)' }}>
+                                        {logoPreview
+                                            ? <img src={logoPreview} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            : <Building2 size={24} color="#9CA3AF" />
+                                        }
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary, #111827)', marginBottom: 4 }}>Logo del cliente</div>
+                                        <div style={{ fontSize: 11, color: 'var(--text-secondary, #6B7280)', marginBottom: 8 }}>PNG, JPG o WebP · máx. 2 MB</div>
+                                        <label style={{ cursor: logoUploading ? 'default' : 'pointer' }}>
+                                            <input
+                                                type="file"
+                                                accept="image/png,image/jpeg,image/webp"
+                                                style={{ display: 'none' }}
+                                                disabled={logoUploading}
+                                                onChange={e => { if (e.target.files[0]) handleLogoUpload(e.target.files[0]); e.target.value = ''; }}
+                                            />
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', background: 'var(--bg-primary, #fff)', border: '1px solid var(--border-color, #D1D5DB)', borderRadius: 6, fontSize: 12, fontWeight: 500, color: 'var(--text-primary, #374151)' }}>
+                                                {logoUploading ? '⏳ Subiendo...' : (logoPreview ? '🔄 Cambiar logo' : '📁 Subir logo')}
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="wf-section-title"><Building2 size={14} /> Datos de la Empresa</div>
                             <div className="wf-grid-2">
                                 <div className="wf-field">
@@ -877,10 +941,17 @@ export default function Clients() {
                             </div>
                         </div>
                         <div className="cl-modal__footer">
-                            <button className="cl-btn-cancel" onClick={() => setModalOpen(false)}>Cancelar</button>
-                            <button className="cl-btn-primary" onClick={handleSave} disabled={submitting}>
-                                {submitting ? 'Guardando...' : (modalMode === 'create' ? 'Crear Cliente' : 'Guardar Cambios')}
-                            </button>
+                            {formError && (
+                                <div className="wf-error" style={{ width: '100%', marginBottom: 8 }}>
+                                    {formError}
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', width: '100%' }}>
+                                <button className="cl-btn-cancel" onClick={() => setModalOpen(false)}>Cancelar</button>
+                                <button className="cl-btn-primary" onClick={handleSave} disabled={submitting}>
+                                    {submitting ? 'Guardando...' : (modalMode === 'create' ? 'Crear Cliente' : 'Guardar Cambios')}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>,

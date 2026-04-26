@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clock Page - HMCS</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F1F5F9;
+  --bg-card: #ffffff;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --hover: #F8FAFC;
+  --color-primary: #2A6C95;
+  --success: #10B981;
+  --error: #EF4444;
+  --radius-full: 9999px;
+  --radius-md: 10px;
+  --surface: #ffffff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.clock-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 16px 0;
+}
+
+.clock-page__time-display { text-align: center; }
+
+.clock-page__time {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-page__date {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  text-transform: capitalize;
+}
+
+.clock-page__status { text-align: center; }
+
+.clock-page__status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--hover);
+  color: var(--text-muted);
+}
+
+.clock-page__status-badge--active {
+  background: rgba(16,185,129,0.1);
+  color: var(--success);
+}
+
+.clock-page__project-area { width: 100%; }
+
+.clock-page__project-single {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  background: var(--hover);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.clock-page__button-area { padding: 16px 0; }
+
+/* Clock Button */
+.clock-btn {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: white;
+  transition: all 0.3s;
+  box-shadow: 0 8px 32px rgba(8,84,61,0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.clock-btn--in {
+  background: linear-gradient(135deg, #08543D, #10B981);
+}
+.clock-btn--in:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 40px rgba(8,84,61,0.4);
+}
+
+.clock-btn--out {
+  background: linear-gradient(135deg, #DC2626, #F87171);
+  box-shadow: 0 8px 32px rgba(220,38,38,0.3);
+}
+.clock-btn--out:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 40px rgba(220,38,38,0.4);
+}
+
+.clock-btn__pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0.3;
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.08); opacity: 0.1; }
+  100% { transform: scale(1); opacity: 0.3; }
+}
+
+.clock-page__message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  width: 100%;
+}
+.clock-page__message--success {
+  background: rgba(16,185,129,0.1);
+  color: var(--success);
+}
+
+.clock-page__today { width: 100%; }
+.clock-page__today-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.clock-page__today-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.clock-page__history { width: 100%; }
+
+.clock-page__entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.clock-page__entry:last-child { border-bottom: none; }
+
+.clock-page__entry-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.clock-page__entry-hours {
+  font-weight: 600;
+  color: var(--text);
+}
+</style>
+</head>
+<body>
+<div class="clock-page fade-in">
+
+  <!-- TIME DISPLAY -->
+  <div class="clock-page__time-display">
+    <div class="clock-page__time">02:34:17 PM</div>
+    <div class="clock-page__date">viernes, abril 25</div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="clock-page__status">
+    <div class="clock-page__status-badge clock-page__status-badge--active">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Trabajando desde 07:02 AM
+    </div>
+  </div>
+
+  <!-- CLOCK BUTTON (OUT state since worker is clocked in) -->
+  <div class="clock-page__button-area">
+    <button class="clock-btn clock-btn--out">
+      <div class="clock-btn__pulse"></div>
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      CLOCK OUT
+    </button>
+  </div>
+
+  <!-- SUCCESS MESSAGE -->
+  <div class="clock-page__message clock-page__message--success">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <span>Entrada registrada correctamente.</span>
+  </div>
+
+  <!-- TODAY HOURS -->
+  <div class="clock-page__today card">
+    <div class="clock-page__today-header">
+      <span>Horas Hoy</span>
+      <span class="clock-page__today-value">7.5h</span>
+    </div>
+  </div>
+
+  <!-- RECENT ENTRIES -->
+  <div class="clock-page__history card">
+    <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 12px;">Registros Recientes</h3>
+
+    <div class="clock-page__entry">
+      <div class="clock-page__entry-time">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        07:02 AM &rarr; --:-- (open)
+      </div>
+      <span class="clock-page__entry-hours">Abierto</span>
+    </div>
+
+    <div class="clock-page__entry">
+      <div class="clock-page__entry-time">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        06:58 AM &rarr; 04:32 PM
+      </div>
+      <span class="clock-page__entry-hours">9.6h</span>
+    </div>
+
+    <div class="clock-page__entry">
+      <div class="clock-page__entry-time">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        07:05 AM &rarr; 04:15 PM
+      </div>
+      <span class="clock-page__entry-hours">9.2h</span>
+    </div>
+
+    <div class="clock-page__entry">
+      <div class="clock-page__entry-time">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        06:50 AM &rarr; 03:55 PM
+      </div>
+      <span class="clock-page__entry-hours">9.1h</span>
+    </div>
+
+    <div class="clock-page__entry">
+      <div class="clock-page__entry-time">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        07:10 AM &rarr; 04:00 PM
+      </div>
+      <span class="clock-page__entry-hours">8.8h</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
