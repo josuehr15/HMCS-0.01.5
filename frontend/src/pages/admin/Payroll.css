@@ -1,8 +1,8 @@
 .payroll-page {
   font-family: 'Inter', system-ui, sans-serif;
-  color: #111827;
+  color: var(--text);
   padding: 16px;
-  background-color: #f9fafb;
+  background-color: var(--bg);
   min-height: calc(100vh - 64px);
 }
 
@@ -16,12 +16,12 @@
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text);
 }
 .payroll-header p {
   margin: 4px 0 0;
   font-size: 14px;
-  color: #6B7280;
+  color: var(--text-muted);
 }
 .payroll-header-actions {
   display: flex;
@@ -29,7 +29,7 @@
 }
 
 .btn-outline {
-  background: white;
+  background: var(--bg-card);
   border: 1px solid #D1D5DB;
   color: #4B5563;
   padding: 8px 16px;
@@ -40,8 +40,8 @@
   transition: all 0.2s;
 }
 .btn-outline:hover {
-  background: #f9fafb;
-  border-color: #9CA3AF;
+  background: var(--bg);
+  border-color: var(--text-secondary);
 }
 
 .btn-primary {
@@ -67,14 +67,14 @@
   margin-bottom: 16px;
 }
 .metric-card {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 14px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
 }
 .metric-label {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -82,8 +82,8 @@
   font-weight: 500;
 }
 .metric-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.metric-value { font-size: 24px; font-weight: 600; color: #111827; }
-.metric-hint { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+.metric-value { font-size: 24px; font-weight: 600; color: var(--text); }
+.metric-hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 
 
 /* NIVEL 3 — Body */
@@ -101,13 +101,13 @@
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: var(--text-secondary);
   padding: 0 4px;
   margin-bottom: 6px;
 }
 .week-card {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 14px 16px;
   cursor: pointer;
@@ -126,8 +126,8 @@
   align-items: center;
   margin-bottom: 8px;
 }
-.week-dates { font-size: 13px; font-weight: 600; color: #1f2937; }
-.week-meta { font-size: 12px; color: #6b7280; display: flex; gap: 12px; font-weight: 500; }
+.week-dates { font-size: 13px; font-weight: 600; color: var(--text); }
+.week-meta { font-size: 12px; color: var(--text-muted); display: flex; gap: 12px; font-weight: 500; }
 
 /* Badges */
 .badge {
@@ -139,26 +139,26 @@
 .badge-pending_approval, .badge-pending { background: #FAEEDA; color: #633806; }
 .badge-paid { background: #E1F5EE; color: #085041; }
 .badge-approved { background: #E6F1FB; color: #0C447C; }
-.badge-ungenerated, .badge-draft { background: #f3f4f6; color: #4B5563; }
+.badge-ungenerated, .badge-draft { background: var(--hover); color: #4B5563; }
 
 
 /* Detail Card */
 .detail-card {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 .detail-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.detail-title { font-size: 18px; font-weight: 600; color: #111827; }
-.detail-sub { font-size: 13px; color: #6b7280; margin-top: 4px; font-weight: 500; }
+.detail-title { font-size: 18px; font-weight: 600; color: var(--text); }
+.detail-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
 .detail-actions { display: flex; gap: 10px; align-items: center; }
 
 /* Alert */
@@ -215,14 +215,14 @@
   grid-template-columns: 240px 70px 70px 80px 90px 90px 110px minmax(130px, 1fr);
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border);
   gap: 12px;
 }
 .worker-row:last-child { border-bottom: none; }
 .worker-row.thead {
   background: rgba(42, 108, 149, 0.04);
   padding: 8px 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border);
 }
 .th {
   font-size: 10.5px; font-weight: 600;
@@ -237,11 +237,11 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 600; color: #2A6C95; flex-shrink: 0;
 }
-.worker-name { font-size: 14px; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.worker-trade { font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;}
-.num       { font-size: 13px; text-align: right; color: #374151; font-weight: 500; }
-.num-muted { font-size: 13px; text-align: right; color: #9ca3af; font-weight: 500; }
-.amount    { font-size: 14px; font-weight: 600; text-align: right; color: #111827; }
+.worker-name { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.worker-trade { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;}
+.num       { font-size: 13px; text-align: right; color: var(--text); font-weight: 500; }
+.num-muted { font-size: 13px; text-align: right; color: var(--text-secondary); font-weight: 500; }
+.amount    { font-size: 14px; font-weight: 600; text-align: right; color: var(--text); }
 .pay-action { display: flex; justify-content: flex-end; }
 
 .btn-pay {
@@ -268,24 +268,24 @@
 /* Footer totales */
 .detail-footer {
   padding: 14px 16px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border);
   background: #fdfdfd;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.footer-note { font-size: 13px; color: #6b7280; font-weight: 500; }
+.footer-note { font-size: 13px; color: var(--text-muted); font-weight: 500; }
 .footer-totals { display: flex; gap: 40px; }
 .ft-item { text-align: right; }
-.ft-label { font-size: 12px; color: #6b7280; font-weight: 500; }
-.ft-value { font-size: 18px; font-weight: 600; margin-top: 4px; color: #111827; }
+.ft-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.ft-value { font-size: 18px; font-weight: 600; margin-top: 4px; color: var(--text); }
 .ft-value.green { color: #08543D; }
 
 /* Empty state */
 .detail-empty {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  min-height: 180px; color: #9ca3af;
+  min-height: 180px; color: var(--text-secondary);
   border: 1px dashed #d1d5db;
   border-radius: 12px; background: #fafafa;
 }
@@ -384,7 +384,7 @@
   padding: 20px;
 }
 .payroll-modal {
-  background: #ffffff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 24px;
   width: 580px;
@@ -392,17 +392,17 @@
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   position: relative;
   z-index: 501;
 }
-.payroll-modal h3 { margin-top: 0; margin-bottom: 8px; color: #111827; }
+.payroll-modal h3 { margin-top: 0; margin-bottom: 8px; color: var(--text); }
 .pm-worker { font-size: 16px; margin-bottom: 2px; }
 .pm-amount { font-size: 14px; margin-bottom: 20px; color: #4B5563; }
 .pm-amount .green { font-size: 18px; font-weight: 700; color: #08543D; margin-left: 4px; }
 .pm-form { display: flex; flex-direction: column; gap: 16px; }
 .pm-field { display: flex; flex-direction: column; gap: 6px; }
-.pm-field label { font-size: 13px; font-weight: 600; color: #374151; }
+.pm-field label { font-size: 13px; font-weight: 600; color: var(--text); }
 .pm-field select, .pm-field input {
   padding: 10px; border: 1px solid #D1D5DB; border-radius: 6px;
   font-size: 14px; outline: none; transition: border-color 0.2s;
@@ -412,10 +412,10 @@
   display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;
 }
 .btn-outline {
-  padding: 10px 16px; border: 1px solid #D1D5DB; background: white;
+  padding: 10px 16px; border: 1px solid #D1D5DB; background: var(--bg-card);
   border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;
 }
-.btn-outline:hover { background: #F3F4F6; }
+.btn-outline:hover { background: var(--hover); }
 .btn-voucher { text-decoration: none; font-size: 16px; margin-left: 8px; filter: grayscale(1); transition: filter 0.2s; }
 .btn-voucher:hover { filter: grayscale(0); }
 .btn-voucher-upload {

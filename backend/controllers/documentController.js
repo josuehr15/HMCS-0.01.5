@@ -19,7 +19,6 @@ const getDocuments = async (req, res) => {
         const docs = await Document.findAll({ where, order: [['created_at', 'DESC']] });
         return successResponse(res, docs, 'Documents retrieved.');
     } catch (error) {
-        console.error('getDocuments error:', error);
         return errorResponse(res, 'Failed to retrieve documents.', 500);
     }
 };
@@ -53,7 +52,6 @@ const uploadDocument = async (req, res) => {
 
         return successResponse(res, doc, 'Document uploaded successfully.', 201);
     } catch (error) {
-        console.error('uploadDocument error:', error);
         return errorResponse(res, 'Failed to upload document.', 500);
     }
 };
@@ -71,7 +69,6 @@ const downloadDocument = async (req, res) => {
 
         res.download(filePath, doc.document_name);
     } catch (error) {
-        console.error('downloadDocument error:', error);
         return errorResponse(res, 'Failed to download document.', 500);
     }
 };
@@ -87,7 +84,6 @@ const deleteDocument = async (req, res) => {
         await doc.update({ is_active: false });
         return successResponse(res, { id: doc.id }, 'Document deleted.');
     } catch (error) {
-        console.error('deleteDocument error:', error);
         return errorResponse(res, 'Failed to delete document.', 500);
     }
 };

@@ -209,7 +209,6 @@ const generateInvoice = async (req, res) => {
         return successResponse(res, full, 'Factura generada exitosamente.', 201);
     } catch (error) {
         await t.rollback();
-        console.error('generateInvoice error:', error);
         return errorResponse(res, 'Failed to generate invoice.', 500);
     }
 };
@@ -259,7 +258,6 @@ const getAllInvoices = async (req, res) => {
             message: 'Invoices retrieved.',
         });
     } catch (error) {
-        console.error('getAllInvoices error:', error);
         return errorResponse(res, 'Failed to retrieve invoices.', 500);
     }
 };
@@ -274,7 +272,6 @@ const getInvoiceStats = async (req, res) => {
         const paid = invoices.filter(i => i.status === 'paid' && i.paid_at && new Date(i.paid_at).getMonth() === now.getMonth()).reduce((s, i) => s + parseFloat(i.total || 0), 0);
         return successResponse(res, { total: invoices.length, pending_amount: pending.toFixed(2), sent_amount: sent.toFixed(2), paid_this_month: paid.toFixed(2) }, 'Stats retrieved.');
     } catch (error) {
-        console.error('getInvoiceStats error:', error);
         return errorResponse(res, 'Failed to get stats.', 500);
     }
 };
@@ -339,7 +336,6 @@ const getUnbilledWeeks = async (req, res) => {
 
         return successResponse(res, unbilledWeeks, 'Unbilled weeks retrieved.');
     } catch (error) {
-        console.error('getUnbilledWeeks error:', error);
         return errorResponse(res, 'Failed to get unbilled weeks.', 500);
     }
 };
@@ -365,7 +361,6 @@ const getInvoiceById = async (req, res) => {
 
         return successResponse(res, invoiceData, 'Invoice retrieved.');
     } catch (error) {
-        console.error('getInvoiceById error:', error);
         return errorResponse(res, 'Failed to retrieve invoice.', 500);
     }
 };
@@ -427,7 +422,6 @@ const updateInvoice = async (req, res) => {
 
         return successResponse(res, updated, 'Invoice updated successfully.');
     } catch (error) {
-        console.error('updateInvoice error:', error);
         return errorResponse(res, 'Failed to update invoice.', 500);
     }
 };
@@ -460,7 +454,6 @@ const updateInvoiceStatus = async (req, res) => {
         const full = await Invoice.findByPk(invoice.id, { include: INVOICE_INCLUDES });
         return successResponse(res, full, `Factura marcada como ${status}.`);
     } catch (error) {
-        console.error('updateInvoiceStatus error:', error);
         return errorResponse(res, 'Failed to update invoice status.', 500);
     }
 };
@@ -474,7 +467,6 @@ const deleteInvoice = async (req, res) => {
         await invoice.update({ is_active: false });
         return successResponse(res, { id: invoice.id }, 'Factura eliminada.');
     } catch (error) {
-        console.error('deleteInvoice error:', error);
         return errorResponse(res, 'Failed to delete invoice.', 500);
     }
 };
@@ -485,7 +477,6 @@ const getCompanySettingsHandler = async (req, res) => {
         const settings = await getCompanySettings();
         return successResponse(res, settings, 'Company settings retrieved.');
     } catch (error) {
-        console.error('getCompanySettings error:', error);
         return errorResponse(res, 'Failed to get company settings.', 500);
     }
 };
@@ -646,7 +637,6 @@ const getInvoiceHtml = async (req, res) => {
         res.setHeader('Content-Type', 'text/html');
         res.send(html);
     } catch (error) {
-        console.error('getInvoiceHtml error:', error);
         return errorResponse(res, 'Failed to generate invoice HTML.', 500);
     }
 };
@@ -681,7 +671,6 @@ const sendInvoiceEmail = async (req, res) => {
                 text: `Please find attached invoice #${invoice.invoice_number}.\n\nWeek: ${invoice.week_start_date} to ${invoice.week_end_date}\nTotal: $${invoice.total}\n\n${settings.payment_instructions || ''}`,
             });
         } catch (emailErr) {
-            console.error('Email send error:', emailErr.message);
             // L-4: Email failed — do NOT mark as sent, return error
             return res.status(502).json({
                 success: false,
@@ -695,7 +684,6 @@ const sendInvoiceEmail = async (req, res) => {
         const full = await Invoice.findByPk(invoice.id, { include: INVOICE_INCLUDES });
         return successResponse(res, full, 'Factura enviada y marcada como enviada.');
     } catch (error) {
-        console.error('sendInvoiceEmail error:', error);
         return errorResponse(res, 'Failed to send invoice.', 500);
     }
 };

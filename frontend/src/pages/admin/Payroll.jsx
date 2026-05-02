@@ -217,7 +217,6 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
       setWScreenshotUrl(url);
       setWStep(3);
     } catch (err) {
-      console.error('Upload error:', err);
       setWStep(3);
     } finally {
       setWUploading(false);
@@ -251,7 +250,7 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
             payment_method: wPayMethod,
             payment_reference: wPayRef,
             notes: '',
-          }).catch(() => {});
+          }).catch((_err) => {});
         }
         onRefreshPayroll?.();
         showToast('success', 'Cambios guardados correctamente.');
@@ -862,7 +861,7 @@ export default function AdminPayroll() {
 
       setWeeks(Array.isArray(dataWeeks) ? dataWeeks : []);
       setStats(mappedStats);
-    } catch (e) { console.error('Error fetching data'); }
+    } catch (e) { }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -917,7 +916,7 @@ export default function AdminPayroll() {
       setLoadingDetail(true);
       api.get(`/payroll/${selectedWeekObj.payroll_id}`)
         .then(res => setSelectedPayroll(res.data?.data || res.data))
-        .catch(() => { })
+        .catch((_err) => {})
         .finally(() => setLoadingDetail(false));
     }
   }, [selectedWeekObj?.payroll_id]); // eslint-disable-line react-hooks/exhaustive-deps

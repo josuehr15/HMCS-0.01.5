@@ -355,7 +355,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    border-bottom: 2px solid #E5E7EB;
+    border-bottom: 2px solid var(--border);
     margin-bottom: 0;
     overflow-x: auto;
     padding-bottom: 0;
@@ -368,7 +368,7 @@
     padding: 10px 18px;
     font-size: 13px;
     font-weight: 600;
-    color: #6B7280;
+    color: var(--text-muted);
     background: none;
     border: none;
     border-bottom: 3px solid transparent;
@@ -388,8 +388,8 @@
 }
 
 .ac-tab-panel {
-    background: #fff;
-    border: 1px solid #E5E7EB;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-top: none;
     border-radius: 0 0 14px 14px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
@@ -411,7 +411,7 @@
 .ac-period-label {
     font-size: 12px;
     font-weight: 700;
-    color: #6B7280;
+    color: var(--text-muted);
 }
 
 .ac-month-input {
@@ -419,8 +419,8 @@
     border: 1px solid #D1D5DB;
     border-radius: 8px;
     font-size: 13px;
-    color: #111827;
-    background: #F9FAFB;
+    color: var(--text);
+    background: var(--hover);
     cursor: pointer;
 }
 
@@ -432,24 +432,24 @@
     height: 32px;
     border-radius: 8px;
     border: 1px solid #D1D5DB;
-    background: #F9FAFB;
+    background: var(--hover);
     cursor: pointer;
-    color: #6B7280;
+    color: var(--text-muted);
     transition: background 0.15s;
 }
 
 .ac-refresh-btn:hover {
-    background: #E5E7EB;
+    background: var(--border);
 }
 
 .ac-loading-txt {
     font-size: 11px;
-    color: #9CA3AF;
+    color: var(--text-secondary);
 }
 
 /* ── P&L Box ──────────────────────────────────────────────────────── */
 .ac-pnl-box {
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 20px;
@@ -458,7 +458,7 @@
 .ac-section-title {
     font-size: 14px;
     font-weight: 800;
-    color: #111827;
+    color: var(--text);
     margin: 0 0 14px;
 }
 
@@ -470,7 +470,7 @@
 
 .ac-pnl-col {
     padding: 16px 20px;
-    border-right: 1px solid #E5E7EB;
+    border-right: 1px solid var(--border);
 }
 
 .ac-pnl-col:last-child {
@@ -498,9 +498,9 @@
     justify-content: space-between;
     align-items: center;
     font-size: 12px;
-    color: #374151;
+    color: var(--text);
     padding: 5px 0;
-    border-bottom: 1px dashed #F3F4F6;
+    border-bottom: 1px dashed var(--border);
 }
 
 .ac-pnl-row:last-child {
@@ -510,8 +510,8 @@
 .ac-pnl-row--total {
     font-weight: 800;
     font-size: 13px;
-    color: #111827;
-    border-top: 2px solid #E5E7EB;
+    color: var(--text);
+    border-top: 2px solid var(--border);
     padding-top: 8px;
     border-bottom: none;
     margin-top: 4px;
@@ -549,7 +549,7 @@
 
 /* ── Cash flow mini chart ─────────────────────────────────────────── */
 .ac-cf-box {
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px 20px;
     margin-bottom: 20px;
@@ -597,7 +597,7 @@
 
 .ac-cf-label {
     font-size: 10px;
-    color: #9CA3AF;
+    color: var(--text-secondary);
 }
 
 .ac-cf-legend {
@@ -605,7 +605,7 @@
     align-items: center;
     gap: 4px;
     font-size: 11px;
-    color: #6B7280;
+    color: var(--text-muted);
     margin-top: 8px;
 }
 
@@ -626,7 +626,7 @@
 
 /* ── Margins tables ───────────────────────────────────────────────── */
 .ac-margins-box {
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px 20px;
     margin-bottom: 20px;
@@ -643,11 +643,11 @@
     text-align: left;
     font-size: 11px;
     font-weight: 700;
-    color: #6B7280;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.4px;
     padding: 8px 10px;
-    border-bottom: 2px solid #E5E7EB;
+    border-bottom: 2px solid var(--border);
 }
 
 .ac-margins-table th.r {
@@ -656,8 +656,8 @@
 
 .ac-margins-table td {
     padding: 8px 10px;
-    border-bottom: 1px solid #F3F4F6;
-    color: #374151;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
 }
 
 .ac-margins-table td.r {
@@ -736,12 +736,12 @@
     padding: 5px 24px 5px 8px;
     border: 1.5px solid #D1D5DB;
     border-radius: 7px;
-    background: #F9FAFB;
+    background: var(--hover);
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
     width: 100%;
-    color: #374151;
+    color: var(--text);
     transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
     outline: none;
 }
@@ -754,7 +754,7 @@
 .ac-inline-cat-sel:focus {
     border-color: #2A6C95;
     box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.12);
-    background: #fff;
+    background: var(--bg-card);
 }
 
 /* Estado: sin categoría */
@@ -799,10 +799,10 @@
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
-    border: 2px solid #E5E7EB;
-    background: #F9FAFB;
+    border: 2px solid var(--border);
+    background: var(--hover);
     cursor: pointer;
-    color: #6B7280;
+    color: var(--text-muted);
     transition: all 0.15s;
 }
 
@@ -820,13 +820,13 @@
 .ac-import-header h3 {
     font-size: 16px;
     font-weight: 800;
-    color: #111827;
+    color: var(--text);
     margin: 0 0 4px;
 }
 
 .ac-import-sub {
     font-size: 11px;
-    color: #9CA3AF;
+    color: var(--text-secondary);
     margin: 0;
 }
 
@@ -836,14 +836,14 @@
     padding: 32px;
     text-align: center;
     cursor: pointer;
-    background: #F9FAFB;
+    background: var(--hover);
     transition: border-color 0.15s;
     margin-bottom: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
     font-size: 13px;
-    color: #6B7280;
+    color: var(--text-muted);
 }
 
 .ac-dropzone:hover {
@@ -859,8 +859,8 @@
     padding: 10px 12px;
     font-size: 11px;
     font-family: monospace;
-    color: #374151;
-    background: #F9FAFB;
+    color: var(--text);
+    background: var(--hover);
     resize: vertical;
     margin-bottom: 10px;
 }
@@ -871,7 +871,7 @@
     gap: 16px;
     font-size: 13px;
     font-weight: 600;
-    color: #374151;
+    color: var(--text);
     margin-bottom: 10px;
 }
 
@@ -932,12 +932,12 @@
 
 /* Split modal */
 .ac-split-info {
-    background: #F3F4F6;
+    background: var(--hover);
     border-radius: 8px;
     padding: 10px 12px;
     margin-bottom: 14px;
     font-size: 12px;
-    color: #374151;
+    color: var(--text);
 }
 
 .ac-split-info p {
@@ -945,7 +945,7 @@
 }
 
 .ac-split-part {
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 12px;
     margin-bottom: 10px;
@@ -954,7 +954,7 @@
 .ac-split-part-label {
     font-size: 11px;
     font-weight: 700;
-    color: #6B7280;
+    color: var(--text-muted);
     margin: 0 0 8px;
 }
 
@@ -1025,7 +1025,7 @@
 
 /* ── Tax ──────────────────────────────────────────────────────────── */
 .ac-tax-box {
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 20px;
@@ -1036,8 +1036,8 @@
     justify-content: space-between;
     padding: 9px 16px;
     font-size: 13px;
-    color: #374151;
-    border-bottom: 1px solid #F3F4F6;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
 }
 
 .ac-tax-row:last-child {
@@ -1045,10 +1045,10 @@
 }
 
 .ac-tax-row--head {
-    background: #F9FAFB;
+    background: var(--hover);
     font-weight: 800;
     font-size: 14px;
-    color: #111827;
+    color: var(--text);
 }
 
 .ac-tax-row--sub {
@@ -1078,7 +1078,7 @@
 
 .ac-tax-divider {
     height: 2px;
-    background: #E5E7EB;
+    background: var(--border);
 }
 
 /* ── Dark mode ────────────────────────────────────────────────────── */

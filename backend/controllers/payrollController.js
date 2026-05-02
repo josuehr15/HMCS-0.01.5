@@ -46,7 +46,6 @@ const getAllPayrolls = async (req, res) => {
 
         return successResponse(res, payrolls, 'Payrolls retrieved.');
     } catch (error) {
-        console.error('getAllPayrolls error:', error);
         return errorResponse(res, 'Failed to retrieve payrolls.', 500);
     }
 };
@@ -74,7 +73,6 @@ const getPayrollStats = async (req, res) => {
             workers_pending: pending.length,
         }, 'Stats retrieved.');
     } catch (error) {
-        console.error('getPayrollStats error:', error);
         return errorResponse(res, 'Failed to get stats.', 500);
     }
 };
@@ -156,7 +154,6 @@ const getPendingWeeks = async (req, res) => {
 
         return successResponse(res, result, 'Pending weeks retrieved.');
     } catch (error) {
-        console.error('getPendingWeeks error:', error);
         return errorResponse(res, 'Failed to get pending weeks.', 500);
     }
 };
@@ -182,7 +179,6 @@ const getPayrollById = async (req, res) => {
         if (!payroll) return errorResponse(res, 'Payroll not found.', 404);
         return successResponse(res, payroll, 'Payroll retrieved.');
     } catch (error) {
-        console.error('getPayrollById error:', error);
         return errorResponse(res, 'Failed to retrieve payroll.', 500);
     }
 };
@@ -307,7 +303,6 @@ const generatePayroll = async (req, res) => {
         return successResponse(res, full, 'Nómina generada exitosamente.', 201);
     } catch (error) {
         await t.rollback();
-        console.error('generatePayroll error:', error);
         return errorResponse(res, 'Failed to generate payroll.', 500);
     }
 };
@@ -330,7 +325,6 @@ const updatePayrollStatus = async (req, res) => {
         const full = await Payroll.findByPk(payroll.id, { include: PAYROLL_INCLUDES });
         return successResponse(res, full, `Nómina marcada como ${status}.`);
     } catch (error) {
-        console.error('updatePayrollStatus error:', error);
         return errorResponse(res, 'Failed to update status.', 500);
     }
 };
@@ -344,7 +338,6 @@ const deletePayroll = async (req, res) => {
         await payroll.update({ is_active: false });
         return successResponse(res, { id: payroll.id }, 'Nómina eliminada.');
     } catch (error) {
-        console.error('deletePayroll error:', error);
         return errorResponse(res, 'Failed to delete payroll.', 500);
     }
 };
@@ -405,7 +398,6 @@ const markWorkerPaid = async (req, res) => {
         return successResponse(res, updatedLine, 'Worker marcado como pagado.');
     } catch (error) {
         await t.rollback();
-        console.error('markWorkerPaid error:', error);
         return errorResponse(res, 'Failed to mark worker as paid.', 500);
     }
 };
@@ -446,7 +438,6 @@ const updatePayrollLine = async (req, res) => {
         const upd = await PayrollLine.findByPk(line.id, { include: LINE_INCLUDES });
         return successResponse(res, upd, 'Línea actualizada.');
     } catch (error) {
-        console.error('updatePayrollLine error:', error);
         return errorResponse(res, 'Failed to update payroll line.', 500);
     }
 };
@@ -474,7 +465,6 @@ const getPayrollLineById = async (req, res) => {
         if (!line) return errorResponse(res, 'Line not found', 404);
         return successResponse(res, line);
     } catch (error) {
-        console.error('getPayrollLineById Error:', error);
         return errorResponse(res, 'Failed to fetch payroll line.', 500);
     }
 };
@@ -489,7 +479,6 @@ const uploadPaymentScreenshot = async (req, res) => {
 
         const screenshotUrl = `/uploads/payment_screenshots/${req.file.filename}`;
         const filePath = path.resolve(req.file.path); // absolute path, works on Windows
-        console.log('[upload-screenshot] file:', req.file.filename, '| path:', filePath);
         const imageBuffer = fs.readFileSync(filePath);
         const base64Image = imageBuffer.toString('base64');
         const mediaType = req.file.mimetype === 'image/png' ? 'image/png' : 'image/jpeg';
@@ -498,7 +487,6 @@ const uploadPaymentScreenshot = async (req, res) => {
         try {
             extractedData = await extractPaymentData(base64Image, mediaType);
         } catch (aiErr) {
-            console.error('Claude Vision error:', aiErr.message);
         }
 
         return successResponse(res, {
@@ -507,7 +495,6 @@ const uploadPaymentScreenshot = async (req, res) => {
             needs_confirmation: true,
         }, 'Screenshot uploaded and analyzed.');
     } catch (error) {
-        console.error('uploadPaymentScreenshot error:', error.message, error.stack);
         return errorResponse(res, `Failed to process screenshot: ${error.message}`, 500);
     }
 };
@@ -535,7 +522,6 @@ const confirmPaymentData = async (req, res) => {
         });
         return successResponse(res, updated, 'Payment data confirmed.');
     } catch (error) {
-        console.error('confirmPaymentData error:', error);
         return errorResponse(res, 'Failed to confirm payment data.', 500);
     }
 };
@@ -559,7 +545,6 @@ const getMyPayrollLines = async (req, res) => {
         });
         return successResponse(res, lines, 'My payroll lines retrieved.');
     } catch (error) {
-        console.error('getMyPayrollLines error:', error);
         return errorResponse(res, 'Failed to retrieve payroll lines.', 500);
     }
 };
@@ -908,7 +893,6 @@ const getVoucherView = async (req, res) => {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(html);
     } catch (error) {
-        console.error('getVoucherView error:', error);
         return errorResponse(res, 'Failed to generate voucher.', 500);
     }
 };
@@ -976,7 +960,6 @@ const updatePayrollLinePerDiem = async (req, res) => {
         return successResponse(res, updated, 'Per diem updated.');
     } catch (error) {
         await t.rollback();
-        console.error('updatePayrollLinePerDiem error:', error);
         return errorResponse(res, 'Failed to update per diem.', 500);
     }
 };

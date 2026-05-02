@@ -41,7 +41,6 @@ const getAllProjects = async (req, res) => {
 
         return successResponse(res, projects, 'Projects retrieved successfully.');
     } catch (error) {
-        console.error('getAllProjects error:', error);
         return errorResponse(res, 'Failed to retrieve projects.', 500);
     }
 };
@@ -80,7 +79,6 @@ const getProjectById = async (req, res) => {
         if (!project) return errorResponse(res, 'Project not found.', 404);
         return successResponse(res, project, 'Project retrieved successfully.');
     } catch (error) {
-        console.error('getProjectById error:', error);
         return errorResponse(res, 'Failed to retrieve project.', 500);
     }
 };
@@ -104,7 +102,6 @@ const getProjectLinkedData = async (req, res) => {
             can_hard_delete: total === 0,
         }, 'Linked data retrieved.');
     } catch (error) {
-        console.error('getProjectLinkedData error:', error);
         return errorResponse(res, 'Failed to get linked data.', 500);
     }
 };
@@ -146,7 +143,6 @@ const createProject = async (req, res) => {
 
         return successResponse(res, full, 'Proyecto creado exitosamente.', 201);
     } catch (error) {
-        console.error('createProject error:', error);
         return errorResponse(res, 'Failed to create project.', 500);
     }
 };
@@ -191,7 +187,6 @@ const updateProject = async (req, res) => {
 
         return successResponse(res, updated, 'Project updated successfully.');
     } catch (error) {
-        console.error('updateProject error:', error);
         return errorResponse(res, 'Failed to update project.', 500);
     }
 };
@@ -216,7 +211,6 @@ const toggleProjectStatus = async (req, res) => {
         const msg = newStatus === 'active' ? 'Proyecto reactivado.' : 'Proyecto pausado.';
         return successResponse(res, updated, msg);
     } catch (error) {
-        console.error('toggleProjectStatus error:', error);
         return errorResponse(res, 'Failed to toggle project status.', 500);
     }
 };
@@ -232,7 +226,6 @@ const deleteProject = async (req, res) => {
         await project.update({ is_active: false, status: 'on_hold' });
         return successResponse(res, { id: project.id, action: 'deactivated' }, 'Proyecto desactivado.');
     } catch (error) {
-        console.error('deleteProject error:', error);
         return errorResponse(res, 'Failed to deactivate project.', 500);
     }
 };
@@ -275,7 +268,6 @@ const forceDeleteProject = async (req, res) => {
         return successResponse(res, { id: project.id, action: 'deleted' }, 'Proyecto eliminado permanentemente.');
     } catch (error) {
         await t.rollback();
-        console.error('forceDeleteProject error:', error);
         return errorResponse(res, 'Failed to permanently delete project.', 500);
     }
 };
@@ -306,7 +298,6 @@ const resolveMapUrl = async (req, res) => {
 
         return errorResponse(res, 'El enlace final no contenía coordenadas explícitas. Ingresa manualmente.', 404);
     } catch (error) {
-        console.error('resolveMapUrl error:', error);
         return errorResponse(res, 'Error al resolver la URL de Google Maps.', 500);
     }
 };

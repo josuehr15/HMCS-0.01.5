@@ -16,7 +16,6 @@ const getAllTrades = async (req, res) => {
 
         return successResponse(res, trades, 'Trades retrieved successfully.');
     } catch (error) {
-        console.error('getAllTrades error:', error);
         return errorResponse(res, 'Failed to retrieve trades.', 500);
     }
 };
@@ -42,7 +41,6 @@ const createTrade = async (req, res) => {
         const trade = await Trade.create({ name, name_es });
         return successResponse(res, trade, 'Trade created successfully.', 201);
     } catch (error) {
-        console.error('createTrade error:', error);
         return errorResponse(res, 'Failed to create trade.', 500);
     }
 };
@@ -70,7 +68,6 @@ const updateTrade = async (req, res) => {
         await trade.update(updates);
         return successResponse(res, trade, 'Trade updated successfully.');
     } catch (error) {
-        console.error('updateTrade error:', error);
         return errorResponse(res, 'Failed to update trade.', 500);
     }
 };
@@ -106,7 +103,6 @@ const deleteTrade = async (req, res) => {
         await trade.update({ is_active: false });
         return successResponse(res, { id: trade.id, name: trade.name }, 'Trade deactivated successfully.');
     } catch (error) {
-        console.error('deleteTrade error:', error);
         return errorResponse(res, 'Failed to delete trade.', 500);
     }
 };

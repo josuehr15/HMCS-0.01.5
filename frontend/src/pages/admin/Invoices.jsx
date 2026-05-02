@@ -58,7 +58,6 @@ function PayModal({ invoice, onClose, onPaid }) {
             onPaid();
             onClose();
         } catch (e) {
-            console.error(e);
         } finally {
             setLoading(false);
         }
@@ -155,7 +154,6 @@ function EditModal({ invoice: initInv, onClose, onSaved, showToast }) {
             showToast('Factura actualizada correctamente.');
             onClose();
         } catch (err) {
-            console.error('Error updating invoice:', err);
             showToast('Error al actualizar la factura.', 'error');
         } finally {
             setLoading(false);
@@ -274,7 +272,7 @@ function InvoiceDrawer({ invoice: initInv, onClose, onRefresh, navigate, onEdit 
         setLoadingFull(true);
         api.get(`/invoices/${initInv.id}`)
             .then(r => setInvoice(r.data?.data || r.data || r))
-            .catch(() => {})
+            .catch((_err) => {})
             .finally(() => setLoadingFull(false));
     }, [initInv?.id]);
 
@@ -292,7 +290,7 @@ function InvoiceDrawer({ invoice: initInv, onClose, onRefresh, navigate, onEdit 
             const upd = r.data?.data || r.data || r;
             setInvoice(upd);
             onRefresh();
-        } catch (e) { console.error(e); }
+        } catch (e) { }
         finally { setLoading(false); }
     };
 
@@ -306,7 +304,6 @@ function InvoiceDrawer({ invoice: initInv, onClose, onRefresh, navigate, onEdit 
             onRefresh();
             onClose();
         } catch (err) {
-            console.error('Error deleting invoice:', err);
             alert(err.response?.data?.message || 'Error al eliminar factura');
         } finally {
             setLoading(false);
@@ -380,7 +377,6 @@ function InvoiceDrawer({ invoice: initInv, onClose, onRefresh, navigate, onEdit 
                                                 const res = await api.get(`/invoices/${invoice.id}`);
                                                 setInvoice(res.data?.data || res.data || res);
                                             } catch (err) {
-                                                console.error(err);
                                             }
                                         }}>
                                         <option value="draft">Borrador</option>
@@ -601,7 +597,7 @@ function InvoiceDrawer({ invoice: initInv, onClose, onRefresh, navigate, onEdit 
                         // Re-fetch to update drawer
                         api.get(`/invoices/${invoice.id}`)
                             .then(r => setInvoice(r.data?.data || r.data || r))
-                            .catch(() => {});
+                            .catch((_err) => {});
                     }}
                 />
             )}
@@ -850,7 +846,6 @@ export default function Invoices() {
             const res = await get(`/invoices${qs ? `?${qs}` : ''}`);
             setInvoices(res.data?.data || res.data || []);
         } catch (e) {
-            console.error(e);
             showToast('Error al cargar facturas.', 'error');
         } finally {
             setLoading(false);
@@ -859,7 +854,7 @@ export default function Invoices() {
 
     useEffect(() => { loadInvoices(); }, [loadInvoices]);
     useEffect(() => {
-        get('/clients').then(r => setClients(r.data?.data || r.data || [])).catch(() => {});
+        get('/clients').then(r => setClients(r.data?.data || r.data || [])).catch((_err) => {});
     }, []);
 
     const displayInvoices = useMemo(() => {

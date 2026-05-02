@@ -34,7 +34,7 @@ function PayModal({ invoice, onClose, onPaid }) {
             await api.put(`/invoices/${invoice.id}/paid`, form);
             onPaid();
             onClose();
-        } catch (e) { console.error(e); }
+        } catch (e) { }
         finally { setLoading(false); }
     };
 
@@ -108,7 +108,7 @@ function EmailModal({ invoice, onClose, onSent }) {
             await api.patch(`/invoices/${invoice.id}/status`, { status: 'sent' });
             onSent();
             onClose();
-        } catch (e) { console.error(e); }
+        } catch (e) { }
         finally { setLoading(false); }
     };
 
@@ -167,7 +167,6 @@ export default function InvoicePrint() {
             const res = await api.get(`/invoices/${id}`);
             setInvoice(res.data?.data || res.data || res);
         } catch (e) {
-            console.error(e);
         } finally {
             setLoading(false);
         }
@@ -180,7 +179,7 @@ export default function InvoicePrint() {
         try {
             const res = await api.put(`/invoices/${id}/${endpoint}`);
             setInvoice(res.data?.data || res.data || res);
-        } catch (e) { console.error(e); }
+        } catch (e) { }
         finally { setActionLoading(false); }
     };
 

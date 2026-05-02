@@ -103,7 +103,7 @@ function TabDashboard({ api, setActiveTab, onUncatCountChange }) {
             setSummary(s);
             setCashflow(cfRes.data?.data || cfRes.data || cfRes);
             if (onUncatCountChange) onUncatCountChange(s?.uncategorized_count || 0);
-        } catch (e) { console.error(e); }
+        } catch (e) { }
         finally { setLoadingSummary(false); }
     }, [api]);
 
@@ -116,7 +116,7 @@ function TabDashboard({ api, setActiveTab, onUncatCountChange }) {
             ]);
             setWMargins(wmRes.data?.data || wmRes.data || []);
             setCMargins(cmRes.data?.data || cmRes.data || []);
-        } catch (e) { console.error(e); }
+        } catch (e) { }
         finally { setLoadingMargins(false); }
     }, [api]);
 
@@ -1541,7 +1541,6 @@ function TabImport({ api, categories, showToast }) {
             const res = await api.get('/accounting/import/history');
             setImportHistory(res.data.data || []);
         } catch (err) {
-            console.error('Error fetching import history:', err);
         } finally {
             setHistoryLoading(false);
         }
@@ -1559,7 +1558,6 @@ function TabImport({ api, categories, showToast }) {
             setImportStep(2);
         } catch (err) {
             showToast('Error al analizar el CSV.', 'error');
-            console.error(err);
         } finally { setImportLoading(false); }
     };
 
@@ -1573,7 +1571,6 @@ function TabImport({ api, categories, showToast }) {
             setImportStep(3);
         } catch (err) {
             showToast('Error al importar.', 'error');
-            console.error(err);
         } finally { setImportLoading(false); }
     };
 
@@ -1592,7 +1589,6 @@ function TabImport({ api, categories, showToast }) {
             }
         } catch (err) {
             showToast('Error al deshacer.', 'error');
-            console.error(err);
         }
     };
 
@@ -2048,7 +2044,7 @@ function TabTax({ api }) {
         try {
             const res = await api.get(`/accounting/tax-summary?year=${taxYear}`);
             setTaxData(res.data?.data || res.data || res);
-        } catch { console.error('tax fetch failed'); }
+        } catch { }
         finally { setLoading(false); }
     }, [api, taxYear]);
 
@@ -2417,8 +2413,8 @@ export default function Accounting() {
 
     useEffect(() => {
         loadCategories();
-        get('/workers').then(r => setWorkers(r.data || r)).catch(() => { });
-        get('/clients').then(r => setClients(r.data || r)).catch(() => { });
+        get('/workers').then(r => setWorkers(r.data || r)).catch((_err) => {});
+        get('/clients').then(r => setClients(r.data || r)).catch((_err) => {});
     }, []);
 
     return (

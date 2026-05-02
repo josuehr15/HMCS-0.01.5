@@ -14,7 +14,7 @@
     gap: 8px;
     cursor: pointer;
     font-size: 12px;
-    color: #6B7280;
+    color: var(--text-muted);
     background: #FAFAFA;
     transition: all 0.18s;
     user-select: none;
@@ -42,17 +42,17 @@
 .doc-type-select {
     flex: 1;
     font-size: 11px;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 4px 8px;
-    background: #fff;
-    color: #374151;
+    background: var(--bg-card);
+    color: var(--text);
     cursor: pointer;
 }
 
 .doc-hint {
     font-size: 10px;
-    color: #9CA3AF;
+    color: var(--text-secondary);
     white-space: nowrap;
 }
 
@@ -92,7 +92,7 @@
 /* Empty state */
 .doc-list-empty {
     font-size: 11px;
-    color: #9CA3AF;
+    color: var(--text-secondary);
     text-align: center;
     padding: 8px 0;
     display: flex;
@@ -118,8 +118,8 @@
     align-items: center;
     gap: 8px;
     padding: 6px 8px;
-    background: #F9FAFB;
-    border: 1px solid #E5E7EB;
+    background: var(--hover);
+    border: 1px solid var(--border);
     border-radius: 6px;
     transition: border-color 0.15s;
 }
@@ -129,7 +129,7 @@
 }
 
 .doc-item__icon {
-    color: #6B7280;
+    color: var(--text-muted);
     flex-shrink: 0;
 }
 
@@ -142,7 +142,7 @@
     display: block;
     font-size: 11px;
     font-weight: 600;
-    color: #374151;
+    color: var(--text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -151,7 +151,7 @@
 .doc-item__meta {
     display: block;
     font-size: 10px;
-    color: #9CA3AF;
+    color: var(--text-secondary);
 }
 
 .doc-item__actions {
@@ -164,13 +164,13 @@
     width: 24px;
     height: 24px;
     border-radius: 5px;
-    border: 1px solid #E5E7EB;
-    background: #fff;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #6B7280;
+    color: var(--text-muted);
     transition: all 0.15s;
 }
 

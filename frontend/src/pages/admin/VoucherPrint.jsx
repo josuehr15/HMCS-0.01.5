@@ -96,7 +96,6 @@ function VoucherPrint() {
         const res = await api.get(`/payroll/lines/${id}`);
         if (!cancelled) setData(res.data?.data || res.data);
       } catch (e) {
-        if (!cancelled) console.error('Voucher fetch error:', e);
       } finally {
         if (!cancelled) setLoading(false);
       }

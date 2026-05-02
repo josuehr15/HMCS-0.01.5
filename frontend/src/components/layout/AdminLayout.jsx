@@ -1,49 +1,111 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from './Sidebar';
-import { Bell, Search, Clock, FileText, CheckCircle, X } from 'lucide-react';
+import api from '../../utils/api';
+import {
+    Bell, Search, X,
+    AlertCircle, Clock, FileText, CheckCircle2,
+    DollarSign, Tag, RefreshCw,
+} from 'lucide-react';
 import './AdminLayout.css';
 
+// ─── Icono por tipo de notificación ────────────────────────────────────────
+const NotifIcon = ({ type, size = 15 }) => {
+    const icons = {
+        overdue:    <AlertCircle size={size} />,
+        payroll:    <Clock size={size} />,
+        perdiem:    <DollarSign size={size} />,
+        accounting: <Tag size={size} />,
+        clockin:    <CheckCircle2 size={size} />,
+        invoice:    <FileText size={size} />,
+    };
+    return icons[type] || <Bell size={size} />;
+};
+
+// ─── Intervalo de polling (ms) ──────────────────────────────────────────────
+const POLL_INTERVAL = 60_000; // 1 minuto
+
 const AdminLayout = () => {
-    const [pinned, setPinned] = useState(false);
+    const [pinned, setPinned]                 = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [notifications, setNotifications]   = useState([]);
+    const [loading, setLoading]               = useState(false);
+    const [dismissed, setDismissed]           = useState(() => {
+        // IDs descartados se guardan en sessionStorage (se limpian al cerrar pestaña)
+        try {
+            return JSON.parse(sessionStorage.getItem('hmcs_notif_dismissed') || '[]');
+        } catch { return []; }
+    });
+
     const { user } = useAuth();
     const navigate = useNavigate();
+    const panelRef = useRef(null);
 
-    const notifications = [
-        { 
-          id: 1, 
-          icon: <Clock size={16} />, 
-          title: 'Nómina pendiente', 
-          desc: 'Hay nómina esperando aprobación',
-          time: 'Hace 2h',
-          color: '#F59E0B',
-          route: '/admin/payroll'
-        },
-        { 
-          id: 2, 
-          icon: <FileText size={16} />, 
-          title: 'Factura creada', 
-          desc: 'Nueva factura por $450',
-          time: 'Hace 3h',
-          color: '#2A6C95',
-          route: '/admin/invoices'
-        },
-        { 
-          id: 3, 
-          icon: <CheckCircle size={16} />, 
-          title: 'Clock-in registrado', 
-          desc: 'Brian N. marcó entrada',
-          time: 'Hace 4h',
-          color: '#10B981',
-          route: '/admin/time-entries'
-        },
-    ];
+    // ── Fetch desde la API ────────────────────────────────────────────────
+    const fetchNotifications = useCallback(async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/notifications');
+            if (res.data?.success) {
+                setNotifications(res.data.data || []);
+            }
+        } catch {
+            // silencioso — la campana no debe interrumpir la app
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // Carga inicial + polling cada minuto
+    useEffect(() => {
+        fetchNotifications();
+        const timer = setInterval(fetchNotifications, POLL_INTERVAL);
+        return () => clearInterval(timer);
+    }, [fetchNotifications]);
+
+    // Cierra el panel al hacer clic fuera
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (panelRef.current && !panelRef.current.contains(e.target)) {
+                setShowNotifications(false);
+            }
+        };
+        if (showNotifications) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showNotifications]);
+
+    // ── Notificaciones visibles (sin las descartadas) ─────────────────────
+    const visible = notifications.filter(n => !dismissed.includes(n.id));
+    const unreadCount = visible.length;
+
+    // ── Descartar una notificación ────────────────────────────────────────
+    const dismiss = (id, e) => {
+        e.stopPropagation();
+        const next = [...dismissed, id];
+        setDismissed(next);
+        try { sessionStorage.setItem('hmcs_notif_dismissed', JSON.stringify(next)); } catch {}
+    };
+
+    // ── Marcar todas como leídas ──────────────────────────────────────────
+    const dismissAll = () => {
+        const allIds = notifications.map(n => n.id);
+        setDismissed(allIds);
+        try { sessionStorage.setItem('hmcs_notif_dismissed', JSON.stringify(allIds)); } catch {}
+        setShowNotifications(false);
+    };
+
+    // ── Navegar a la ruta de la notificación ──────────────────────────────
+    const handleNotifClick = (notif) => {
+        navigate(notif.route);
+        setShowNotifications(false);
+    };
 
     return (
         <div className="admin-layout">
-            {/* ── Global Header (full width, above sidebar) ── */}
+            {/* ── Global Header ─────────────────────────────────────────── */}
             <header className="admin-header">
 
                 {/* LEFT — Logo */}
@@ -73,22 +135,106 @@ const AdminLayout = () => {
                             placeholder="Buscar trabajadores, proyectos, facturas..."
                             className="admin-header__search-input"
                         />
-
                     </div>
                 </div>
 
                 {/* RIGHT — Actions */}
                 <div className="admin-header__actions">
 
-                    {/* Notifications */}
-                    <button 
-                        className="admin-header__icon-btn" 
-                        title="Notificaciones"
-                        onClick={() => setShowNotifications(!showNotifications)}
-                    >
-                        <Bell size={18} />
-                        <span className="admin-header__badge">{notifications.length}</span>
-                    </button>
+                    {/* Campana de notificaciones */}
+                    <div className="notif-wrapper" ref={panelRef}>
+                        <button
+                            className={`admin-header__icon-btn ${unreadCount > 0 ? 'admin-header__icon-btn--has-notif' : ''}`}
+                            title="Notificaciones"
+                            onClick={() => setShowNotifications(prev => !prev)}
+                        >
+                            <Bell size={18} />
+                            {unreadCount > 0 && (
+                                <span className="admin-header__badge">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Panel dropdown */}
+                        {showNotifications && (
+                            <div className="notif-panel">
+                                <div className="notif-panel__header">
+                                    <h3 className="notif-panel__title">
+                                        Notificaciones
+                                        {unreadCount > 0 && (
+                                            <span className="notif-panel__count">{unreadCount}</span>
+                                        )}
+                                    </h3>
+                                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                        <button
+                                            className="notif-panel__refresh"
+                                            onClick={fetchNotifications}
+                                            title="Actualizar"
+                                        >
+                                            <RefreshCw size={13} className={loading ? 'notif-spinning' : ''} />
+                                        </button>
+                                        <button
+                                            className="notif-panel__close"
+                                            onClick={() => setShowNotifications(false)}
+                                        >
+                                            <X size={15} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="notif-panel__list">
+                                    {loading && visible.length === 0 ? (
+                                        <div className="notif-empty">
+                                            <RefreshCw size={20} className="notif-spinning" style={{ color: 'var(--text-muted)' }} />
+                                            <p>Cargando...</p>
+                                        </div>
+                                    ) : visible.length === 0 ? (
+                                        <div className="notif-empty">
+                                            <CheckCircle2 size={28} style={{ color: '#10B981' }} />
+                                            <p>Todo al día</p>
+                                            <span>No hay notificaciones pendientes</span>
+                                        </div>
+                                    ) : (
+                                        visible.map(n => (
+                                            <div
+                                                key={n.id}
+                                                className="notif-item"
+                                                onClick={() => handleNotifClick(n)}
+                                            >
+                                                <div
+                                                    className="notif-item__icon"
+                                                    style={{ background: `${n.color}18`, color: n.color }}
+                                                >
+                                                    <NotifIcon type={n.type} size={15} />
+                                                </div>
+                                                <div className="notif-item__body">
+                                                    <div className="notif-item__title">{n.title}</div>
+                                                    <div className="notif-item__desc">{n.desc}</div>
+                                                    <div className="notif-item__time">{n.time}</div>
+                                                </div>
+                                                <button
+                                                    className="notif-item__dismiss"
+                                                    onClick={(e) => dismiss(n.id, e)}
+                                                    title="Descartar"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {visible.length > 0 && (
+                                    <div className="notif-panel__footer">
+                                        <button className="notif-panel__clear" onClick={dismissAll}>
+                                            Marcar todas como leídas
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Divider */}
                     <div className="admin-header__divider" />
@@ -105,71 +251,13 @@ const AdminLayout = () => {
                             {user?.email?.charAt(0).toUpperCase() || 'A'}
                         </div>
                     </div>
-
                 </div>
             </header>
 
-            {/* ── Body: Sidebar + Content ── */}
+            {/* ── Body: Sidebar + Content ───────────────────────────────── */}
             <div className="admin-body">
                 <Sidebar pinned={pinned} onPinToggle={() => setPinned(!pinned)} />
-
                 <main className={`admin-layout__main ${pinned ? 'admin-layout__main--expanded' : ''}`}>
-                    {showNotifications && (
-                        <div
-                            className="notif-overlay"
-                            onClick={() => setShowNotifications(false)}
-                        >
-                            <div
-                                className="notif-panel"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <div className="notif-panel__header">
-                                    <h3 className="notif-panel__title">Notificaciones</h3>
-                                    <button
-                                        className="notif-panel__close"
-                                        onClick={() => setShowNotifications(false)}
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                </div>
-                                <div className="notif-panel__list">
-                                    {notifications.map(n => (
-                                        <div
-                                            key={n.id}
-                                            className="notif-item"
-                                            onClick={() => {
-                                                navigate(n.route);
-                                                setShowNotifications(false);
-                                            }}
-                                        >
-                                            <div
-                                                className="notif-item__icon"
-                                                style={{
-                                                    background: `${n.color}15`,
-                                                    color: n.color
-                                                }}
-                                            >
-                                                {n.icon}
-                                            </div>
-                                            <div className="notif-item__body">
-                                                <div className="notif-item__title">{n.title}</div>
-                                                <div className="notif-item__desc">{n.desc}</div>
-                                                <div className="notif-item__time">{n.time}</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="notif-panel__footer">
-                                    <button
-                                        className="notif-panel__clear"
-                                        onClick={() => setShowNotifications(false)}
-                                    >
-                                        Marcar todas como leídas
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                     <div className="admin-content">
                         <Outlet />
                     </div>

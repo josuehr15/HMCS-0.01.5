@@ -92,9 +92,6 @@ export default function PaymentUploadModal({ lineId, onClose, onSuccess }) {
       const extractedData = responseData.extracted_data ?? responseData.extractedData ?? {};
       const screenshotPath = responseData.screenshot_url ?? responseData.screenshotUrl ?? '';
 
-      console.log('[PaymentUpload] Full response:', json);
-      console.log('[PaymentUpload] extractedData:', extractedData);
-
       const safeExtracted = typeof extractedData === 'object' && extractedData !== null
         ? extractedData
         : {};
@@ -109,7 +106,6 @@ export default function PaymentUploadModal({ lineId, onClose, onSuccess }) {
 
       setStep(3);
     } catch (err) {
-      console.error('[PaymentUpload] Upload error:', err);
       setError(`Error: ${err.message || 'Error desconocido'}`);
       setStep(1);
     }
@@ -130,7 +126,6 @@ export default function PaymentUploadModal({ lineId, onClose, onSuccess }) {
       });
       onSuccess?.();
     } catch (err) {
-      console.error('Confirm error:', err);
       setError('Failed to save. Please try again.');
     } finally {
       setSaving(false);

@@ -39,7 +39,6 @@ const getAllClients = async (req, res) => {
 
         return successResponse(res, clients, 'Clients retrieved successfully.');
     } catch (error) {
-        console.error('getAllClients error:', error);
         return errorResponse(res, 'Failed to retrieve clients.', 500);
     }
 };
@@ -63,7 +62,6 @@ const getClientById = async (req, res) => {
         if (!client) return errorResponse(res, 'Client not found.', 404);
         return successResponse(res, client, 'Client retrieved successfully.');
     } catch (error) {
-        console.error('getClientById error:', error);
         return errorResponse(res, 'Failed to retrieve client.', 500);
     }
 };
@@ -87,7 +85,6 @@ const getClientLinkedData = async (req, res) => {
             can_hard_delete: total === 0,
         }, 'Linked data retrieved.');
     } catch (error) {
-        console.error('getClientLinkedData error:', error);
         return errorResponse(res, 'Failed to get linked data.', 500);
     }
 };
@@ -149,7 +146,6 @@ const createClient = async (req, res) => {
         });
         return successResponse(res, fullClient, 'Client created successfully.', 201);
     } catch (error) {
-        console.error('createClient error:', error);
         return errorResponse(res, 'Failed to create client.', 500);
     }
 };
@@ -191,7 +187,6 @@ const updateClient = async (req, res) => {
         });
         return successResponse(res, updatedClient, 'Client updated successfully.');
     } catch (error) {
-        console.error('updateClient error:', error);
         return errorResponse(res, 'Failed to update client.', 500);
     }
 };
@@ -217,7 +212,6 @@ const toggleClientStatus = async (req, res) => {
         const message = newStatus === 'active' ? 'Cliente reactivado.' : 'Cliente desactivado.';
         return successResponse(res, updated, message);
     } catch (error) {
-        console.error('toggleClientStatus error:', error);
         return errorResponse(res, 'Failed to toggle client status.', 500);
     }
 };
@@ -235,7 +229,6 @@ const deleteClient = async (req, res) => {
 
         return successResponse(res, { id: client.id, action: 'deactivated' }, 'Cliente desactivado.');
     } catch (error) {
-        console.error('deleteClient error:', error);
         return errorResponse(res, 'Failed to deactivate client.', 500);
     }
 };
@@ -290,7 +283,6 @@ const forceDeleteClient = async (req, res) => {
         return successResponse(res, { id: client.id, action: 'deleted' }, 'Cliente eliminado permanentemente. Email liberado.');
     } catch (error) {
         await t.rollback();
-        console.error('forceDeleteClient error:', error);
         return errorResponse(res, 'Failed to permanently delete client.', 500);
     }
 };
@@ -318,7 +310,6 @@ const resetClientPassword = async (req, res) => {
             company_name: client.company_name,
         }, 'Contraseña reseteada.');
     } catch (error) {
-        console.error('resetClientPassword error:', error);
         return errorResponse(res, 'Failed to reset password.', 500);
     }
 };
@@ -351,7 +342,6 @@ const addClientRate = async (req, res) => {
         if (error.name === 'SequelizeUniqueConstraintError') {
             return errorResponse(res, 'Ya existe una tarifa para este oficio.', 409);
         }
-        console.error('addClientRate error:', error);
         return errorResponse(res, 'Failed to add rate.', 500);
     }
 };
@@ -375,7 +365,6 @@ const updateClientRate = async (req, res) => {
         });
         return successResponse(res, full, 'Rate updated.');
     } catch (error) {
-        console.error('updateClientRate error:', error);
         return errorResponse(res, 'Failed to update rate.', 500);
     }
 };
@@ -391,7 +380,6 @@ const deleteClientRate = async (req, res) => {
         await rate.update({ is_active: false });
         return successResponse(res, { id: rate.id }, 'Rate deleted.');
     } catch (error) {
-        console.error('deleteClientRate error:', error);
         return errorResponse(res, 'Failed to delete rate.', 500);
     }
 };
@@ -410,7 +398,6 @@ const uploadClientLogo = async (req, res) => {
         await client.update({ logo_url });
         return successResponse(res, { logo_url }, 'Logo uploaded successfully.');
     } catch (error) {
-        console.error('uploadClientLogo error:', error);
         return errorResponse(res, 'Failed to upload logo.', 500);
     }
 };

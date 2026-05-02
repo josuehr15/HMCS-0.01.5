@@ -55,7 +55,7 @@ function WorkerCard({ worker, onEdit, onToggle, onCardClick, getStats }) {
     // Lazy-load stats once card mounts
     useEffect(() => {
         if (!getStats) return;
-        getStats(worker.id).then(s => setStats(s)).catch(() => { });
+        getStats(worker.id).then(s => setStats(s)).catch((_err) => {});
     }, [worker.id, getStats]);
 
     const hoursPercent = stats
@@ -180,7 +180,7 @@ function WorkerDrawer({ worker, trades, onClose, onEdit, onDeleted, onToggle, ap
                     }
                 }
             })
-            .catch(() => { })
+            .catch((_err) => {})
             .finally(() => setLocationLoading(false));
     }, [worker, get]);
 

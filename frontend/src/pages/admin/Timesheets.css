@@ -354,7 +354,7 @@
     border-radius: 8px;
     border: 1px dashed #D1D5DB;
     background: transparent;
-    color: #9CA3AF;
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -410,9 +410,9 @@
 }
 
 .ts-chip--rejected {
-    background: #F3F4F6;
-    color: #6B7280;
-    border-color: #E5E7EB;
+    background: var(--hover);
+    color: var(--text-muted);
+    border-color: var(--border);
 }
 
 .ts-chip--live {
@@ -602,7 +602,7 @@
 .ts-badge--pending { background: #FEF3C7; color: #B45309; }
 .ts-badge--approved { background: #D1FAE5; color: #047857; }
 .ts-badge--flagged { background: #FEE2E2; color: #B91C1C; }
-.ts-badge--rejected { background: #F3F4F6; color: #4B5563; }
+.ts-badge--rejected { background: var(--hover); color: #4B5563; }
 .ts-badge--manual { background: #EDE9FE; color: #6D28D9; }
 
 .ts-drawer-section h3 {
@@ -866,7 +866,7 @@
 
 /* ── Modal container ── */
 .te-modal {
-    background: #ffffff;
+    background: var(--bg-card);
     border-radius: 16px;
     box-shadow: 0 24px 48px -12px rgba(18, 28, 42, 0.18);
     width: 100%;

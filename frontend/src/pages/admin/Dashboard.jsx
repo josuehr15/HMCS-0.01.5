@@ -189,7 +189,6 @@ const Dashboard = () => {
                     deposited: paidAmt,
                 });
             } catch (err) {
-                console.error('Dashboard load error:', err);
             } finally {
                 setLoading(false);
             }

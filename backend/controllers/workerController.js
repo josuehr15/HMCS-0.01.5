@@ -61,7 +61,6 @@ const getAllWorkers = async (req, res) => {
             message: 'Workers retrieved successfully.',
         });
     } catch (error) {
-        console.error('getAllWorkers error:', error);
         return errorResponse(res, 'Failed to retrieve workers.', 500);
     }
 };
@@ -82,7 +81,6 @@ const getWorkerById = async (req, res) => {
         if (!worker) return errorResponse(res, 'Worker not found.', 404);
         return successResponse(res, worker, 'Worker retrieved successfully.');
     } catch (error) {
-        console.error('getWorkerById error:', error);
         return errorResponse(res, 'Failed to retrieve worker.', 500);
     }
 };
@@ -125,7 +123,6 @@ const getWorkerStats = async (req, res) => {
             total_earned_all_time: Math.round(totalEarnedAll * 100) / 100,
         }, 'Worker stats retrieved.');
     } catch (error) {
-        console.error('getWorkerStats error:', error);
         // Non-critical — return zeros so cards still render
         return successResponse(res, {
             total_hours_this_month: 0, total_earned_this_month: 0,
@@ -159,7 +156,6 @@ const getWorkerLinkedData = async (req, res) => {
             can_hard_delete: total === 0,
         }, 'Linked data counts retrieved.');
     } catch (error) {
-        console.error('getWorkerLinkedData error:', error);
         return errorResponse(res, 'Failed to get linked data.', 500);
     }
 };
@@ -262,7 +258,6 @@ const createWorker = async (req, res) => {
         });
         return successResponse(res, fullWorker, 'Worker created successfully.', 201);
     } catch (error) {
-        console.error('createWorker error:', error);
         return errorResponse(res, 'Failed to create worker.', 500);
     }
 };
@@ -315,7 +310,6 @@ const updateWorker = async (req, res) => {
         });
         return successResponse(res, updatedWorker, 'Worker updated successfully.');
     } catch (error) {
-        console.error('updateWorker error:', error);
         return errorResponse(res, 'Failed to update worker.', 500);
     }
 };
@@ -348,7 +342,6 @@ const toggleWorkerStatus = async (req, res) => {
 
         return successResponse(res, updated, message);
     } catch (error) {
-        console.error('toggleWorkerStatus error:', error);
         return errorResponse(res, 'Failed to toggle worker status.', 500);
     }
 };
@@ -372,7 +365,6 @@ const deleteWorker = async (req, res) => {
             id: worker.id, worker_code: worker.worker_code, action: 'deactivated',
         }, 'Trabajador desactivado.');
     } catch (error) {
-        console.error('deleteWorker error:', error);
         return errorResponse(res, 'Failed to deactivate worker.', 500);
     }
 };
@@ -448,7 +440,6 @@ const forceDeleteWorker = async (req, res) => {
         }, 'Trabajador eliminado permanentemente. El email ha quedado libre.');
     } catch (error) {
         await t.rollback();
-        console.error('forceDeleteWorker error:', error);
         return errorResponse(res, 'Failed to permanently delete worker.', 500);
     }
 };
@@ -477,7 +468,6 @@ const resetWorkerPassword = async (req, res) => {
             worker_name: `${worker.first_name} ${worker.last_name}`,
         }, 'Contraseña reseteada exitosamente.');
     } catch (error) {
-        console.error('resetWorkerPassword error:', error);
         return errorResponse(res, 'Failed to reset password.', 500);
     }
 };

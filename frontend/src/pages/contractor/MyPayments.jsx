@@ -41,7 +41,6 @@ function VoucherModal({ lineId, onClose }) {
         setBlobUrl(url);
       } catch (e) {
         if (!cancelled) {
-          console.error('Voucher load error:', e);
           setError('No se pudo cargar el comprobante.');
         }
       } finally {
@@ -95,7 +94,6 @@ export default function MyPayments() {
         const data = res.data?.data || res.data;
         setLines(Array.isArray(data) ? data : []);
       } catch (e) {
-        if (!cancelled) console.error('MyPayments fetch error:', e);
       } finally {
         if (!cancelled) setLoading(false);
       }

@@ -41,7 +41,6 @@ const getAllAssignments = async (req, res) => {
 
         return successResponse(res, assignments, 'Assignments retrieved successfully.');
     } catch (error) {
-        console.error('getAllAssignments error:', error);
         return errorResponse(res, 'Failed to retrieve assignments.', 500);
     }
 };
@@ -67,7 +66,6 @@ const getAssignmentById = async (req, res) => {
         if (!assignment) return errorResponse(res, 'Assignment not found.', 404);
         return successResponse(res, assignment, 'Assignment retrieved successfully.');
     } catch (error) {
-        console.error('getAssignmentById error:', error);
         return errorResponse(res, 'Failed to retrieve assignment.', 500);
     }
 };
@@ -127,7 +125,6 @@ const createAssignment = async (req, res) => {
         return successResponse(res, full, 'Asignación creada exitosamente.', 201);
     } catch (error) {
         await t.rollback();
-        console.error('createAssignment error:', error);
         return errorResponse(res, 'Failed to create assignment.', 500);
     }
 };
@@ -173,7 +170,6 @@ const updateAssignment = async (req, res) => {
         return successResponse(res, full, 'Assignment updated successfully.');
     } catch (error) {
         await t.rollback();
-        console.error('updateAssignment error:', error);
         return errorResponse(res, 'Failed to update assignment.', 500);
     }
 };
@@ -203,7 +199,6 @@ const deleteAssignment = async (req, res) => {
         return successResponse(res, response, 'Asignación cancelada.');
     } catch (error) {
         await t.rollback();
-        console.error('deleteAssignment error:', error);
         return errorResponse(res, 'Failed to delete assignment.', 500);
     }
 };

@@ -20,7 +20,6 @@ const createPerDiem = async (req, res) => {
 
         return successResponse(res, entry, 'Per diem entry created.', 201);
     } catch (error) {
-        console.error('createPerDiem error:', error);
         return errorResponse(res, 'Failed to create per diem entry.', 500);
     }
 };
@@ -57,7 +56,6 @@ const getAllPerDiem = async (req, res) => {
 
         return successResponse(res, entries, 'Per diem entries retrieved.');
     } catch (error) {
-        console.error('getAllPerDiem error:', error);
         return errorResponse(res, 'Failed to retrieve per diem entries.', 500);
     }
 };
@@ -74,7 +72,6 @@ const markPerDiemPaid = async (req, res) => {
         await entry.update({ status: 'paid', paid_at: new Date() });
         return successResponse(res, entry, 'Per diem marked as paid.');
     } catch (error) {
-        console.error('markPerDiemPaid error:', error);
         return errorResponse(res, 'Failed to mark per diem as paid.', 500);
     }
 };
@@ -101,7 +98,6 @@ const getWorkerPerDiem = async (req, res) => {
 
         return successResponse(res, entries, 'Per diem entries retrieved.');
     } catch (error) {
-        console.error('getWorkerPerDiem error:', error);
         return errorResponse(res, 'Failed to retrieve per diem entries.', 500);
     }
 };
@@ -120,7 +116,6 @@ const deletePerDiem = async (req, res) => {
         await entry.update({ is_active: false });
         return successResponse(res, null, 'Per diem entry deleted.');
     } catch (error) {
-        console.error('deletePerDiem error:', error);
         return errorResponse(res, 'Failed to delete per diem entry.', 500);
     }
 };

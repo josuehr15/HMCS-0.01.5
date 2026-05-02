@@ -63,7 +63,6 @@ const register = async (req, res) => {
             token, // still returned in body for backward compat with existing frontend
         }, 'User registered successfully.', 201);
     } catch (error) {
-        console.error('Register error:', error);
         return errorResponse(res, 'Internal server error.', 500);
     }
 };
@@ -123,7 +122,6 @@ const login = async (req, res) => {
             token, // still returned in body for backward compat
         }, 'Login successful.');
     } catch (error) {
-        console.error('Login error:', error);
         return errorResponse(res, 'Internal server error.', 500);
     }
 };
@@ -144,7 +142,6 @@ const me = async (req, res) => {
             },
         }, 'Authenticated.');
     } catch (error) {
-        console.error('Me error:', error);
         return errorResponse(res, 'Internal server error.', 500);
     }
 };

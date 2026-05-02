@@ -181,7 +181,7 @@
 }
 
 .cl-badge--active  { background: rgba(16, 185, 129, 0.1); color: #059669; }
-.cl-badge--inactive { background: rgba(156, 163, 175, 0.15); color: #6B7280; }
+.cl-badge--inactive { background: rgba(156, 163, 175, 0.15); color: var(--text-muted); }
 
 /* ─── Grid de Cards ─────────────────────────────────────────────────────────── */
 .cl-grid {

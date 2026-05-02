@@ -59,7 +59,6 @@ const clockIn = async (req, res) => {
 
         return successResponse(res, timeEntry, 'Clock in exitoso.', 201);
     } catch (error) {
-        console.error('clockIn error:', error);
         return errorResponse(res, 'Failed to clock in.', 500);
     }
 };
@@ -111,7 +110,6 @@ const clockOut = async (req, res) => {
 
         return successResponse(res, timeEntry, `Clock out exitoso. Total: ${totalHours}h.`);
     } catch (error) {
-        console.error('clockOut error:', error);
         return errorResponse(res, 'Failed to clock out.', 500);
     }
 };
@@ -143,7 +141,6 @@ const getMyTimeEntries = async (req, res) => {
 
         return successResponse(res, entries, 'Time entries retrieved.');
     } catch (error) {
-        console.error('getMyTimeEntries error:', error);
         return errorResponse(res, 'Failed to retrieve time entries.', 500);
     }
 };
@@ -173,7 +170,6 @@ const getAllTimeEntries = async (req, res) => {
 
         return successResponse(res, entries, 'Time entries retrieved.');
     } catch (error) {
-        console.error('getAllTimeEntries error:', error);
         return errorResponse(res, 'Failed to retrieve time entries.', 500);
     }
 };
@@ -188,7 +184,6 @@ const getTimeEntryById = async (req, res) => {
         if (!entry) return errorResponse(res, 'Time entry not found.', 404);
         return successResponse(res, entry, 'Time entry retrieved.');
     } catch (error) {
-        console.error('getTimeEntryById error:', error);
         return errorResponse(res, 'Failed to retrieve time entry.', 500);
     }
 };
@@ -250,7 +245,6 @@ const createManualEntry = async (req, res) => {
         const full = await TimeEntry.findByPk(entry.id, { include: ENTRY_INCLUDES });
         return successResponse(res, full, 'Entrada manual creada exitosamente.', 201);
     } catch (error) {
-        console.error('createManualEntry error:', error);
         return errorResponse(res, 'Failed to create manual entry.', 500);
     }
 };
@@ -293,7 +287,6 @@ const updateTimeEntry = async (req, res) => {
         const full = await TimeEntry.findByPk(entry.id, { include: ENTRY_INCLUDES });
         return successResponse(res, full, 'Entrada actualizada.');
     } catch (error) {
-        console.error('updateTimeEntry error:', error);
         return errorResponse(res, 'Failed to update time entry.', 500);
     }
 };
@@ -321,7 +314,6 @@ const updateEntryStatus = async (req, res) => {
         const full = await TimeEntry.findByPk(entry.id, { include: ENTRY_INCLUDES });
         return successResponse(res, full, `Entrada ${status}.`);
     } catch (error) {
-        console.error('updateEntryStatus error:', error);
         return errorResponse(res, 'Failed to update status.', 500);
     }
 };
@@ -349,7 +341,6 @@ const bulkUpdateStatus = async (req, res) => {
 
         return successResponse(res, { updated: count, ids, status }, `${count} entradas actualizadas a "${status}".`);
     } catch (error) {
-        console.error('bulkUpdateStatus error:', error);
         return errorResponse(res, 'Failed to bulk update status.', 500);
     }
 };
@@ -362,7 +353,6 @@ const deleteTimeEntry = async (req, res) => {
         await entry.update({ is_active: false });
         return successResponse(res, { id: entry.id }, 'Entrada eliminada.');
     } catch (error) {
-        console.error('deleteTimeEntry error:', error);
         return errorResponse(res, 'Failed to delete time entry.', 500);
     }
 };
@@ -403,7 +393,6 @@ const getSummary = async (req, res) => {
             stats: { totalHours: parseFloat(totalHours.toFixed(2)), pending, approved, liveNow },
         }, 'Summary retrieved.');
     } catch (error) {
-        console.error('getSummary error:', error);
         return errorResponse(res, 'Failed to retrieve summary.', 500);
     }
 };

@@ -95,7 +95,7 @@ const getCategories = async (req, res) => {
             order: [['type', 'ASC'], ['name_es', 'ASC']],
         });
         return successResponse(res, cats, 'Categories retrieved.');
-    } catch (e) { console.error(e); return errorResponse(res, 'Failed.', 500); }
+    } catch (e) { return errorResponse(res, 'Failed.', 500); }
 };
 
 const createCategory = async (req, res) => {
@@ -151,7 +151,7 @@ const getTransactions = async (req, res) => {
             where, include: TX_INCLUDES, order: [['date', 'DESC'], ['id', 'DESC']],
         });
         return successResponse(res, txs, 'Transactions retrieved.');
-    } catch (e) { console.error(e); return errorResponse(res, 'Failed.', 500); }
+    } catch (e) { return errorResponse(res, 'Failed.', 500); }
 };
 
 const getTransactionById = async (req, res) => {
@@ -175,7 +175,7 @@ const createTransaction = async (req, res) => {
         });
         const full = await Transaction.findByPk(tx.id, { include: TX_INCLUDES });
         return successResponse(res, full, 'Transaction created.', 201);
-    } catch (e) { console.error(e); return errorResponse(res, 'Failed.', 500); }
+    } catch (e) { return errorResponse(res, 'Failed.', 500); }
 };
 
 const updateTransaction = async (req, res) => {
@@ -242,7 +242,6 @@ const splitTransaction = async (req, res) => {
         return successResponse(res, full, 'Split successful.');
     } catch (e) {
         await t.rollback();
-        console.error('splitTransaction error:', e);
         return errorResponse(res, 'Failed to split.', 500);
     }
 };
@@ -330,7 +329,6 @@ const previewCSV = async (req, res) => {
             rows: preview,
         }, 'CSV preview ready.');
     } catch (e) {
-        console.error('previewCSV error:', e);
         return errorResponse(res, 'Failed to parse CSV.', 500);
     }
 };
@@ -397,7 +395,6 @@ const confirmCSV = async (req, res) => {
         return successResponse(res, { imported, skipped }, `${imported} transacciones importadas.`);
     } catch (e) {
         await t.rollback();
-        console.error('confirmCSV error:', e);
         return errorResponse(res, 'Failed to import CSV.', 500);
     }
 };
@@ -459,7 +456,7 @@ const getPnL = async (req, res) => {
             net: parseFloat((totalIncome - totalExpense).toFixed(2)),
             per_diem_passthrough: parseFloat(parseFloat(perDiemTotal || 0).toFixed(2)),
         }, 'P&L retrieved.');
-    } catch (e) { console.error(e); return errorResponse(res, 'Failed to get P&L.', 500); }
+    } catch (e) { return errorResponse(res, 'Failed to get P&L.', 500); }
 };
 
 // ═════════════════════════════════════════════════════════════
@@ -532,7 +529,7 @@ const getMarginsWorkers = async (req, res) => {
         }).sort((a, b) => b.margin - a.margin);
 
         return successResponse(res, margins, 'Worker margins retrieved.');
-    } catch (e) { console.error(e); return errorResponse(res, 'Failed.', 500); }
+    } catch (e) { return errorResponse(res, 'Failed.', 500); }
 };
 
 const getMarginsClients = async (req, res) => {
@@ -576,7 +573,7 @@ const getMarginsClients = async (req, res) => {
         }));
 
         return successResponse(res, result, 'Client margins retrieved.');
-    } catch (e) { console.error(e); return errorResponse(res, 'Failed.', 500); }
+    } catch (e) { return errorResponse(res, 'Failed.', 500); }
 };
 
 // ─── Cash Flow ────────────────────────────────────────────────
@@ -707,7 +704,7 @@ const getTaxSummary = async (req, res) => {
             per_diem_total,
             workers_1099,
         }, 'Tax summary retrieved.');
-    } catch (e) { console.error(e); return errorResponse(res, 'Failed.', 500); }
+    } catch (e) { return errorResponse(res, 'Failed.', 500); }
 };
 
 const get1099Report = async (req, res) => {
@@ -744,7 +741,7 @@ const get1099Report = async (req, res) => {
         })).sort((a, b) => b.total_paid - a.total_paid);
 
         return successResponse(res, result, '1099 report retrieved.');
-    } catch (e) { console.error(e); return errorResponse(res, 'Failed.', 500); }
+    } catch (e) { return errorResponse(res, 'Failed.', 500); }
 };
 
 // ─── helper ─────────────────────────────────────────────────
@@ -840,7 +837,6 @@ const getDashboardSummary = async (req, res) => {
             pl_by_category: { income: incomeRows, expenses: expenseRows },
         });
     } catch (e) {
-        console.error('getDashboardSummary error:', e);
         return res.status(500).json({ error: 'Failed.' });
     }
 };
@@ -878,7 +874,6 @@ const getCashflowYear = async (req, res) => {
 
         return res.json({ year, months });
     } catch (e) {
-        console.error('getCashflowYear error:', e);
         return res.status(500).json({ error: 'Failed.' });
     }
 };
@@ -894,7 +889,7 @@ const ensureImportColumns = async () => {
     await tryAdd(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS import_source VARCHAR(50) DEFAULT NULL`);
     await tryAdd(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_imported TINYINT(1) NOT NULL DEFAULT 0`);
 };
-ensureImportColumns().catch(e => console.warn('Import columns migration:', e.message));
+ensureImportColumns().catch(() => {});
 
 // ─── CSV parsers ─────────────────────────────────────────────────
 const _parseCsvWF = (csvContent) => {
@@ -990,7 +985,6 @@ const getRules = async (req, res) => {
         });
         return res.json({ success: true, data: rules });
     } catch (e) {
-        console.error('getRules error:', e);
         return errorResponse(res, 'Failed to get rules.', 500);
     }
 };
@@ -1028,7 +1022,6 @@ const createRule = async (req, res) => {
         });
         return res.json({ success: true, data: full, applied_count: applied });
     } catch (e) {
-        console.error('createRule error:', e);
         return errorResponse(res, 'Failed to create rule.', 500);
     }
 };
@@ -1040,7 +1033,6 @@ const updateRule = async (req, res) => {
         await rule.update(req.body);
         return res.json({ success: true, data: rule });
     } catch (e) {
-        console.error('updateRule error:', e);
         return errorResponse(res, 'Failed to update rule.', 500);
     }
 };
@@ -1052,7 +1044,6 @@ const deleteRule = async (req, res) => {
         await rule.update({ is_active: false });
         return res.json({ success: true });
     } catch (e) {
-        console.error('deleteRule error:', e);
         return errorResponse(res, 'Failed to delete rule.', 500);
     }
 };
@@ -1071,7 +1062,6 @@ const applyRule = async (req, res) => {
         });
         return res.json({ success: true, applied_count: results.length });
     } catch (e) {
-        console.error('applyRule error:', e);
         return errorResponse(res, 'Failed to apply rule.', 500);
     }
 };
@@ -1092,7 +1082,6 @@ const previewRuleCount = async (req, res) => {
         });
         return res.json({ success: true, count: matched.length });
     } catch (e) {
-        console.error('previewRuleCount error:', e);
         return errorResponse(res, 'Failed.', 500);
     }
 };
@@ -1149,7 +1138,6 @@ const previewImport = async (req, res) => {
             },
         });
     } catch (e) {
-        console.error('previewImport error:', e);
         return errorResponse(res, 'Failed to preview import.', 500);
     }
 };
@@ -1198,7 +1186,6 @@ const confirmImport = async (req, res) => {
             data: { imported_count: created.length, batch_id: batchId },
         });
     } catch (e) {
-        console.error('confirmImport error:', e);
         return errorResponse(res, 'Failed to confirm import.', 500);
     }
 };
@@ -1267,7 +1254,6 @@ const getImportHistory = async (req, res) => {
 
         return res.json({ success: true, data: result });
     } catch (e) {
-        console.error('getImportHistory error:', e);
         return errorResponse(res, 'Failed to get import history.', 500);
     }
 };
@@ -1287,7 +1273,6 @@ const undoImport = async (req, res) => {
 
         return res.json({ success: true, message: `${count} transacciones eliminadas.` });
     } catch (e) {
-        console.error('undoImport error:', e);
         return errorResponse(res, 'Failed to undo import.', 500);
     }
 };
