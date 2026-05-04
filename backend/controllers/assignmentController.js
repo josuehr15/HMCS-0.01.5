@@ -203,4 +203,34 @@ const deleteAssignment = async (req, res) => {
     }
 };
 
-module.exports = { getAllAssignments, getAssignmentById, createAssignment, updateAssignment, deleteAssignment };
+/**
+ * GET /api/assignments/my
+ * Contractor only — returns their own active assignments with project info.
+ */
+const getMyAssignments = async (req, res) => {
+    try {
+        // Find the worker record linked to this user
+        const worker = await Worker.findOne({
+            where: { user_id: req.user.id, is_active: true, deleted_at: null },
+            attributes: ['id'],
+        });
+
+        if (!worker) {
+            return successResponse(res, [], 'No worker profile found for this user.');
+        }
+
+        const assignments = await Assignment.findAll({
+            where: { worker_id: worker.id, status: 'active', is_active: true },
+            include: [
+                { model: Project, as: 'project', attributes: ['id', 'name', 'address', 'latitude', 'longitude', 'gps_radius_meters'] },
+            ],
+            order: [['start_date', 'DESC']],
+        });
+
+        return successResponse(res, assignments, 'My assignments retrieved successfully.');
+    } catch (error) {
+        return errorResponse(res, 'Failed to retrieve assignments.', 500);
+    }
+};
+
+module.exports = { getAllAssignments, getAssignmentById, createAssignment, updateAssignment, deleteAssignment, getMyAssignments };

@@ -26,6 +26,7 @@ const perDiemRoutes = require('./routes/perDiem');
 const accountingRoutes = require('./routes/accounting');
 const settingsRoutes = require('./routes/settings');
 const notificationRoutes = require('./routes/notifications');
+const clientPortalRoutes = require('./routes/clientPortal');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -82,6 +83,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/accounting', accountingRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/client', clientPortalRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

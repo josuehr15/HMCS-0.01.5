@@ -30,7 +30,7 @@ const ClockPage = () => {
         const fetchAssignments = async () => {
             try {
                 setLoadingAssignments(true);
-                const res = await get('/assignments?status=active');
+                const res = await get('/assignments/my');
                 const active = res?.data || [];
                 setAssignments(Array.isArray(active) ? active : []);
                 // Auto-select if only one assignment

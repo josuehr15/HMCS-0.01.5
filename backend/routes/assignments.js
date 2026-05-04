@@ -8,9 +8,13 @@ const {
     createAssignment,
     updateAssignment,
     deleteAssignment,
+    getMyAssignments,
 } = require('../controllers/assignmentController');
 
 router.use(auth);
+
+// Contractor: ver sus propios assignments activos (debe ir antes de /:id)
+router.get('/my', checkRole('contractor'), getMyAssignments);
 
 router.get('/', checkRole('admin'), getAllAssignments);
 router.get('/:id', checkRole('admin'), getAssignmentById);

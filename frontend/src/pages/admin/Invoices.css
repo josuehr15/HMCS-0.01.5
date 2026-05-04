@@ -875,6 +875,136 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Cards Grid View ──────────────────────────────────────────────── */
+.inv-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.inv-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.inv-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+    border-color: var(--primary);
+}
+
+/* Colored top bar per status */
+.inv-card__accent {
+    height: 4px;
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.inv-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 0;
+}
+
+.inv-card__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.inv-card__number {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text);
+    padding: 10px 16px 2px;
+    letter-spacing: -0.3px;
+}
+
+.inv-card__total {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+    padding: 0 16px 10px;
+    letter-spacing: -0.5px;
+}
+
+.inv-card__client,
+.inv-card__project,
+.inv-card__period {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 16px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+}
+
+.inv-card__client { color: var(--text); font-weight: 500; font-size: 0.82rem; }
+
+.inv-card__client span,
+.inv-card__project span,
+.inv-card__period span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inv-card__footer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 16px 14px;
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+}
+
+.inv-card__action {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.inv-card__action:hover {
+    background: var(--hover);
+    color: var(--text);
+}
+
+.inv-card__date {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+}
+
 /* ── Dark mode tweaks ─────────────────────────────────────────────── */
 [data-theme="dark"] .inv-field select,
 [data-theme="dark"] .inv-field input,

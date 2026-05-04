@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import AdminLayout from './components/layout/AdminLayout';
 import ContractorLayout from './components/layout/ContractorLayout';
+import ClientLayout from './components/layout/ClientLayout';
 import ErrorBoundary from './components/ErrorBoundary'; // DEUDA-004
 import ComingSoon from './components/ComingSoon';        // BASURA-002
 import Login from './pages/Login';
@@ -22,6 +23,10 @@ import Reports from './pages/admin/Reports';
 import Settings from './pages/admin/Settings';
 import PerDiem from './pages/admin/PerDiem';
 import PerDiemContractor from './pages/contractor/PerDiemContractor';
+import ClientDashboard from './pages/client/ClientDashboard';
+import ClientProjects from './pages/client/ClientProjects';
+import ClientInvoices from './pages/client/ClientInvoices';
+import ClientWorkers from './pages/client/ClientWorkers';
 import './styles/globals.css';
 import './styles/modals.css';
 
@@ -30,7 +35,12 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     if (isLoading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-muted)' }}>Cargando...</div>;
     if (!isAuthenticated) return <Navigate to="/login" replace />;
     if (allowedRoles && !allowedRoles.includes(user?.role)) {
-        return <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : '/contractor/clock'} replace />;
+        const fallback = user?.role === 'admin'
+            ? '/admin/dashboard'
+            : user?.role === 'client'
+            ? '/client/dashboard'
+            : '/contractor/clock';
+        return <Navigate to={fallback} replace />;
     }
     return children;
 };
@@ -42,7 +52,11 @@ const AppRoutes = () => {
         <Routes>
             <Route path="/login" element={
                 isAuthenticated
-                    ? <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : '/contractor/clock'} replace />
+                    ? <Navigate to={
+                        user?.role === 'admin' ? '/admin/dashboard'
+                        : user?.role === 'client' ? '/client/dashboard'
+                        : '/contractor/clock'
+                    } replace />
                     : <Login />
             } />
 
@@ -89,6 +103,19 @@ const AppRoutes = () => {
                 <Route path="hours" element={<ComingSoon title="Mis Horas" description="Historial detallado de horas trabajadas. Disponible en la Fase 5." />} />
                 <Route path="per-diem" element={<PerDiemContractor />} />
                 <Route path="profile" element={<ComingSoon title="Mi Perfil" description="Edita tu información de contacto y preferencias. Disponible en la Fase 5." />} />
+            </Route>
+
+            {/* Client Routes */}
+            <Route path="/client" element={
+                <ProtectedRoute allowedRoles={['client']}>
+                    <ClientLayout />
+                </ProtectedRoute>
+            }>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<ClientDashboard />} />
+                <Route path="projects" element={<ClientProjects />} />
+                <Route path="invoices" element={<ClientInvoices />} />
+                <Route path="workers" element={<ClientWorkers />} />
             </Route>
 
             {/* Default redirect */}

@@ -1,0 +1,260 @@
+/* ────────────────────────────────────────────────────────────
+   Client Portal Layout — sidebar + main content (desktop-first)
+   Also defines shared utility classes used by all client pages
+   ──────────────────────────────────────────────────────────── */
+
+/* ── Shared: loading / error states (used by all client pages) ── */
+.client-loading,
+.client-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 60vh;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.client-error { color: #EF4444; }
+
+.client-spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid var(--border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: client-spin 0.7s linear infinite;
+}
+
+@keyframes client-spin { to { transform: rotate(360deg); } }
+
+.client-layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg);
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+.client-sidebar {
+    width: 220px;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    box-shadow: 1px 0 12px rgba(0, 0, 0, 0.04);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 50;
+}
+
+/* Brand block */
+.client-sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.client-sidebar__logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.client-sidebar__brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.client-sidebar__brand-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text);
+    letter-spacing: 0.04em;
+}
+
+.client-sidebar__brand-sub {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+
+/* Nav links */
+.client-sidebar__nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 8px;
+}
+
+.client-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: var(--transition);
+    text-decoration: none;
+    position: relative;
+}
+
+.client-nav-item:hover {
+    background: var(--hover);
+    color: var(--text);
+    transform: none;
+}
+
+.client-nav-item--active {
+    background: rgba(42, 108, 149, 0.09);
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.client-nav-item--active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 55%;
+    background: var(--color-primary);
+    border-radius: 0 3px 3px 0;
+}
+
+[data-theme="dark"] .client-nav-item--active {
+    background: rgba(42, 108, 149, 0.18);
+}
+
+[data-theme="dark"] .client-nav-item--active::before {
+    background: #5BA3CF;
+}
+
+/* Footer */
+.client-sidebar__footer {
+    border-top: 1px solid var(--border);
+    padding: 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.client-sidebar__user {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.client-sidebar__avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.client-sidebar__user-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.client-sidebar__user-email {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.client-sidebar__footer-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.client-sidebar__icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.client-sidebar__icon-btn:hover {
+    background: var(--hover);
+    color: var(--text);
+}
+
+/* ── Main Content ─────────────────────────────────────────── */
+.client-main {
+    flex: 1;
+    min-width: 0;
+    padding: 28px 32px;
+    overflow-y: auto;
+}
+
+/* ── Responsive: collapse sidebar on small screens ────────── */
+@media (max-width: 768px) {
+    .client-sidebar {
+        width: 60px;
+        min-width: 60px;
+    }
+
+    .client-sidebar__brand-text,
+    .client-sidebar__brand-sub,
+    .client-sidebar__user-info,
+    .client-nav-item span {
+        display: none;
+    }
+
+    .client-sidebar__brand {
+        justify-content: center;
+        padding: 16px 8px;
+    }
+
+    .client-nav-item {
+        justify-content: center;
+        padding: 10px;
+    }
+
+    .client-sidebar__footer {
+        align-items: center;
+        padding: 10px 6px;
+    }
+
+    .client-sidebar__footer-actions {
+        flex-direction: column;
+    }
+
+    .client-main {
+        padding: 16px;
+    }
+}

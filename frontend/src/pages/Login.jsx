@@ -34,6 +34,7 @@ const Login = () => {
             const user = await login(email, password);
             if (user.role === 'admin') navigate('/admin/dashboard');
             else if (user.role === 'contractor') navigate('/contractor/clock');
+            else if (user.role === 'client') navigate('/client/dashboard');
             else navigate('/');
         } catch (err) {
             const msg = err.response?.data?.message || 'Error de conexión';
@@ -208,9 +209,32 @@ const Login = () => {
                         <a href="#">Contactar Admin</a>
                     </p>
 
-                    {/* Demo */}
+                    {/* Demo quick-access */}
                     <div className="login-demo">
-                        Demo: admin@hmcs.com / admin123
+                        <span className="login-demo__label">Demo access:</span>
+                        <div className="login-demo__btns">
+                            <button
+                                type="button"
+                                className="login-demo__btn login-demo__btn--admin"
+                                onClick={() => { setEmail('admin@hmcs.com'); setPassword('admin123'); setError(''); }}
+                            >
+                                👤 Admin
+                            </button>
+                            <button
+                                type="button"
+                                className="login-demo__btn login-demo__btn--contractor"
+                                onClick={() => { setEmail('josue@hmcs.com'); setPassword('contractor123'); setError(''); }}
+                            >
+                                🦺 Contractor
+                            </button>
+                            <button
+                                type="button"
+                                className="login-demo__btn login-demo__btn--client"
+                                onClick={() => { setEmail('contact@mockplumbing.com'); setPassword('client123'); setError(''); }}
+                            >
+                                🏗️ Client
+                            </button>
+                        </div>
                     </div>
 
                 </div>

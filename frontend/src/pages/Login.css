@@ -472,14 +472,69 @@
 .login-demo {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.32);
-    text-align: center;
+    border-radius: 10px;
+    padding: 10px 14px;
     margin-top: 14px;
-    font-family: 'Inter', monospace;
-    letter-spacing: 0.02em;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.login-demo__label {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.28);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: center;
+}
+
+.login-demo__btns {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.login-demo__btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 6px 8px;
+    border-radius: 7px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.login-demo__btn--admin {
+    background: rgba(42, 108, 149, 0.25);
+    border-color: rgba(42, 108, 149, 0.4);
+    color: #64B5D9;
+}
+.login-demo__btn--admin:hover {
+    background: rgba(42, 108, 149, 0.4);
+}
+
+.login-demo__btn--contractor {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.35);
+    color: #FCD34D;
+}
+.login-demo__btn--contractor:hover {
+    background: rgba(245, 158, 11, 0.3);
+}
+
+.login-demo__btn--client {
+    background: rgba(8, 84, 61, 0.3);
+    border-color: rgba(8, 84, 61, 0.5);
+    color: #6EE7B7;
+}
+.login-demo__btn--client:hover {
+    background: rgba(8, 84, 61, 0.45);
 }
 
 /* ══════════════════════════════════════════════════════════

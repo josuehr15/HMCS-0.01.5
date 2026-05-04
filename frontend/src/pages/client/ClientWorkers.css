@@ -1,0 +1,189 @@
+/* ────────────────────────────────────────────────────────────
+   Client Workers
+   ──────────────────────────────────────────────────────────── */
+
+.cworkers__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.cworkers__title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: var(--text);
+    margin: 0 0 4px;
+}
+
+.cworkers__subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.cworkers__on-site {
+    color: #10B981;
+    font-weight: 600;
+}
+
+/* ── Search ── */
+.cworkers__search-wrap {
+    margin-bottom: 20px;
+}
+
+.cworkers__search {
+    width: 100%;
+    max-width: 380px;
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-card);
+    color: var(--text);
+    font-size: 0.875rem;
+    transition: var(--transition);
+    outline: none;
+}
+
+.cworkers__search:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(42, 108, 149, 0.12);
+}
+
+/* ── Empty ── */
+.cworkers__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 80px 20px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ── Grid ── */
+.cworkers__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+/* ── Worker card ── */
+.cworker-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.cworker-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
+    border-color: var(--border);
+}
+
+.cworker-card--active {
+    border-color: rgba(16, 185, 129, 0.35);
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.08);
+}
+
+.cworker-card--active:hover {
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.5);
+}
+
+/* Status dot (top-right) */
+.cworker-card__status-dot {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-card);
+}
+
+/* Avatar */
+.cworker-card__avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.cworker-card__name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.cworker-card__trade {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Today status */
+.cworker-card__today {
+    margin-top: 6px;
+}
+
+.cworker-card__clocked-in,
+.cworker-card__not-in {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 20px;
+}
+
+.cworker-card__clocked-in {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+}
+
+.cworker-card__not-in {
+    background: var(--hover);
+    color: var(--text-muted);
+}
+
+/* Project tags */
+.cworker-card__projects {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.cworker-card__project-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    background: var(--hover);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 7px;
+}

@@ -1,0 +1,257 @@
+/* ────────────────────────────────────────────────────────────
+   Client Dashboard
+   ──────────────────────────────────────────────────────────── */
+
+/* Loading/error states defined in ClientLayout.css */
+
+/* ── Dashboard layout ── */
+.cdash {
+    max-width: 1100px;
+}
+
+.cdash__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.cdash__title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: var(--text);
+    margin: 0 0 4px;
+}
+
+.cdash__subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.cdash__company-badge {
+    background: rgba(42, 108, 149, 0.07);
+    border: 1px solid rgba(42, 108, 149, 0.2);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+[data-theme="dark"] .cdash__company-badge {
+    background: rgba(42, 108, 149, 0.15);
+    border-color: rgba(42, 108, 149, 0.3);
+}
+
+/* ── KPI cards ── */
+.cdash__kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.cdash__kpi {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Micro accent bar at the bottom */
+.cdash__kpi::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: transparent;
+    transition: background 0.2s ease;
+}
+
+.cdash__kpi:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
+    border-color: transparent;
+}
+
+/* Color-keyed accent on hover */
+.cdash__kpi--blue:hover  { box-shadow: 0 8px 24px rgba(42,108,149,0.14); }
+.cdash__kpi--green:hover { box-shadow: 0 8px 24px rgba(8,84,61,0.14);    }
+.cdash__kpi--purple:hover{ box-shadow: 0 8px 24px rgba(139,92,246,0.14); }
+.cdash__kpi--amber:hover { box-shadow: 0 8px 24px rgba(245,158,11,0.14); }
+
+.cdash__kpi--blue::after  { background: transparent; }
+.cdash__kpi--green::after { background: transparent; }
+.cdash__kpi--purple::after{ background: transparent; }
+.cdash__kpi--amber::after { background: transparent; }
+
+.cdash__kpi--blue:hover::after  { background: #2A6C95; }
+.cdash__kpi--green:hover::after { background: #08543D; }
+.cdash__kpi--purple:hover::after{ background: #8B5CF6; }
+.cdash__kpi--amber:hover::after { background: #D97706; }
+
+[data-theme="dark"] .cdash__kpi {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .cdash__kpi:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.cdash__kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cdash__kpi-icon--blue   { background: rgba(42,108,149,0.12);  color: #2A6C95; }
+.cdash__kpi-icon--green  { background: rgba(8,84,61,0.12);     color: #08543D; }
+.cdash__kpi-icon--purple { background: rgba(139,92,246,0.12);  color: #8B5CF6; }
+.cdash__kpi-icon--amber  { background: rgba(245,158,11,0.12);  color: #D97706; }
+
+[data-theme="dark"] .cdash__kpi-icon--blue   { background: rgba(42,108,149,0.22); }
+[data-theme="dark"] .cdash__kpi-icon--green  { background: rgba(8,84,61,0.22);    }
+[data-theme="dark"] .cdash__kpi-icon--purple { background: rgba(139,92,246,0.22); }
+[data-theme="dark"] .cdash__kpi-icon--amber  { background: rgba(245,158,11,0.22); }
+
+.cdash__kpi-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.cdash__kpi-value {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--text);
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+
+.cdash__kpi-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* ── Sections ── */
+.cdash__section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.cdash__section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.cdash__section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+    margin: 0;
+}
+
+.cdash__view-all {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    padding: 5px 10px;
+    border-radius: 7px;
+    transition: var(--transition);
+}
+
+.cdash__view-all:hover { background: var(--hover); }
+
+.cdash__empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* ── Invoice table ── */
+.cdash__invoices-table-wrap {
+    overflow-x: auto;
+}
+
+.cdash__invoices-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.cdash__invoices-table th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    background: var(--hover);
+    border-bottom: 1px solid var(--border);
+}
+
+.cdash__invoice-row td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.cdash__invoice-row:last-child td { border-bottom: none; }
+.cdash__invoice-row:hover td { background: var(--hover); }
+
+.cdash__inv-num {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    color: var(--color-primary) !important;
+}
+
+.cdash__inv-total {
+    font-weight: 700;
+}
+
+.cdash__status-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}

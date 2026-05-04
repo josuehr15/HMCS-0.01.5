@@ -21,13 +21,22 @@ api.interceptors.request.use((config) => {
 });
 
 // Response interceptor — handle 401
+// SEC: Only redirect to /login on 401 if it's NOT the /auth/me restore-session call.
+// Redirecting on /auth/me would cause a loop: restoreSession → 401 → redirect → mount → restoreSession → ...
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const url = error.config?.url || '';
+        const is401 = error.response?.status === 401;
+        const isAuthMe = url.includes('/auth/me');
+
+        if (is401 && !isAuthMe) {
             localStorage.removeItem('hmcs_token');
             localStorage.removeItem('hmcs_user');
-            window.location.href = '/login';
+            // Only redirect if we're not already on the login page
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

@@ -5,7 +5,7 @@ import {
     Plus, X, Search, ChevronDown, CheckCircle, Clock,
     DollarSign, Send, FileText, Eye, Trash2, Edit2,
     AlertCircle, RotateCcw, Building2, Calendar, RefreshCw,
-    Printer, ExternalLink
+    Printer, ExternalLink, LayoutGrid, List
 } from 'lucide-react';
 import useApi from '../../hooks/useApi';
 import { useAuth } from '../../context/AuthContext';
@@ -606,6 +606,61 @@ function InvoiceDrawer({ invoice: initInv, onClose, onRefresh, navigate, onEdit 
     );
 }
 
+// ─── Invoice Card (grid view) ─────────────────────────────────────────────────
+function InvoiceCard({ inv, onClick, onEdit, onViewPdf }) {
+    const cfg = STATUS_CONFIG[inv.status] || { label: inv.status, color: '#64748B', bg: 'rgba(100,116,139,0.1)' };
+    return (
+        <div className="inv-card" onClick={() => onClick(inv)}>
+            {/* Top accent bar using status color */}
+            <div className="inv-card__accent" style={{ background: cfg.color }} />
+
+            {/* Header row */}
+            <div className="inv-card__header">
+                <div className="inv-card__icon">
+                    <FileText size={18} />
+                </div>
+                <span className="inv-status-badge" style={{ background: cfg.bg, color: cfg.color }}>
+                    {cfg.label}
+                </span>
+            </div>
+
+            {/* Invoice number + total */}
+            <div className="inv-card__number">#{inv.invoice_number}</div>
+            <div className="inv-card__total">{fmt$(inv.total)}</div>
+
+            {/* Client & project */}
+            <div className="inv-card__client">
+                <Building2 size={11} />
+                <span>{inv.client?.company_name || '—'}</span>
+            </div>
+            <div className="inv-card__project">
+                <FileText size={11} />
+                <span>{inv.project?.name || '—'}</span>
+            </div>
+
+            {/* Period */}
+            <div className="inv-card__period">
+                <Calendar size={11} />
+                <span>{fmtDateRange(inv.week_start_date, inv.week_end_date)}</span>
+            </div>
+
+            {/* Footer actions */}
+            <div className="inv-card__footer" onClick={e => e.stopPropagation()}>
+                <button className="inv-card__action" title="Editar" onClick={() => onEdit(inv)}>
+                    <Edit2 size={13} />
+                </button>
+                <button className="inv-card__action" title="Ver detalles" onClick={() => onClick(inv)}>
+                    <Eye size={13} />
+                </button>
+                <button className="inv-card__action" title="Ver PDF" onClick={() => onViewPdf(inv.id)}>
+                    <Printer size={13} />
+                </button>
+                <span className="inv-card__date">{fmtDate(inv.invoice_date)}</span>
+            </div>
+        </div>
+    );
+}
+
 // ─── Generate Invoice Modal ────────────────────────────────────────────────────
 function GenerateModal({ clients, onClose, onGenerated, showToast }) {
     const api = useApi();
@@ -821,6 +876,8 @@ export default function Invoices() {
     const [loading, setLoading] = useState(true);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [showGenerate, setShowGenerate] = useState(false);
+    const [viewMode, setViewMode] = useState(() => localStorage.getItem('invoices_view') || 'table');
+    const changeView = m => { setViewMode(m); localStorage.setItem('invoices_view', m); };
     const [filterClient, setFilterClient] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [filterStart, setFilterStart] = useState('');
@@ -968,15 +1025,35 @@ export default function Invoices() {
                     <RefreshCw size={14} />
                 </button>
                 <span className="inv-count">{displayInvoices.length} facturas</span>
+
+                {/* View toggle */}
+                <div className="workers-view-toggle">
+                    <button
+                        className={`workers-view-btn ${viewMode === 'cards' ? 'workers-view-btn--active' : ''}`}
+                        onClick={() => changeView('cards')}
+                        title="Vista cuadros"
+                    >
+                        <LayoutGrid size={15} />
+                    </button>
+                    <button
+                        className={`workers-view-btn ${viewMode === 'table' ? 'workers-view-btn--active' : ''}`}
+                        onClick={() => changeView('table')}
+                        title="Vista lista"
+                    >
+                        <List size={15} />
+                    </button>
+                </div>
             </div>
 
-            {/* Table */}
-            <div className="inv-table-wrap">
-                {loading ? (
+            {/* Content */}
+            {loading ? (
+                <div className="inv-table-wrap">
                     <div className="inv-empty-state">
                         <span className="inv-pulse-loader" /> Cargando facturas...
                     </div>
-                ) : displayInvoices.length === 0 ? (
+                </div>
+            ) : displayInvoices.length === 0 ? (
+                <div className="inv-table-wrap">
                     <div className="inv-empty-state">
                         <FileText size={48} style={{ opacity: 0.3 }} />
                         <p>No se encontraron facturas</p>
@@ -984,7 +1061,21 @@ export default function Invoices() {
                             <Plus size={14} /> Generar primera factura
                         </button>
                     </div>
-                ) : (
+                </div>
+            ) : viewMode === 'cards' ? (
+                <div className="inv-cards-grid">
+                    {displayInvoices.map(inv => (
+                        <InvoiceCard
+                            key={inv.id}
+                            inv={inv}
+                            onClick={setSelectedInvoice}
+                            onEdit={setShowEdit}
+                            onViewPdf={id => navigate(`/admin/invoices/${id}`)}
+                        />
+                    ))}
+                </div>
+            ) : (
+                <div className="inv-table-wrap">
                     <table className="inv-table">
                         <thead>
                             <tr>
@@ -1002,8 +1093,8 @@ export default function Invoices() {
                             {displayInvoices.map(inv => (
                                 <tr key={inv.id} onClick={() => setSelectedInvoice(inv)}>
                                     <td>
-                                        <button 
-                                            className="inv-number-link" 
+                                        <button
+                                            className="inv-number-link"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 navigate(`/admin/invoices/${inv.id}`);
@@ -1036,8 +1127,8 @@ export default function Invoices() {
                             ))}
                         </tbody>
                     </table>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* Drawer */}
             {selectedInvoice && (
