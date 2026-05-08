@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import useApi from '../../hooks/useApi';
+import { BASE_URL } from '../../utils/api';
 
 const METHODS = [
   { id: 'zelle', label: 'Zelle', badgeClass: 'pum-badge-zelle', desc: 'Transfer via Zelle / Wells Fargo' },
@@ -72,7 +73,7 @@ export default function PaymentUploadModal({ lineId, onClose, onSuccess }) {
       formData.append('screenshot', file);
 
       const fetchRes = await fetch(
-        `http://localhost:5000/api/payroll/lines/${lineId}/upload-screenshot`,
+        `${BASE_URL}/api/payroll/lines/${lineId}/upload-screenshot`,
         {
           method: 'POST',
           credentials: 'include',

@@ -6,7 +6,7 @@ const {
     generateInvoice, getAllInvoices, getInvoiceStats, getInvoiceById,
     getUnbilledWeeks, updateInvoice, updateInvoiceStatus, deleteInvoice,
     getInvoiceHtml, getCompanySettingsHandler, sendInvoiceEmail,
-    approveInvoice, markAsSent, markAsPaid,
+    approveInvoice, markAsSent, markAsPaid, markAsDraft,
 } = require('../controllers/invoiceController');
 
 router.use(auth);
@@ -32,5 +32,6 @@ router.post('/:id/send-email', checkRole('admin'), sendInvoiceEmail);
 router.put('/:id/approve', checkRole('admin'), approveInvoice);
 router.put('/:id/send', checkRole('admin'), markAsSent);
 router.put('/:id/paid', checkRole('admin'), markAsPaid);
+router.put('/:id/draft', checkRole('admin'), markAsDraft);
 
 module.exports = router;

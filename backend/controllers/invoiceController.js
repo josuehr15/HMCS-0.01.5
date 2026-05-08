@@ -692,10 +692,11 @@ const sendInvoiceEmail = async (req, res) => {
 const approveInvoice = (req, res) => { req.body = { ...req.body, status: 'approved' }; return updateInvoiceStatus(req, res); };
 const markAsSent = (req, res) => { req.body = { ...req.body, status: 'sent' }; return updateInvoiceStatus(req, res); };
 const markAsPaid = (req, res) => { req.body = { ...req.body, status: 'paid' }; return updateInvoiceStatus(req, res); };
+const markAsDraft = (req, res) => { req.body = { ...req.body, status: 'draft' }; return updateInvoiceStatus(req, res); };
 
 module.exports = {
     generateInvoice, getAllInvoices, getInvoiceStats, getInvoiceById,
     getUnbilledWeeks, updateInvoice, updateInvoiceStatus, deleteInvoice,
     getInvoiceHtml, getCompanySettingsHandler, sendInvoiceEmail,
-    approveInvoice, markAsSent, markAsPaid,
+    approveInvoice, markAsSent, markAsPaid, markAsDraft,
 };

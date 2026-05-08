@@ -1,0 +1,307 @@
+/* ─── ShiftChanges.css ─────────────────────────────────────────── */
+
+.sc-page { padding: 1.5rem; max-width: 860px; margin: 0 auto; }
+
+/* ─── Header ─── */
+.sc-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+.sc-header h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 0.2rem;
+}
+.sc-header p { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
+
+/* ─── Buttons ─── */
+.sc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, background 0.15s;
+    white-space: nowrap;
+}
+.sc-btn:hover:not(:disabled) { opacity: 0.85; }
+.sc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sc-btn--primary { background: var(--color-primary, #2A6C95); color: #fff; }
+.sc-btn--ghost   { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+.sc-btn--danger  { background: #EF4444; color: #fff; }
+.sc-btn--success { background: #10B981; color: #fff; }
+.sc-btn--sm      { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+
+/* ─── Filter bar ─── */
+.sc-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 1.1rem;
+    flex-wrap: wrap;
+}
+.sc-filter-btn {
+    padding: 0.32rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    transition: all 0.15s;
+}
+.sc-filter-btn--active {
+    background: var(--color-primary, #2A6C95);
+    color: #fff;
+    border-color: var(--color-primary, #2A6C95);
+}
+.sc-refresh-btn {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0.32rem 0.5rem;
+    display: flex;
+    align-items: center;
+}
+.sc-refresh-btn:hover { background: var(--hover); }
+
+/* ─── Status badge ─── */
+.sc-badge {
+    display: inline-block;
+    padding: 0.22rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ─── Cards ─── */
+.sc-list { display: flex; flex-direction: column; gap: 0.8rem; }
+
+.sc-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.15rem;
+    transition: box-shadow 0.15s;
+}
+.sc-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+.sc-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+    flex-wrap: wrap;
+}
+.sc-card__title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.sc-card__body { display: flex; flex-direction: column; gap: 0.3rem; }
+.sc-card__row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.sc-card__row strong { color: var(--text); }
+.sc-card__row-label { font-weight: 600; color: var(--text); }
+.sc-card__row--reason { font-style: italic; margin-top: 0.15rem; }
+.sc-card__row--note {
+    background: var(--hover);
+    border-radius: 6px;
+    padding: 0.35rem 0.6rem;
+    margin-top: 0.25rem;
+}
+.sc-card__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border);
+}
+
+/* ─── Error inline ─── */
+.sc-error {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 8px;
+    padding: 0.55rem 0.8rem;
+    color: #EF4444;
+    font-size: 0.82rem;
+    margin-bottom: 0.9rem;
+}
+
+/* ─── Empty / Loading ─── */
+.sc-empty {
+    text-align: center;
+    padding: 3.5rem 1rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+.sc-empty svg { opacity: 0.25; }
+.sc-empty p { margin: 0; font-size: 0.9rem; }
+
+.sc-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    gap: 0.5rem;
+    font-size: 0.88rem;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.sc-spin { animation: spin 0.9s linear infinite; }
+
+/* ─── Modals ─── */
+.sc-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+.sc-modal {
+    background: var(--bg-card);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    overflow: hidden;
+}
+.sc-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.3rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.sc-modal__header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+.sc-modal__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0.25rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: background 0.15s;
+}
+.sc-modal__close:hover { background: var(--hover); }
+
+.sc-modal__body {
+    padding: 1.1rem 1.3rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+.sc-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.9rem 1.3rem;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+/* ─── Form elements in modal ─── */
+.sc-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.sc-select-wrap { position: relative; }
+.sc-select-arrow {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+.sc-select,
+.sc-input,
+.sc-textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.87rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    appearance: none;
+}
+.sc-select { padding-right: 2rem; }
+.sc-textarea { resize: vertical; min-height: 65px; }
+.sc-select:focus, .sc-input:focus, .sc-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary, #2A6C95);
+    box-shadow: 0 0 0 2px rgba(42,108,149,0.15);
+}
+
+/* ─── Respond modal info block ─── */
+.sc-modal__info {
+    background: var(--hover);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.sc-modal__info p { margin: 0; }
+.sc-modal__info strong { color: var(--text); }
+.sc-modal__entry { font-family: monospace; font-size: 0.79rem; }
+.sc-modal__reason { font-style: italic; }

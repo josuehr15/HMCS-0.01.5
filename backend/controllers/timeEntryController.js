@@ -80,9 +80,12 @@ const clockOut = async (req, res) => {
         if (!timeEntry) return errorResponse(res, 'Entrada no encontrada.', 404);
         if (timeEntry.clock_out) return errorResponse(res, 'Esta entrada ya tiene clock-out.', 409);
 
-        // M-1: GPS validation on clock-out (same rule as clock-in)
+        // FIX C7: GPS solo se registra en clock-out pero NO bloquea (Libro 1 spec).
+        // Clock-in puede requerir GPS, pero clock-out siempre debe permitirse
+        // (worker puede haberse movido legítimamente al terminar el turno).
+        let gpsWarning = null;
         const project = await Project.findByPk(timeEntry.project_id);
-        if (project && project.latitude && project.longitude && project.gps_radius_meters) {
+        if (project && project.latitude && project.longitude && project.gps_radius_meters && latitude && longitude) {
             const distance = calculateDistance(
                 parseFloat(latitude), parseFloat(longitude),
                 parseFloat(project.latitude), parseFloat(project.longitude)
@@ -92,10 +95,8 @@ const clockOut = async (req, res) => {
                 parseFloat(project.latitude), parseFloat(project.longitude),
                 project.gps_radius_meters
             )) {
-                return errorResponse(res,
-                    `No estás lo suficientemente cerca del proyecto para marcar salida. Distancia: ${Math.round(distance)}m, Radio: ${project.gps_radius_meters}m.`,
-                    403
-                );
+                // Solo advertencia — no bloquear
+                gpsWarning = `Fuera de radio al marcar salida: ${Math.round(distance)}m (radio ${project.gps_radius_meters}m)`;
             }
         }
 
@@ -108,7 +109,11 @@ const clockOut = async (req, res) => {
             total_hours: totalHours,
         });
 
-        return successResponse(res, timeEntry, `Clock out exitoso. Total: ${totalHours}h.`);
+        const message = gpsWarning
+            ? `Clock out exitoso. Total: ${totalHours}h. Advertencia: ${gpsWarning}`
+            : `Clock out exitoso. Total: ${totalHours}h.`;
+
+        return successResponse(res, { ...timeEntry.toJSON(), gps_warning: gpsWarning }, message);
     } catch (error) {
         return errorResponse(res, 'Failed to clock out.', 500);
     }

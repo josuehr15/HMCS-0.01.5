@@ -1,0 +1,418 @@
+/* ────────────────────────────────────────────────────────────
+   Contractor Dashboard — P161
+   ──────────────────────────────────────────────────────────── */
+
+.cd-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 80px 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.cd-loading__spin {
+    animation: spin 1s linear infinite;
+    color: var(--color-primary);
+}
+
+.cd-page {
+    padding: 20px 16px 100px; /* bottom for nav bar */
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── Error ── */
+.cd-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    color: #DC2626;
+}
+
+/* ── Greeting ── */
+.cd-greeting {
+    margin-bottom: -4px;
+}
+
+.cd-greeting__name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--text);
+    margin: 0 0 4px;
+}
+
+.cd-greeting__date {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ── Clock Status Card ── */
+.cd-clock-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.cd-clock-card--in {
+    border-color: rgba(16, 185, 129, 0.4);
+    background: linear-gradient(135deg, #F0FDF4 0%, var(--bg-card) 60%);
+}
+
+.cd-clock-card--out {
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .cd-clock-card--in {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, var(--bg-card) 60%);
+}
+
+.cd-clock-card__icon {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cd-clock-card--in .cd-clock-card__icon {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10B981;
+}
+
+.cd-clock-card--out .cd-clock-card__icon {
+    background: var(--hover);
+    color: var(--text-muted);
+}
+
+.cd-clock-card__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.cd-clock-card__status {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--text);
+}
+
+.cd-clock-card__detail {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+    line-height: 1.4;
+}
+
+.cd-clock-card__elapsed {
+    font-weight: 600;
+    color: #10B981;
+}
+
+.cd-clock-card__project {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 3px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.cd-clock-card__btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.cd-clock-card--in .cd-clock-card__btn {
+    background: #EF4444;
+    color: #fff;
+}
+
+.cd-clock-card--in .cd-clock-card__btn:hover {
+    background: #DC2626;
+}
+
+.cd-clock-card--out .cd-clock-card__btn {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.cd-clock-card--out .cd-clock-card__btn:hover {
+    background: #1E5276;
+}
+
+/* ── KPI Grid ── */
+.cd-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.cd-kpi {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: border-top-color 0.2s;
+}
+
+.cd-kpi__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin: 0 0 6px;
+}
+
+.cd-kpi__value {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.1;
+}
+
+.cd-kpi__sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin: 4px 0 0;
+}
+
+/* ── Sections ── */
+.cd-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cd-section__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ── Assignments ── */
+.cd-assignments {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cd-assignment {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.cd-assignment__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10B981;
+    margin-top: 5px;
+    flex-shrink: 0;
+}
+
+.cd-assignment__name {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text);
+}
+
+.cd-assignment__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+    font-size: 0.74rem;
+    color: var(--text-muted);
+}
+
+.cd-assignment__meta span {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* ── Recent activity ── */
+.cd-recent {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cd-recent__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+}
+
+.cd-recent__date {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text);
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.cd-recent__times {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cd-recent__right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.cd-recent__project {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cd-recent__hours {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 0.82rem;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.cd-recent__badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.cd-recent__badge--approved  { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.cd-recent__badge--rejected  { background: rgba(239, 68, 68, 0.1);  color: #EF4444; }
+.cd-recent__badge--pending   { background: var(--hover); color: var(--text-muted); }
+
+.cd-see-all {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 9px;
+    background: var(--hover);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+}
+
+.cd-see-all:hover {
+    background: var(--border);
+}
+
+/* ── Quick Actions ── */
+.cd-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.cd-quick-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 16px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text);
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.cd-quick-btn svg {
+    color: var(--color-primary);
+}
+
+.cd-quick-btn:hover {
+    background: var(--hover);
+    border-color: var(--color-primary);
+}
+
+@media (max-width: 380px) {
+    .cd-quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .cd-recent__project {
+        display: none;
+    }
+}

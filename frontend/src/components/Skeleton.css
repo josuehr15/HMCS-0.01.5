@@ -1,0 +1,170 @@
+/* ── Skeleton: shimmer animation ────────────────────── */
+@keyframes sk-shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+
+.sk {
+    --sk-base: var(--border);
+    --sk-shine: rgba(255, 255, 255, 0.25);
+    background: var(--sk-base);
+    border-radius: var(--radius-sm);
+    animation: sk-shimmer 1.5s ease-in-out infinite;
+    background: linear-gradient(
+        90deg,
+        var(--sk-base) 25%,
+        var(--sk-shine) 50%,
+        var(--sk-base) 75%
+    );
+    background-size: 800px 100%;
+}
+
+[data-theme="dark"] .sk {
+    --sk-base: #1E2433;
+    --sk-shine: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Text variant ──────────────────────────────────── */
+.sk--text {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: none;
+    animation: none;
+}
+
+.sk__line {
+    height: 14px;
+    border-radius: var(--radius-sm);
+    background: var(--sk-base);
+    animation: sk-shimmer 1.5s ease-in-out infinite;
+    background: linear-gradient(
+        90deg,
+        var(--sk-base) 25%,
+        var(--sk-shine) 50%,
+        var(--sk-base) 75%
+    );
+    background-size: 800px 100%;
+}
+
+.sk__line--title {
+    width: 60%;
+    height: 20px;
+}
+
+.sk__line--text {
+    width: 90%;
+    height: 14px;
+}
+
+.sk__line--text-short {
+    width: 40%;
+    height: 14px;
+}
+
+/* ── Card variant ──────────────────────────────────── */
+.sk--card {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    min-height: 180px;
+}
+
+.sk__block--img {
+    height: 120px;
+    background: var(--sk-base);
+    animation: sk-shimmer 1.5s ease-in-out infinite;
+    background: linear-gradient(
+        90deg,
+        var(--sk-base) 25%,
+        var(--sk-shine) 50%,
+        var(--sk-base) 75%
+    );
+    background-size: 800px 100%;
+}
+
+.sk__body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--bg-card);
+}
+
+/* ── Circle variant ────────────────────────────────── */
+.sk--circle {
+    border-radius: 50%;
+}
+
+/* ── Chart variant (bar chart skeleton) ────────────── */
+.sk--chart {
+    display: flex;
+    align-items: flex-end;
+    padding: 20px 16px 8px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+}
+
+.sk__bar-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+}
+
+.sk__bar {
+    flex: 1;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background: var(--sk-base);
+    animation: sk-shimmer 1.5s ease-in-out infinite;
+    background: linear-gradient(
+        90deg,
+        var(--sk-base) 25%,
+        var(--sk-shine) 50%,
+        var(--sk-base) 75%
+    );
+    background-size: 800px 100%;
+}
+
+/* ── Table row variant ─────────────────────────────── */
+.sk--table-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.sk__row {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+}
+
+.sk__row:last-child {
+    border-bottom: none;
+}
+
+.sk__cell {
+    height: 14px;
+    border-radius: var(--radius-sm);
+    background: var(--sk-base);
+    animation: sk-shimmer 1.5s ease-in-out infinite;
+    background: linear-gradient(
+        90deg,
+        var(--sk-base) 25%,
+        var(--sk-shine) 50%,
+        var(--sk-base) 75%
+    );
+    background-size: 800px 100%;
+}
+
+.sk__cell--sm { width: 15%; }
+.sk__cell--md { width: 30%; }
+.sk__cell--lg { width: 40%; }

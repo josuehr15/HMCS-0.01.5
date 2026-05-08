@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useApi from '../../hooks/useApi';
 import PaymentUploadModal from '../../components/admin/PaymentUploadModal';
+import { BASE_URL } from '../../utils/api';
 import './VoucherPrint.css';
 
 const fmt = (v) => `$${parseFloat(v || 0).toFixed(2)}`;
@@ -306,7 +307,7 @@ function VoucherPrint() {
             </div>
             {screenshotUrl ? (
               <div className="vp-screenshot-filled">
-                <img src={`http://localhost:5000${screenshotUrl}`} alt="Payment proof" className="vp-screenshot-img" />
+                <img src={`${BASE_URL}${screenshotUrl}`} alt="Payment proof" className="vp-screenshot-img" />
                 {methodLabel && <div className="vp-screenshot-tag">{methodLabel} · Wells Fargo</div>}
               </div>
             ) : (

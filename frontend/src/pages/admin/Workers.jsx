@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Search, Plus, Edit2, UserX, UserCheck, X, ChevronDown,
     Phone, MapPin, Briefcase, DollarSign, User, AlertTriangle,
@@ -6,7 +7,9 @@ import {
     Settings, Wrench, Pencil, Trash2, Save, Key, Mail,
     FileText, Play, Pause, Copy, ExternalLink, LogIn, EyeOff
 } from 'lucide-react';
+import EmptyState from '../../components/EmptyState';
 import useApi from '../../hooks/useApi';
+import DocumentUploader from '../../components/DocumentUploader';
 import './Workers.css';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -314,6 +317,12 @@ function WorkerDrawer({ worker, trades, onClose, onEdit, onDeleted, onToggle, ap
                         </div>
                     )}
 
+                    {/* Documents */}
+                    <div className="drawer-section">
+                        <p className="drawer-section__title"><FileText size={13} /> Documentos</p>
+                        <DocumentUploader ownerType="worker" ownerId={worker.id} />
+                    </div>
+
                     {/* Active location */}
                     <div className="drawer-section">
                         <p className="drawer-section__title"><MapPin size={13} /> Ubicación Actual</p>
@@ -608,6 +617,7 @@ function TradesModal({ trades, onClose, onRefresh, api }) {
 export default function Workers() {
     const apiHook = useApi();
     const { get, post, put, patch, del } = apiHook;
+    const navigate = useNavigate();
 
     // Stable callback for per-card stats fetch
     const getStats = useCallback(async (workerId) => {
@@ -841,14 +851,16 @@ export default function Workers() {
             {isLoading ? (
                 <div className="workers-loading"><div className="workers-spinner" /><p>Cargando trabajadores...</p></div>
             ) : filteredWorkers.length === 0 ? (
-                <div className="workers-empty">
-                    <Users size={48} /><p>No se encontraron trabajadores</p>
-                    <button className="workers-btn-primary" onClick={openCreate}><Plus size={16} /> Agregar el primero</button>
-                </div>
+                <EmptyState
+                    icon={Users}
+                    title="No se encontraron trabajadores"
+                    description={searchTerm ? 'Prueba con otros filtros o términos de búsqueda' : 'Aún no has agregado trabajadores al sistema'}
+                    action={<button className="workers-btn-primary" onClick={openCreate}><Plus size={16} /> Agregar el primero</button>}
+                />
             ) : viewMode === 'cards' ? (
                 <div className="workers-cards-grid">
                     {filteredWorkers.map(w => (
-                        <WorkerCard key={w.id} worker={w} onEdit={openEdit} onToggle={handleToggle} onCardClick={setDrawerWorker} getStats={getStats} />
+                        <WorkerCard key={w.id} worker={w} onEdit={openEdit} onToggle={handleToggle} onCardClick={(w) => navigate(`/admin/workers/${w.id}`)} getStats={getStats} />
                     ))}
                 </div>
             ) : (

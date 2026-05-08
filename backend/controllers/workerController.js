@@ -1,9 +1,13 @@
 const { Op } = require('sequelize');
-const { User, Worker, Trade, Assignment, TimeEntry, InvoiceLine, PayrollLine } = require('../models');
+const { User, Worker, Trade, Assignment, TimeEntry, InvoiceLine, PayrollLine, Project, Document } = require('../models');
 const { sequelize } = require('../config/database');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
 const generateWorkerCode = require('../utils/generateWorkerCode');
 const bcrypt = require('bcryptjs');
+const path = require('path');
+const { generateW9PDF, generateContractPDF } = require('../utils/generateContractDocs');
+// SEC-SSN FIX C11: encrypt SSN at rest with AES-256-GCM
+const { encrypt: encryptSSN, decrypt: decryptSSN, maskSSN } = require('../utils/encryption');
 
 /**
  * GET /api/workers
@@ -297,7 +301,8 @@ const updateWorker = async (req, res) => {
             emergency_contact_name: emergency_contact_name !== undefined ? emergency_contact_name : worker.emergency_contact_name,
             emergency_contact_phone: emergency_contact_phone !== undefined ? emergency_contact_phone : worker.emergency_contact_phone,
             notes: notes !== undefined ? notes : worker.notes,
-            ssn_encrypted: ssn_encrypted !== undefined ? ssn_encrypted : worker.ssn_encrypted,
+            // SEC-SSN FIX C11: encrypt before storing, never store plaintext
+            ssn_encrypted: ssn_encrypted !== undefined ? encryptSSN(ssn_encrypted) : worker.ssn_encrypted,
         });
 
         await User.update({ is_active: newIsActive }, { where: { id: worker.user_id } });
@@ -472,6 +477,170 @@ const resetWorkerPassword = async (req, res) => {
     }
 };
 
+/**
+ * GET /api/workers/me
+ * Contractor only — returns their own worker profile.
+ */
+const updateMyProfile = async (req, res) => {
+    try {
+        const worker = await Worker.findOne({ where: { user_id: req.user.id, deleted_at: null } });
+        if (!worker) return errorResponse(res, 'Worker profile not found.', 404);
+
+        const allowed = ['phone', 'address', 'city', 'state', 'zip_code',
+                         'emergency_contact_name', 'emergency_contact_phone', 'notes'];
+        const updates = {};
+        allowed.forEach(field => { if (req.body[field] !== undefined) updates[field] = req.body[field]; });
+
+        await worker.update(updates);
+        return successResponse(res, worker, 'Profile updated successfully.');
+    } catch (error) {
+        console.error('updateMyProfile error:', error);
+        return errorResponse(res, 'Failed to update profile.', 500);
+    }
+};
+
+const getMyProfile = async (req, res) => {
+    try {
+        const worker = await Worker.findOne({
+            where: { user_id: req.user.id, deleted_at: null },
+            include: [
+                { model: User, as: 'user', attributes: ['id', 'email', 'preferred_language', 'last_login_at'] },
+                { model: Trade, as: 'trade', attributes: ['id', 'name', 'name_es'] },
+                {
+                    model: Assignment, as: 'assignments',
+                    where: { status: 'active', is_active: true },
+                    required: false,
+                    include: [{ model: Project, as: 'project', attributes: ['id', 'name', 'address'] }],
+                },
+            ],
+        });
+
+        if (!worker) return errorResponse(res, 'Worker profile not found.', 404);
+        return successResponse(res, worker, 'Profile retrieved successfully.');
+    } catch (error) {
+        return errorResponse(res, 'Failed to retrieve profile.', 500);
+    }
+};
+
+/**
+ * POST /api/workers/me/generate-docs
+ * Contractor only — generates W-9 and Contract PDFs from submitted data,
+ * saves them to disk, and registers them in the documents table.
+ *
+ * Body: { ssn, signatureDataUrl, w9SignDate, contractSignDate }
+ */
+const generateMyDocs = async (req, res) => {
+    try {
+        const worker = await Worker.findOne({
+            where: { user_id: req.user.id, deleted_at: null },
+            include: [{ model: User, as: 'user', attributes: ['id', 'email'] }],
+        });
+        if (!worker) return errorResponse(res, 'Worker profile not found.', 404);
+
+        const { ssn, signatureDataUrl, contractSigUrl, w9SignDate, contractSignDate } = req.body;
+        if (!ssn)              return errorResponse(res, 'SSN is required.', 400);
+        if (!signatureDataUrl) return errorResponse(res, 'Signature is required.', 400);
+
+        // SEC-SSN FIX C11: encrypt SSN and persist to worker record
+        await worker.update({ ssn_encrypted: encryptSSN(ssn) });
+
+        const fullName    = `${worker.first_name} ${worker.last_name}`;
+        const address     = worker.address || '';
+        const city        = worker.city    || '';
+        const state       = worker.state   || '';
+        const zip         = worker.zip_code || '';
+
+        const signDate = w9SignDate ? new Date(w9SignDate) : new Date();
+        const conDate  = contractSignDate ? new Date(contractSignDate) : new Date();
+
+        // FIX W9-SIG: usar firma correcta para cada documento
+        // signatureDataUrl = firma del W-9, contractSigUrl = firma del contrato (fallback a signatureDataUrl)
+        const w9SigUrl       = signatureDataUrl;
+        const contractSigFinal = contractSigUrl || signatureDataUrl;
+
+        // Generate both documents in parallel
+        const [w9, contract] = await Promise.all([
+            generateW9PDF({ fullName, address, city, state, zip, ssn, signatureDataUrl: w9SigUrl, signDate }),
+            generateContractPDF({ fullName, address, city, state, zip, signatureDataUrl: contractSigFinal, signDate: conDate }),
+        ]);
+
+        // Register W-9 in documents table (delete existing active W-9 first)
+        await Document.update(
+            { is_active: false, deleted_by: req.user.id, deleted_at: new Date() },
+            { where: { owner_type: 'worker', owner_id: worker.id, document_type: 'w9', is_active: true } }
+        );
+        const w9Doc = await Document.create({
+            owner_type:    'worker',
+            owner_id:      worker.id,
+            document_type: 'w9',
+            document_name: `W-9 — ${fullName}`,
+            file_name:     w9.fileName,
+            file_url:      `/uploads/documents/${w9.fileName}`,
+            file_size:     w9.size,
+            mime_type:     'application/pdf',
+            uploaded_by:   req.user.id,
+            notes:         'Generado automáticamente durante onboarding',
+        });
+
+        // Register Contract in documents table
+        await Document.update(
+            { is_active: false, deleted_by: req.user.id, deleted_at: new Date() },
+            { where: { owner_type: 'worker', owner_id: worker.id, document_type: 'contract', is_active: true } }
+        );
+        const contractDoc = await Document.create({
+            owner_type:    'worker',
+            owner_id:      worker.id,
+            document_type: 'contract',
+            document_name: `Contrato — ${fullName}`,
+            file_name:     contract.fileName,
+            file_url:      `/uploads/documents/${contract.fileName}`,
+            file_size:     contract.size,
+            mime_type:     contract.mimeType,
+            uploaded_by:   req.user.id,
+            notes:         'Generado automáticamente durante onboarding',
+        });
+
+        return successResponse(res, { w9: w9Doc, contract: contractDoc }, 'Documents generated successfully.');
+    } catch (error) {
+        console.error('generateMyDocs error:', error);
+        return errorResponse(res, 'Failed to generate documents.', 500);
+    }
+};
+
+/**
+ * GET /api/workers/assigned
+ * Contractor only — returns other active workers in the same projects.
+ */
+const getAssignedWorkers = async (req, res) => {
+    try {
+        const worker = await Worker.findOne({
+            where: { user_id: req.user.id, deleted_at: null },
+            include: [{ model: Assignment, as: 'assignments', where: { status: 'active', is_active: true }, required: false }],
+        });
+        if (!worker) return errorResponse(res, 'Worker not found.', 404);
+
+        const projectIds = (worker.assignments || []).map(a => a.project_id).filter(Boolean);
+        if (projectIds.length === 0) return successResponse(res, [], 'No project assignments found.');
+
+        const coworkerAssignments = await Assignment.findAll({
+            where: { project_id: { [Op.in]: projectIds }, status: 'active', is_active: true },
+            attributes: ['worker_id'],
+        });
+
+        const coworkerIds = [...new Set(coworkerAssignments.map(a => a.worker_id).filter(id => id !== worker.id))];
+        if (coworkerIds.length === 0) return successResponse(res, [], 'No coworkers found.');
+
+        const coworkers = await Worker.findAll({
+            where: { id: { [Op.in]: coworkerIds }, deleted_at: null, is_active: true },
+            attributes: ['id', 'first_name', 'last_name', 'worker_code', 'trade_id'],
+        });
+
+        return successResponse(res, coworkers, 'Assigned workers retrieved.');
+    } catch (error) {
+        return errorResponse(res, 'Failed to get assigned workers.', 500);
+    }
+};
+
 module.exports = {
     getAllWorkers,
     getWorkerById,
@@ -483,4 +652,8 @@ module.exports = {
     resetWorkerPassword,
     getWorkerLinkedData,
     getWorkerStats,
+    getMyProfile,
+    updateMyProfile,
+    generateMyDocs,
+    getAssignedWorkers,
 };

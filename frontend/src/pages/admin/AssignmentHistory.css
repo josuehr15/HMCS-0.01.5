@@ -1,0 +1,358 @@
+/* ── Page layout ─────────────────────────────────────────────────────────── */
+.ah-page {
+    padding: 1.75rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.ah-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.35rem;
+    gap: 1rem;
+}
+.ah-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 0.2rem;
+}
+.ah-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+.ah-header__right { display: flex; gap: 8px; align-items: center; }
+
+/* ── KPIs ────────────────────────────────────────────────────────────────── */
+.ah-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.35rem;
+}
+@media (max-width: 900px) { .ah-kpis { grid-template-columns: repeat(2, 1fr); } }
+
+.ah-kpi {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+.ah-kpi:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.07); transform: translateY(-1px); }
+.ah-kpi::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 3px;
+    background: var(--ah-kpi-color, #2A6C95);
+    opacity: 0.6;
+}
+.ah-kpi__icon {
+    width: 42px; height: 42px;
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.ah-kpi__value {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+}
+.ah-kpi__label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.18rem;
+    font-weight: 500;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+.ah-toolbar {
+    display: flex;
+    gap: 0.65rem;
+    margin-bottom: 0.85rem;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.55rem 0.75rem;
+}
+.ah-search-wrap {
+    flex: 1;
+    position: relative;
+}
+.ah-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+.ah-search {
+    width: 100%;
+    padding: 0.45rem 2rem 0.45rem 2.1rem;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.83rem;
+    box-sizing: border-box;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ah-search:focus {
+    outline: none;
+    border-color: var(--color-primary, #2A6C95);
+    box-shadow: 0 0 0 2px rgba(42,108,149,0.1);
+}
+.ah-search-clear {
+    position: absolute;
+    right: 8px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); display: flex; align-items: center;
+}
+.ah-search-clear:hover { color: var(--text); }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.ah-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.45rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background 0.15s, opacity 0.15s, transform 0.1s;
+}
+.ah-btn--primary { background: var(--color-primary, #2A6C95); color: #fff; }
+.ah-btn--primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.ah-btn--ghost {
+    background: var(--bg-card);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+.ah-btn--ghost:hover { background: var(--hover); color: var(--text); }
+.ah-btn--sm { padding: 0.3rem 0.65rem; font-size: 0.75rem; }
+.ah-btn--filter {
+    background: var(--bg-card);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    position: relative;
+}
+.ah-btn--filter-active { border-color: var(--color-primary, #2A6C95); color: var(--color-primary, #2A6C95); }
+.ah-filter-badge {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--color-primary, #2A6C95);
+    position: absolute; top: 4px; right: 4px;
+}
+
+/* ── Filters panel ───────────────────────────────────────────────────────── */
+.ah-filters {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+.ah-filter-group { display: flex; flex-direction: column; gap: 0.3rem; min-width: 180px; }
+.ah-filter-label {
+    font-size: 0.7rem; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.05em;
+}
+.ah-select {
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.83rem;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.ah-select:focus { border-color: var(--color-primary, #2A6C95); }
+.ah-clear-filters { margin-top: 1.15rem; }
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.ah-table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.ah-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+.ah-table th {
+    background: var(--bg);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.65rem 0.9rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+.ah-table td {
+    padding: 0.8rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+}
+.ah-row:last-child td { border-bottom: none; }
+.ah-row:hover td { background: var(--hover); }
+.ah-row--editing td { background: rgba(42,108,149,0.05); }
+/* striped rows */
+.ah-row:nth-child(even) td { background: rgba(0,0,0,0.015); }
+.ah-row:nth-child(even):hover td { background: var(--hover); }
+
+/* ── Cell types ──────────────────────────────────────────────────────────── */
+.ah-worker-cell { display: flex; align-items: center; gap: 0.6rem; }
+.ah-worker-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2A6C95, #1e5278);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(42,108,149,0.3);
+}
+.ah-worker-name { font-weight: 600; color: var(--text); font-size: 0.84rem; }
+.ah-worker-code { font-size: 0.7rem; color: var(--text-muted); font-family: monospace; margin-top: 1px; }
+.ah-project-name { font-weight: 500; color: var(--text); font-size: 0.84rem; }
+.ah-project-addr { font-size: 0.7rem; color: var(--text-muted); margin-top: 1px; }
+.ah-trade-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(42,108,149,0.1);
+    color: #2A6C95;
+    padding: 0.22rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid rgba(42,108,149,0.2);
+}
+.ah-date-cell {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-size: 0.8rem;
+}
+.ah-date-cell svg { color: var(--text-muted); flex-shrink: 0; }
+.ah-ongoing { font-style: italic; color: #10B981; font-size: 0.78rem; font-weight: 600; }
+.ah-duration { color: var(--text-muted); font-size: 0.75rem; }
+.ah-status-cell { display: flex; align-items: center; gap: 5px; }
+.ah-notes { color: var(--text-muted); font-size: 0.76rem; }
+.ah-actions { display: flex; gap: 5px; }
+
+/* ── Status badges ───────────────────────────────────────────────────────── */
+.ah-badge {
+    display: inline-block;
+    padding: 0.22rem 0.55rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+.ah-badge--active    { background: rgba(16,185,129,0.1);  color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
+.ah-badge--completed { background: rgba(42,108,149,0.1);  color: #2A6C95; border: 1px solid rgba(42,108,149,0.2); }
+.ah-badge--cancelled { background: rgba(239,68,68,0.1);   color: #EF4444; border: 1px solid rgba(239,68,68,0.2); }
+
+/* ── Inline edit inputs ──────────────────────────────────────────────────── */
+.ah-inline-input {
+    width: 100%;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--color-primary, #2A6C95);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.78rem;
+    box-sizing: border-box;
+    outline: none;
+}
+.ah-inline-select {
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--color-primary, #2A6C95);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.78rem;
+    outline: none;
+}
+
+/* ── Table footer ────────────────────────────────────────────────────────── */
+.ah-table-footer {
+    padding: 0.65rem 0.9rem;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+}
+
+/* ── States ──────────────────────────────────────────────────────────────── */
+.ah-loading, .ah-error, .ah-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 3.5rem 1.5rem;
+    color: var(--text-muted);
+    text-align: center;
+    background: var(--bg-card);
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+}
+.ah-error { color: #EF4444; }
+.ah-empty svg { opacity: 0.18; }
+.ah-spinning { animation: ah-spin 0.8s linear infinite; }
+@keyframes ah-spin { to { transform: rotate(360deg); } }
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+.ah-toast {
+    position: fixed;
+    bottom: 1.5rem; right: 1.5rem;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.1rem;
+    border-radius: 9px;
+    background: #10B981;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    animation: ah-slide-in 0.25s ease;
+}
+.ah-toast--error { background: #EF4444; }
+@keyframes ah-slide-in {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}

@@ -2064,25 +2064,25 @@ function TabTax({ api }) {
         if (type === 'tax') {
             const rows = [
                 ['Concepto', 'Monto'],
-                ['Ingresos Brutos', taxData.gross_income.toFixed(2)],
-                ...(taxData.deductible_by_category || []).map(c => [c.name_es, (-c.total).toFixed(2)]),
-                ['Total Deducible', (-taxData.total_deductible).toFixed(2)],
-                ['Ingreso Neto Gravable', taxData.net_taxable.toFixed(2)],
-                ['Per Diem (no gravable)', taxData.per_diem_total.toFixed(2)],
+                ['Ingresos Brutos', Number(taxData.gross_income || 0).toFixed(2)],
+                ...(taxData.deductible_by_category || []).map(c => [c.name_es, Number(-c.total || 0).toFixed(2)]),
+                ['Total Deducible', Number(-taxData.total_deductible || 0).toFixed(2)],
+                ['Ingreso Neto Gravable', Number(taxData.net_taxable || 0).toFixed(2)],
+                ['Per Diem (no gravable)', Number(taxData.per_diem_total || 0).toFixed(2)],
             ];
-            downloadBlob(rows.map(r => r.join(',')).join('\n'), `tax_summary_${taxYear}.csv`, 'text/csv');
+            downloadBlob(rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n'), `tax_summary_${taxYear}.csv`, 'text/csv');
         } else {
             const rows = [
                 ['Nombre', 'Código', 'SSN', 'Dirección', 'Ciudad', 'Estado', 'ZIP', 'Total Pagado', 'Necesita 1099'],
                 ...(taxData.workers_1099 || []).map(w => [
                     `${w.first_name} ${w.last_name}`,
                     w.worker_code,
-                    w.ssn || '',
+                    w.ssn ? `***-**-${w.ssn.slice(-4)}` : '',
                     w.address || '',
                     w.city || '',
                     w.state || '',
                     w.zip_code || '',
-                    w.total_paid.toFixed(2),
+                    Number(w.total_paid || 0).toFixed(2),
                     w.total_paid >= 600 ? 'Sí' : 'No',
                 ])
             ];
@@ -2125,7 +2125,7 @@ function TabTax({ api }) {
                     ...(taxData.workers_1099 || []).map(w => [
                         `${w.first_name} ${w.last_name}`,
                         w.worker_code,
-                        w.ssn || 'Sin SSN',
+                        w.ssn ? `***-**-${w.ssn.slice(-4)}` : 'Sin SSN',
                         w.address || '',
                         w.city || '',
                         w.state || '',
@@ -2187,7 +2187,7 @@ function TabTax({ api }) {
                         body: (taxData.workers_1099 || []).map(w => [
                             `${w.first_name} ${w.last_name}`,
                             w.worker_code,
-                            w.ssn || 'N/A',
+                            w.ssn ? `***-**-${w.ssn.slice(-4)}` : 'N/A',
                             w.address ? `${w.address}${w.city ? ', ' + w.city : ''}${w.state ? ', ' + w.state : ''}${w.zip_code ? ' ' + w.zip_code : ''}` : 'Sin dirección',
                             `$${w.total_paid.toFixed(2)}`,
                             w.total_paid >= 600 ? 'Sí' : 'No',
@@ -2248,7 +2248,7 @@ function TabTax({ api }) {
                 <div className="tax-year-left">
                     <span className="tax-year-label">Año fiscal:</span>
                     <select className="tax-year-select" value={taxYear} onChange={e => setTaxYear(e.target.value)}>
-                        {[2026, 2025, 2024].map(y => <option key={y} value={y}>{y}</option>)}
+                        {(() => { const cy = new Date().getFullYear(); return [cy, cy-1, cy-2].map(y => <option key={y} value={y}>{y}</option>); })()}
                     </select>
                     <button className="tax-refresh-btn" onClick={fetchTaxData}>
                         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">

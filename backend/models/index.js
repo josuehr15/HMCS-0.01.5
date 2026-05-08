@@ -17,6 +17,9 @@ const AccountingCategory = require('./AccountingCategory');
 const Transaction = require('./Transaction');
 const TransactionRule = require('./TransactionRule');
 const BankImport = require('./BankImport');
+const ShiftChange = require('./ShiftChange');
+const WorkerAvailability = require('./WorkerAvailability');
+const WorkerRating = require('./WorkerRating');
 
 // ─── User Associations ─────────────────────────────────
 User.hasOne(Worker, { foreignKey: 'user_id', as: 'worker' });
@@ -104,13 +107,36 @@ Transaction.belongsTo(Transaction, { foreignKey: 'parent_transaction_id', as: 'p
 // ─── BankImport Associations ────────────────────────────────────
 BankImport.belongsTo(User, { foreignKey: 'imported_by_user_id', as: 'importedBy' });
 
+// ─── Document Associations ──────────────────────────────────────
+Document.belongsTo(User, { foreignKey: 'uploaded_by', as: 'uploader' });
+Document.belongsTo(User, { foreignKey: 'deleted_by',  as: 'deleter'  });
+
 // ─── TransactionRule Associations ───────────────────────────────
 TransactionRule.belongsTo(AccountingCategory, { foreignKey: 'category_id', as: 'category' });
 TransactionRule.belongsTo(Worker,             { foreignKey: 'worker_id',   as: 'worker'   });
 TransactionRule.belongsTo(User,               { foreignKey: 'created_by_user_id', as: 'createdBy' });
 
+// ─── ShiftChange Associations ────────────────────────────────────
+ShiftChange.belongsTo(Worker,     { foreignKey: 'requester_worker_id', as: 'requester' });
+ShiftChange.belongsTo(Worker,     { foreignKey: 'target_worker_id',    as: 'target'    });
+ShiftChange.belongsTo(TimeEntry,  { foreignKey: 'requester_entry_id',  as: 'requesterEntry' });
+ShiftChange.belongsTo(TimeEntry,  { foreignKey: 'target_entry_id',     as: 'targetEntry'    });
+ShiftChange.belongsTo(User,       { foreignKey: 'reviewed_by_user_id', as: 'reviewer'  });
+Worker.hasMany(ShiftChange,       { foreignKey: 'requester_worker_id', as: 'shiftChangeRequests' });
+Worker.hasMany(ShiftChange,       { foreignKey: 'target_worker_id',    as: 'shiftChangeTargets'  });
+
+// ─── WorkerAvailability Associations ─────────────────────────────
+WorkerAvailability.belongsTo(Worker, { foreignKey: 'worker_id', as: 'worker' });
+Worker.hasMany(WorkerAvailability,   { foreignKey: 'worker_id', as: 'availabilitySchedule' });
+
+// ─── WorkerRating Associations ────────────────────────────────────
+WorkerRating.belongsTo(Worker,  { foreignKey: 'worker_id',  as: 'worker'  });
+WorkerRating.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
+Worker.hasMany(WorkerRating,    { foreignKey: 'worker_id',  as: 'ratings' });
+
 module.exports = {
     User, Worker, Client, Trade, Project, Assignment, ClientRate,
     TimeEntry, Invoice, InvoiceLine, Payroll, PayrollLine, PerDiemEntry, Document, CompanySettings,
-    AccountingCategory, Transaction, TransactionRule, BankImport,
+    AccountingCategory, Transaction, TransactionRule, BankImport, ShiftChange, WorkerAvailability,
+    WorkerRating,
 };

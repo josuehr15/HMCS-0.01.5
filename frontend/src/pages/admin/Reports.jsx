@@ -3,8 +3,23 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Legend
 } from 'recharts';
-import { Download, ChevronDown, AlertCircle, RefreshCw } from 'lucide-react';
+import { Download, ChevronDown, AlertCircle, RefreshCw, FileText, Clock, FileText as FileIcon, DollarSign, BarChart3, Calendar } from 'lucide-react';
+import EmptyState from '../../components/EmptyState';
 import useApi from '../../hooks/useApi';
+import {
+    exportHoursPDF,
+    exportInvoicingPDF,
+    exportPayrollPDF,
+    exportMarginsPDF,
+    exportPnLPDF,
+} from '../../utils/exportPDF';
+import {
+    exportHoursXLSX,
+    exportInvoicingXLSX,
+    exportPayrollXLSX,
+    exportMarginsXLSX,
+    exportPnLXLSX,
+} from '../../utils/exportXLSX';
 import './Reports.css';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -14,15 +29,6 @@ const firstOfMonth = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
 const lastOfMonth = fmt(new Date(today.getFullYear(), today.getMonth() + 1, 0));
 const money = (n) =>
     `$${parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-function exportCSV(headers, rows, filename) {
-    const lines = [headers.join(','), ...rows.map(r => r.map(v => `"${v ?? ''}"`).join(','))];
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
-}
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KpiCard({ label, value, valueColor, sub, subType }) {
@@ -78,14 +84,16 @@ function HoursTab({ from, to, workers, projects }) {
         const id = e.worker_id;
         const name = `${e.worker?.first_name || ''} ${e.worker?.last_name || ''}`.trim()
             || e.worker?.worker_code || `W${id}`;
-        if (!byWorker[id]) byWorker[id] = { name, total: 0 };
+        if (!byWorker[id]) byWorker[id] = { name, regular: 0, overtime: 0, total: 0 };
+        byWorker[id].regular += parseFloat(e.regular_hours || 0);
+        byWorker[id].overtime += parseFloat(e.overtime_hours || 0);
         byWorker[id].total += parseFloat(e.total_hours || 0);
     });
 
     const rows = Object.values(byWorker).map(w => ({
-        ...w,
-        regular: parseFloat(Math.min(w.total, 40).toFixed(2)),
-        overtime: parseFloat(Math.max(0, w.total - 40).toFixed(2)),
+        name: w.name,
+        regular: parseFloat(w.regular.toFixed(2)),
+        overtime: parseFloat(w.overtime.toFixed(2)),
         total: parseFloat(w.total.toFixed(2)),
     }));
 
@@ -95,11 +103,25 @@ function HoursTab({ from, to, workers, projects }) {
         OT: r.overtime,
     }));
 
-    const doExport = () => exportCSV(
-        ['Trabajador', 'Horas Regulares', 'Horas OT', 'Total Horas'],
-        rows.map(r => [r.name, r.regular, r.overtime, r.total]),
-        `horas_${from}_${to}.csv`
-    );
+    const doExportXLSX = () => exportHoursXLSX({
+        from, to, rows,
+        kpis: [
+            { label: 'TOTAL HORAS',       value: `${kpiTotal.toFixed(1)}h`   },
+            { label: 'HORAS REGULARES',   value: `${kpiRegular.toFixed(1)}h` },
+            { label: 'HORAS OVERTIME',    value: `${kpiOT.toFixed(1)}h`      },
+            { label: 'PROMEDIO / WORKER', value: `${kpiAvg.toFixed(1)}h`     },
+        ],
+    });
+
+    const doExportPDF = () => exportHoursPDF({
+        from, to, rows,
+        kpis: [
+            { label: 'TOTAL HORAS',       value: `${kpiTotal.toFixed(1)}h`   },
+            { label: 'HORAS REGULARES',   value: `${kpiRegular.toFixed(1)}h` },
+            { label: 'HORAS OVERTIME',    value: `${kpiOT.toFixed(1)}h`      },
+            { label: 'PROMEDIO / WORKER', value: `${kpiAvg.toFixed(1)}h`     },
+        ],
+    });
 
     return (
         <div className="rpt-tab-content">
@@ -129,7 +151,8 @@ function HoursTab({ from, to, workers, projects }) {
                     </select>
                     <ChevronDown size={13} className="workers-select__arrow" />
                 </div>
-                <button className="rpt-export-btn" onClick={doExport}><Download size={14} /> Exportar CSV</button>
+                <button className="rpt-export-btn" onClick={doExportXLSX} disabled={rows.length === 0}><Download size={14} /> Exportar Excel</button>
+                <button className="rpt-export-btn rpt-export-btn--pdf" onClick={doExportPDF} disabled={rows.length === 0}><FileText size={14} /> Exportar PDF</button>
             </div>
 
             {error && <div className="rpt-error"><AlertCircle size={14} /> {error}</div>}
@@ -187,7 +210,7 @@ function HoursTab({ from, to, workers, projects }) {
                 </>
             )}
             {!loading && rows.length === 0 && !error && (
-                <div className="rpt-empty"><p>Sin datos para el período seleccionado</p></div>
+                <EmptyState icon={Clock} title="Sin datos de horas" description="No hay registros de horas para el período y filtros seleccionados" />
             )}
         </div>
     );
@@ -231,11 +254,8 @@ function InvoicingTab({ from, to, clients }) {
     const chartData = Object.entries(byMonth).sort()
         .map(([k, v]) => ({ mes: k, Total: parseFloat(v.toFixed(2)) }));
 
-    const doExport = () => exportCSV(
-        ['#Factura', 'Cliente', 'Proyecto', 'Total', 'Status', 'Fecha'],
-        invoices.map(i => [i.invoice_number, i.client?.company_name, i.project?.name, i.total, i.status, i.invoice_date]),
-        `facturas_${from}_${to}.csv`
-    );
+    const doExportXLSX = () => exportInvoicingXLSX({ from, to, invoices, totals });
+    const doExportPDF  = () => exportInvoicingPDF({ from, to, invoices, totals });
 
     const STATUS_LABELS = {
         draft: 'Borrador', pending_approval: 'Pend. Aprobación',
@@ -258,7 +278,8 @@ function InvoicingTab({ from, to, clients }) {
                     </select>
                     <ChevronDown size={13} className="workers-select__arrow" />
                 </div>
-                <button className="rpt-export-btn" onClick={doExport}><Download size={14} /> Exportar CSV</button>
+                <button className="rpt-export-btn" onClick={doExportXLSX} disabled={invoices.length === 0}><Download size={14} /> Exportar Excel</button>
+                <button className="rpt-export-btn rpt-export-btn--pdf" onClick={doExportPDF} disabled={invoices.length === 0}><FileText size={14} /> Exportar PDF</button>
             </div>
 
             {error && <div className="rpt-error"><AlertCircle size={14} /> {error}</div>}
@@ -322,7 +343,7 @@ function InvoicingTab({ from, to, clients }) {
                 </div>
             )}
             {!loading && invoices.length === 0 && !error && (
-                <div className="rpt-empty"><p>Sin facturas para el período seleccionado</p></div>
+                <EmptyState icon={FileIcon} title="Sin facturas" description="No hay facturas para el período y filtros seleccionados" />
             )}
         </div>
     );
@@ -381,11 +402,25 @@ function PayrollTab({ from, to, workers }) {
     const kpiPerDiem = rows.reduce((s, r) => s + r.perDiem, 0);
     const kpiNet = rows.reduce((s, r) => s + r.net, 0);
 
-    const doExport = () => exportCSV(
-        ['Trabajador', 'Gross Pay', 'Deducciones', 'Per Diem', 'Net Pay', 'Semanas'],
-        rows.map(r => [r.name, r.gross, r.deductions, r.perDiem, r.net, r.weeks]),
-        `nomina_${from}_${to}.csv`
-    );
+    const doExportXLSX = () => exportPayrollXLSX({
+        from, to, rows,
+        kpis: [
+            { label: 'GROSS PAY TOTAL', value: money(kpiGross)   },
+            { label: 'DEDUCCIONES',     value: money(kpiDed)     },
+            { label: 'PER DIEM',        value: money(kpiPerDiem) },
+            { label: 'NET PAY TOTAL',   value: money(kpiNet)     },
+        ],
+    });
+
+    const doExportPDF = () => exportPayrollPDF({
+        from, to, rows,
+        kpis: [
+            { label: 'GROSS PAY TOTAL', value: money(kpiGross)   },
+            { label: 'DEDUCCIONES',     value: money(kpiDed)     },
+            { label: 'PER DIEM',        value: money(kpiPerDiem) },
+            { label: 'NET PAY TOTAL',   value: money(kpiNet)     },
+        ],
+    });
 
     return (
         <div className="rpt-tab-content">
@@ -409,7 +444,8 @@ function PayrollTab({ from, to, workers }) {
                     </select>
                     <ChevronDown size={13} className="workers-select__arrow" />
                 </div>
-                <button className="rpt-export-btn" onClick={doExport}><Download size={14} /> Exportar CSV</button>
+                <button className="rpt-export-btn" onClick={doExportXLSX} disabled={rows.length === 0}><Download size={14} /> Exportar Excel</button>
+                <button className="rpt-export-btn rpt-export-btn--pdf" onClick={doExportPDF} disabled={rows.length === 0}><FileText size={14} /> Exportar PDF</button>
             </div>
 
             {error && <div className="rpt-error"><AlertCircle size={14} /> {error}</div>}
@@ -457,7 +493,7 @@ function PayrollTab({ from, to, workers }) {
                 </div>
             )}
             {!loading && rows.length === 0 && !error && (
-                <div className="rpt-empty"><p>Sin datos de nomina para el período</p></div>
+                <EmptyState icon={DollarSign} title="Sin datos de nómina" description="No hay registros de nómina para el período seleccionado" />
             )}
         </div>
     );
@@ -498,7 +534,10 @@ function MarginsTab({ from, to }) {
                 .filter(i => i.status !== 'paid')
                 .reduce((s, i) => s + parseFloat(i.total || 0), 0);
             const costo = payList.reduce((s, p) =>
-                s + (p.lines || []).reduce((ls, l) => ls + parseFloat(l.gross_pay || 0), 0), 0
+                s + (p.lines || []).reduce((ls, l) => ls
+                    + parseFloat(l.gross_pay || 0)
+                    + parseFloat(l.employer_taxes || 0)
+                    + parseFloat(l.workers_comp || 0), 0), 0
             );
             setKpi({ cobrado, costo, pending });
         } catch { setError('Error al cargar márgenes.'); }
@@ -513,15 +552,12 @@ function MarginsTab({ from, to }) {
     const chartData = data.slice(0, 10).map(d => ({
         name: (d.worker_name || d.client_name || '—').split(' ')[0],
         Cobrado: d.billed,
-        Pagado: d.paid || d.cost,
+        Pagado: d.paid !== undefined && d.paid !== null ? d.paid : d.cost,
         Margen: d.margin,
     }));
 
-    const doExport = () => exportCSV(
-        [groupBy === 'worker' ? 'Worker' : 'Cliente', 'Cobrado', 'Pagado/Costo', 'Margen', '%'],
-        data.map(d => [d.worker_name || d.client_name, d.billed, d.paid || d.cost, d.margin, d.margin_pct]),
-        `margenes_${groupBy}_${from}_${to}.csv`
-    );
+    const doExportXLSX = () => exportMarginsXLSX({ from, to, data, kpi, groupBy });
+    const doExportPDF  = () => exportMarginsPDF({ from, to, data, kpi, groupBy });
 
     return (
         <div className="rpt-tab-content">
@@ -567,7 +603,8 @@ function MarginsTab({ from, to }) {
                         Por Cliente
                     </button>
                 </div>
-                <button className="rpt-export-btn" onClick={doExport}><Download size={14} /> Exportar CSV</button>
+                <button className="rpt-export-btn" onClick={doExportXLSX} disabled={data.length === 0}><Download size={14} /> Exportar Excel</button>
+                <button className="rpt-export-btn rpt-export-btn--pdf" onClick={doExportPDF} disabled={data.length === 0}><FileText size={14} /> Exportar PDF</button>
             </div>
 
             <div className="reports__per-diem-notice">
@@ -631,7 +668,7 @@ function MarginsTab({ from, to }) {
                 </div>
             )}
             {!loading && data.length === 0 && !error && (
-                <div className="rpt-empty"><p>Sin datos de márgenes para el período</p></div>
+                <EmptyState icon={BarChart3} title="Sin datos de márgenes" description="No hay información de márgenes para el período seleccionado" />
             )}
         </div>
     );
@@ -667,17 +704,8 @@ function PnLTab({ from, to }) {
     const net = parseFloat(data?.net || 0);
     const perDiemPass = parseFloat(data?.per_diem_passthrough || 0);
 
-    const exportPnL = () => {
-        const rows = [
-            ...Object.entries(incomeItems).map(([cat, amt]) => ['Ingreso', cat, parseFloat(amt || 0).toFixed(2)]),
-            ...Object.entries(expenseItems).map(([cat, amt]) => ['Gasto', cat, parseFloat(amt || 0).toFixed(2)]),
-        ];
-        exportCSV(
-            ['Tipo', 'Categoría', 'Monto'],
-            rows,
-            `pnl_${from}_${to}.csv`
-        );
-    };
+    const doExportXLSX = () => exportPnLXLSX({ from, to, data });
+    const doExportPDF  = () => exportPnLPDF({ from, to, data });
 
     return (
         <div className="rpt-tab-content">
@@ -704,7 +732,8 @@ function PnLTab({ from, to }) {
             </div>
 
             <div className="rpt-filters">
-                <button className="rpt-export-btn" onClick={exportPnL}><Download size={14} /> Exportar CSV</button>
+                <button className="rpt-export-btn" onClick={doExportXLSX} disabled={!data}><Download size={14} /> Exportar Excel</button>
+                <button className="rpt-export-btn rpt-export-btn--pdf" onClick={doExportPDF} disabled={!data}><FileText size={14} /> Exportar PDF</button>
             </div>
 
             {error && <div className="rpt-error"><AlertCircle size={14} /> {error}</div>}
@@ -781,13 +810,193 @@ function PnLTab({ from, to }) {
     );
 }
 
+// ─── Tab: Shift Changes ───────────────────────────────────────────────────────
+const SC_STATUS_LABEL = {
+    pending_target:  'Pend. worker',
+    accepted_target: 'Pend. admin',
+    rejected_target: 'Rechazado worker',
+    approved_admin:  'Aprobado',
+    rejected_admin:  'Rechazado admin',
+    cancelled:       'Cancelado',
+};
+
+function ShiftChangesTab({ from, to, workers }) {
+    const { get } = useApi();
+    const [changes, setChanges] = useState([]);
+    const [filterWorker, setFilterWorker] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const loadData = useCallback(async () => {
+        setLoading(true); setError('');
+        try {
+            const res = await get('/shift-changes');
+            const all = Array.isArray(res?.data) ? res.data : res || [];
+            // Filtrar por período (shift_date)
+            setChanges(all.filter(c => {
+                if (!c.shift_date) return true;
+                return c.shift_date >= from && c.shift_date <= to;
+            }));
+        } catch { setError('Error al cargar cambios de turno.'); }
+        finally { setLoading(false); }
+    }, [get, from, to]);
+
+    useEffect(() => { loadData(); }, [loadData]);
+
+    // Aplicar filtros locales
+    const filtered = changes.filter(c => {
+        if (filterWorker && c.requester_worker_id !== parseInt(filterWorker) && c.target_worker_id !== parseInt(filterWorker)) return false;
+        if (filterStatus && c.status !== filterStatus) return false;
+        return true;
+    });
+
+    // KPIs
+    const total      = filtered.length;
+    const approved   = filtered.filter(c => c.status === 'approved_admin').length;
+    const rejected   = filtered.filter(c => ['rejected_target', 'rejected_admin'].includes(c.status)).length;
+    const pending    = filtered.filter(c => ['pending_target', 'accepted_target'].includes(c.status)).length;
+    const approvalRate = total > 0 ? ((approved / total) * 100).toFixed(0) : 0;
+
+    const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+    const fmtTime = (dt) => dt ? new Date(dt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
+    const wName = (w) => w ? `${w.first_name} ${w.last_name}` : '—';
+
+    const doExportXLSX = () => {
+        if (filtered.length === 0) return;
+        import('../../utils/exportXLSX').then(({ exportShiftChangesXLSX }) => {
+            exportShiftChangesXLSX({ from, to, rows: filtered, kpis: [
+                { label: 'TOTAL SOLICITUDES', value: String(total) },
+                { label: 'APROBADAS',         value: String(approved) },
+                { label: 'RECHAZADAS',        value: String(rejected) },
+                { label: 'TASA APROBACIÓN',   value: `${approvalRate}%` },
+            ]});
+        });
+    };
+
+    const doExportPDF = () => {
+        if (filtered.length === 0) return;
+        import('../../utils/exportPDF').then(({ exportShiftChangesPDF }) => {
+            exportShiftChangesPDF({ from, to, rows: filtered, kpis: [
+                { label: 'TOTAL SOLICITUDES', value: String(total) },
+                { label: 'APROBADAS',         value: String(approved) },
+                { label: 'RECHAZADAS',        value: String(rejected) },
+                { label: 'TASA APROBACIÓN',   value: `${approvalRate}%` },
+            ]});
+        });
+    };
+
+    return (
+        <div className="rpt-tab-content">
+            <div className="reports__kpi-row reports__kpi-row--4">
+                <KpiCard label="TOTAL SOLICITUDES" value={total} valueColor="#2A6C95" />
+                <KpiCard label="APROBADAS" value={approved} valueColor="#10B981" />
+                <KpiCard label="RECHAZADAS" value={rejected} valueColor="#EF4444" />
+                <KpiCard label="TASA APROBACIÓN" value={`${approvalRate}%`}
+                    sub={pending > 0 ? `${pending} pendiente${pending > 1 ? 's' : ''}` : 'Sin pendientes'}
+                    subType={pending > 0 ? 'warning' : undefined}
+                />
+            </div>
+
+            <div className="rpt-filters">
+                <div className="workers-select-wrapper">
+                    <select className="workers-select" value={filterWorker} onChange={e => setFilterWorker(e.target.value)}>
+                        <option value="">Todos los Workers</option>
+                        {workers.map(w => <option key={w.id} value={w.id}>{w.first_name} {w.last_name}</option>)}
+                    </select>
+                    <ChevronDown size={13} className="workers-select__arrow" />
+                </div>
+                <div className="workers-select-wrapper">
+                    <select className="workers-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                        <option value="">Todos los estados</option>
+                        {Object.entries(SC_STATUS_LABEL).map(([val, label]) => (
+                            <option key={val} value={val}>{label}</option>
+                        ))}
+                    </select>
+                    <ChevronDown size={13} className="workers-select__arrow" />
+                </div>
+                <button className="rpt-export-btn" onClick={doExportXLSX} disabled={filtered.length === 0}><Download size={14} /> Exportar Excel</button>
+                <button className="rpt-export-btn rpt-export-btn--pdf" onClick={doExportPDF} disabled={filtered.length === 0}><FileText size={14} /> Exportar PDF</button>
+            </div>
+
+            {error && <div className="rpt-error"><AlertCircle size={14} /> {error}</div>}
+            {loading && <div className="rpt-loading"><RefreshCw size={18} className="rpt-spin" /> Cargando...</div>}
+
+            {!loading && filtered.length > 0 && (
+                <div className="reports__section-card reports__section-card--table">
+                    <p className="reports__section-label">Solicitudes de Cambio de Turno</p>
+                    <div className="rpt-table-wrap">
+                        <table className="rpt-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha Turno</th>
+                                    <th>Solicitante</th>
+                                    <th>Target</th>
+                                    <th>Turno Solicitante</th>
+                                    <th>Estado</th>
+                                    <th>Revisado por</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filtered.map(c => (
+                                    <tr key={c.id}>
+                                        <td>{fmtDate(c.shift_date)}</td>
+                                        <td>{wName(c.requester)}</td>
+                                        <td>{wName(c.target)}</td>
+                                        <td style={{ fontFamily: 'monospace', fontSize: '0.77rem' }}>
+                                            {c.requesterEntry
+                                                ? `${fmtTime(c.requesterEntry.clock_in)} → ${fmtTime(c.requesterEntry.clock_out)}`
+                                                : '—'}
+                                        </td>
+                                        <td>
+                                            <span style={{
+                                                display: 'inline-block',
+                                                padding: '0.18rem 0.55rem',
+                                                borderRadius: '12px',
+                                                fontSize: '0.72rem',
+                                                fontWeight: 600,
+                                                background: c.status === 'approved_admin' ? 'rgba(16,185,129,0.1)'
+                                                    : ['rejected_target','rejected_admin','cancelled'].includes(c.status) ? 'rgba(239,68,68,0.1)'
+                                                    : 'rgba(245,158,11,0.1)',
+                                                color: c.status === 'approved_admin' ? '#10B981'
+                                                    : ['rejected_target','rejected_admin','cancelled'].includes(c.status) ? '#EF4444'
+                                                    : '#D97706',
+                                            }}>
+                                                {SC_STATUS_LABEL[c.status] || c.status}
+                                            </span>
+                                        </td>
+                                        <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                            {c.reviewer?.email || '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colSpan={4}><strong>Total: {filtered.length} solicitudes</strong></td>
+                                    <td colSpan={2}><strong>Aprobadas: {approved} · Rechazadas: {rejected}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {!loading && filtered.length === 0 && !error && (
+                <EmptyState icon={Calendar} title="Sin cambios de turno" description="No hay solicitudes de cambio de turno para el período y filtros seleccionados" />
+            )}
+        </div>
+    );
+}
+
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 const TABS = [
-    { id: 'hours', label: 'Horas' },
-    { id: 'invoicing', label: 'Facturación' },
-    { id: 'payroll', label: 'Nómina' },
-    { id: 'margins', label: 'Márgenes' },
-    { id: 'pnl', label: 'P&L' },
+    { id: 'hours',         label: 'Horas' },
+    { id: 'invoicing',     label: 'Facturación' },
+    { id: 'payroll',       label: 'Nómina' },
+    { id: 'margins',       label: 'Márgenes' },
+    { id: 'pnl',           label: 'P&L' },
+    { id: 'shift-changes', label: 'Turnos' },
 ];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -855,11 +1064,12 @@ export default function Reports() {
             </div>
 
             <div className="rpt-content-area">
-                {activeTab === 'hours' && <HoursTab from={from} to={to} workers={workers} projects={projects} />}
-                {activeTab === 'invoicing' && <InvoicingTab from={from} to={to} clients={clients} />}
-                {activeTab === 'payroll' && <PayrollTab from={from} to={to} workers={workers} />}
-                {activeTab === 'margins' && <MarginsTab from={from} to={to} />}
-                {activeTab === 'pnl' && <PnLTab from={from} to={to} />}
+                {activeTab === 'hours'         && <HoursTab from={from} to={to} workers={workers} projects={projects} />}
+                {activeTab === 'invoicing'     && <InvoicingTab from={from} to={to} clients={clients} />}
+                {activeTab === 'payroll'       && <PayrollTab from={from} to={to} workers={workers} />}
+                {activeTab === 'margins'       && <MarginsTab from={from} to={to} />}
+                {activeTab === 'pnl'           && <PnLTab from={from} to={to} />}
+                {activeTab === 'shift-changes' && <ShiftChangesTab from={from} to={to} workers={workers} />}
             </div>
         </div>
     );

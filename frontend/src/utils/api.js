@@ -1,8 +1,12 @@
 import axios from 'axios';
 
 // SEC-003: API base URL from env var, fallback to localhost for local dev
+// Exportar para que todos los archivos usen esta constante en vez de hardcodear
+export const API_URL  = import.meta.env.VITE_API_URL  || 'http://localhost:5000/api';
+export const BASE_URL = API_URL.replace('/api', ''); // para URLs de archivos estáticos
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+    baseURL: API_URL,
     headers: { 'Content-Type': 'application/json' },
     // SEC-001: withCredentials sends httpOnly cookie on every request
     withCredentials: true,

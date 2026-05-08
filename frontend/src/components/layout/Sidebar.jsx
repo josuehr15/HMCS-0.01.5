@@ -6,7 +6,7 @@ import {
     LayoutDashboard, Users, Building2, FolderKanban, Clock,
     FileText, DollarSign, LogOut, Sun, Moon, Pin,
     Calculator, BarChart2, Settings,
-    Wallet,
+    Wallet, FolderOpen, ArrowLeftRight, Crosshair,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -21,6 +21,9 @@ const MENU_SECTIONS = [
             { path: '/admin/time-entries', label: 'Registro de Horas', icon: Clock },
             { path: '/admin/invoices', label: 'Facturas', icon: FileText },
             { path: '/admin/payroll', label: 'Nómina', icon: DollarSign },
+            { path: '/admin/documents', label: 'Documentos', icon: FolderOpen },
+            { path: '/admin/shift-changes', label: 'Cambios de Turno', icon: ArrowLeftRight },
+            { path: '/admin/matching', label: 'Matching', icon: Crosshair },
         ],
     },
     {

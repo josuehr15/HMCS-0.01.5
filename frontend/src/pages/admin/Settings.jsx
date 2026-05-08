@@ -6,7 +6,7 @@ import {
     Wrench, DollarSign, Bell, Plus, X, Edit2, Upload,
 } from 'lucide-react';
 import useApi from '../../hooks/useApi';
-import api from '../../utils/api';
+import api, { BASE_URL } from '../../utils/api';
 import './Settings.css';
 
 // ─── Toast helper ─────────────────────────────────────────────────────────────
@@ -548,7 +548,7 @@ export default function Settings() {
                                         ].map(({ slot, title, desc, ref, currentUrl, fallback, imgStyle }) => {
                                             const { preview, file, uploading } = logos[slot];
                                             const displaySrc = preview || (currentUrl
-                                                ? `http://localhost:5000${currentUrl}`
+                                                ? `${BASE_URL}${currentUrl}`
                                                 : null);
                                             return (
                                                 <div key={slot} className="set-logo-card">

@@ -6,63 +6,100 @@ import api from '../../utils/api';
 import {
     Bell, Search, X,
     AlertCircle, Clock, FileText, CheckCircle2,
-    DollarSign, Tag, RefreshCw,
+    DollarSign, Tag, RefreshCw, Wifi, WifiOff, ArrowLeftRight, Crosshair,
 } from 'lucide-react';
 import './AdminLayout.css';
 
 // ─── Icono por tipo de notificación ────────────────────────────────────────
 const NotifIcon = ({ type, size = 15 }) => {
     const icons = {
-        overdue:    <AlertCircle size={size} />,
-        payroll:    <Clock size={size} />,
-        perdiem:    <DollarSign size={size} />,
-        accounting: <Tag size={size} />,
-        clockin:    <CheckCircle2 size={size} />,
-        invoice:    <FileText size={size} />,
+        overdue:      <AlertCircle size={size} />,
+        payroll:      <Clock size={size} />,
+        perdiem:      <DollarSign size={size} />,
+        accounting:   <Tag size={size} />,
+        clockin:      <CheckCircle2 size={size} />,
+        invoice:      <FileText size={size} />,
+        shift_change: <ArrowLeftRight size={size} />,
+        matching:     <Crosshair size={size} />,
     };
     return icons[type] || <Bell size={size} />;
 };
 
-// ─── Intervalo de polling (ms) ──────────────────────────────────────────────
-const POLL_INTERVAL = 60_000; // 1 minuto
+// ─── URL base del backend ──────────────────────────────────────────────────
+const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
+// getStoredToken eliminado — SEC-002: SSE usa withCredentials (httpOnly cookie)
 
 const AdminLayout = () => {
-    const [pinned, setPinned]                 = useState(false);
+    const [pinned, setPinned]                       = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
-    const [notifications, setNotifications]   = useState([]);
-    const [loading, setLoading]               = useState(false);
-    const [dismissed, setDismissed]           = useState(() => {
-        // IDs descartados se guardan en sessionStorage (se limpian al cerrar pestaña)
-        try {
-            return JSON.parse(sessionStorage.getItem('hmcs_notif_dismissed') || '[]');
-        } catch { return []; }
+    const [notifications, setNotifications]         = useState([]);
+    const [sseConnected, setSseConnected]           = useState(false);
+    const [loading, setLoading]                     = useState(false);
+    const [dismissed, setDismissed]                 = useState(() => {
+        try { return JSON.parse(sessionStorage.getItem('hmcs_notif_dismissed') || '[]'); }
+        catch { return []; }
     });
 
     const { user } = useAuth();
     const navigate = useNavigate();
-    const panelRef = useRef(null);
+    const panelRef  = useRef(null);
+    const esRef     = useRef(null); // EventSource instance
+    const retryRef  = useRef(null); // retry timeout
 
-    // ── Fetch desde la API ────────────────────────────────────────────────
+    // ── Fetch manual (botón refresh en el panel) ───────────────────────────
     const fetchNotifications = useCallback(async () => {
         try {
             setLoading(true);
             const res = await api.get('/notifications');
-            if (res.data?.success) {
-                setNotifications(res.data.data || []);
-            }
+            if (res.data?.success) setNotifications(res.data.data || []);
         } catch {
-            // silencioso — la campana no debe interrumpir la app
+            // silencioso
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Carga inicial + polling cada minuto
+    // ── Conectar SSE ───────────────────────────────────────────────────────
+    const connectSSE = useCallback(() => {
+        // No conectar si no hay usuario
+        if (!user) return;
+
+        // SEC-002: Usar withCredentials para enviar la httpOnly cookie al backend.
+        // El backend (authSSE middleware) acepta cookie primero, query param como fallback.
+        // Así el JWT nunca aparece en logs del servidor ni en browser history.
+        const url = `${API_BASE}/api/notifications/stream`;
+        const es = new EventSource(url, { withCredentials: true });
+        esRef.current = es;
+
+        es.addEventListener('notifications', (e) => {
+            try {
+                const payload = JSON.parse(e.data);
+                setNotifications(payload.data || []);
+                setSseConnected(true);
+            } catch { /* ignorar parse errors */ }
+        });
+
+        es.onerror = () => {
+            setSseConnected(false);
+            es.close();
+            esRef.current = null;
+            // Reconectar con backoff de 15s
+            retryRef.current = setTimeout(connectSSE, 15_000);
+        };
+    }, [user, fetchNotifications]);
+
+    // Iniciar SSE al montar; limpiar al desmontar
     useEffect(() => {
-        fetchNotifications();
-        const timer = setInterval(fetchNotifications, POLL_INTERVAL);
-        return () => clearInterval(timer);
-    }, [fetchNotifications]);
+        connectSSE();
+        return () => {
+            clearTimeout(retryRef.current);
+            if (esRef.current) {
+                esRef.current.close();
+                esRef.current = null;
+            }
+        };
+    }, [connectSSE]);
 
     // Cierra el panel al hacer clic fuera
     useEffect(() => {
@@ -167,10 +204,19 @@ const AdminLayout = () => {
                                         )}
                                     </h3>
                                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                        {/* Indicador SSE */}
+                                        <span
+                                            title={sseConnected ? 'Tiempo real activo' : 'Sin conexión en tiempo real'}
+                                            style={{ display: 'flex', alignItems: 'center', color: sseConnected ? '#10B981' : 'var(--text-muted)' }}
+                                        >
+                                            {sseConnected
+                                                ? <Wifi size={12} />
+                                                : <WifiOff size={12} />}
+                                        </span>
                                         <button
                                             className="notif-panel__refresh"
                                             onClick={fetchNotifications}
-                                            title="Actualizar"
+                                            title="Actualizar manualmente"
                                         >
                                             <RefreshCw size={13} className={loading ? 'notif-spinning' : ''} />
                                         </button>

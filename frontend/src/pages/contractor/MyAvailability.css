@@ -1,0 +1,255 @@
+/* ─── MyAvailability.css ─────────────────────────────────────── */
+
+.mav-page {
+    padding: 1.25rem 1rem 5rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.mav-page__title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem;
+}
+
+.mav-page__subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0 0 1.25rem;
+}
+
+/* ─── Grid semanal ─────────────────────────────────────────── */
+.mav-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mav-day {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    transition: border-color 0.15s;
+}
+
+.mav-day--unavailable {
+    opacity: 0.55;
+}
+
+.mav-day__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.625rem;
+}
+
+.mav-day__name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 90px;
+}
+
+/* Toggle switch */
+.mav-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.mav-toggle__label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.mav-toggle__track {
+    width: 38px;
+    height: 22px;
+    background: var(--border-color);
+    border-radius: 11px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.mav-toggle__track--on {
+    background: var(--primary-color, #2563eb);
+}
+
+.mav-toggle__thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    transition: transform 0.2s;
+}
+
+.mav-toggle__track--on .mav-toggle__thumb {
+    transform: translateX(16px);
+}
+
+/* Time fields */
+.mav-day__times {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mav-day__times-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-width: 40px;
+}
+
+.mav-time-input {
+    flex: 1;
+    padding: 0.375rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-page, var(--bg-main));
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.mav-time-input:focus {
+    border-color: var(--primary-color, #2563eb);
+}
+
+.mav-times-sep {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Note field */
+.mav-day__note {
+    margin-top: 0.5rem;
+}
+
+.mav-note-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.375rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-page, var(--bg-main));
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    transition: border-color 0.15s;
+}
+
+.mav-note-input:focus {
+    border-color: var(--primary-color, #2563eb);
+}
+
+/* ─── Actions ──────────────────────────────────────────────── */
+.mav-actions {
+    margin-top: 1.25rem;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.mav-btn {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+}
+
+.mav-btn:active { transform: scale(0.97); }
+.mav-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.mav-btn--save {
+    background: var(--primary-color, #2563eb);
+    color: #fff;
+}
+
+.mav-btn--reset {
+    background: var(--bg-page, var(--bg-main));
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+/* ─── Status feedback ──────────────────────────────────────── */
+.mav-toast {
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.875rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.mav-toast--ok {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.mav-toast--err {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.mav-loading,
+.mav-error {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* ─── Tabs ─────────────────────────────────────────────────── */
+.mav-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0;
+}
+
+.mav-tab {
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.mav-tab--active {
+    color: var(--primary-color, #2563eb);
+    border-bottom-color: var(--primary-color, #2563eb);
+}
+
+/* ─── Calendar wrap ────────────────────────────────────────── */
+.mav-calendar-wrap {
+    margin-top: 0.25rem;
+}
+
+.mav-calendar-hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 0 0 0.75rem;
+}

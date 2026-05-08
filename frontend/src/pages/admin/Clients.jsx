@@ -8,9 +8,9 @@ import {
     BarChart3, Briefcase, EyeOff, CheckCircle,
     FolderOpen, FileText, Copy, Pause, Play
 } from 'lucide-react';
+import EmptyState from '../../components/EmptyState';
 import useApi from '../../hooks/useApi';
-import DocumentUploader from '../../components/DocumentUploader';
-import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import './Clients.css';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ function ClientCard({ client, onEdit, onToggle, onCardClick, selected }) {
                         style={{ background: client.logo_url ? 'transparent' : (isActive ? bgColor : '#9CA3AF'), padding: client.logo_url ? 0 : undefined, overflow: 'hidden' }}
                     >
                         {client.logo_url
-                            ? <img src={`http://localhost:5000${client.logo_url}`} alt={client.company_name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                            ? <img src={`${BASE_URL}${client.logo_url}`} alt={client.company_name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
                             : initials(client.company_name)
                         }
                     </div>
@@ -216,7 +216,7 @@ function ClientDrawer({ client, api, showToast, onClose, onEdit, onDeleted, onTo
                             style={{ background: client.logo_url ? 'transparent' : (isActive ? avatarColor(client.company_name) : '#9CA3AF'), overflow: 'hidden', padding: 0 }}
                         >
                             {client.logo_url
-                                ? <img src={`http://localhost:5000${client.logo_url}`} alt={client.company_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ? <img src={`${BASE_URL}${client.logo_url}`} alt={client.company_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 : initials(client.company_name)
                             }
                         </div>
@@ -606,7 +606,7 @@ export default function Clients() {
             overtime_multiplier: String(r.overtime_multiplier || '1.50'),
         })));
         setFormError('');
-        setLogoPreview(c.logo_url ? `http://localhost:5000${c.logo_url}` : null);
+        setLogoPreview(c.logo_url ? `${BASE_URL}${c.logo_url}` : null);
         setEditingId(c.id);
         setModalMode('edit'); setModalOpen(true);
     };
@@ -617,7 +617,7 @@ export default function Clients() {
         try {
             const formDataObj = new FormData();
             formDataObj.append('logo', file);
-            const res = await fetch(`http://localhost:5000/api/clients/${editingId}/logo`, {
+            const res = await fetch(`${BASE_URL}/api/clients/${editingId}/logo`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
                 body: formDataObj,
@@ -625,7 +625,7 @@ export default function Clients() {
             const json = await res.json();
             if (!res.ok) throw new Error(json.message || 'Error');
             const url = json.data?.logo_url || json.logo_url;
-            setLogoPreview(`http://localhost:5000${url}`);
+            setLogoPreview(`${BASE_URL}${url}`);
             setClients(prev => prev.map(c => c.id === editingId ? { ...c, logo_url: url } : c));
             if (drawerClient?.id === editingId) setDrawerClient(d => ({ ...d, logo_url: url }));
             showToast('Logo actualizado.');
@@ -656,7 +656,8 @@ export default function Clients() {
                 setClients(prev => [...prev, newC].sort((a, b) => a.company_name.localeCompare(b.company_name)));
                 showToast(`${newC.company_name} creado exitosamente.`);
             } else {
-                const res = await put(`/clients/${editingId}`, formData);
+                // FIX C4: incluir rates en el PUT — antes se enviaba solo formData y los rates se perdían
+                const res = await put(`/clients/${editingId}`, { ...formData, rates: formRates });
                 const upd = res.data?.data || res.data || res;
                 setClients(prev => prev.map(c => c.id === editingId ? upd : c));
                 if (drawerClient?.id === editingId) setDrawerClient(upd);
@@ -759,11 +760,12 @@ export default function Clients() {
 
             {/* Content */}
             {filtered.length === 0 ? (
-                <div className="workers-empty">
-                    <Building2 size={48} />
-                    <p>No se encontraron clientes</p>
-                    <button className="workers-btn-primary" onClick={openCreate}><Plus size={16} /> Agregar el primero</button>
-                </div>
+                <EmptyState
+                    icon={Building2}
+                    title="No se encontraron clientes"
+                    description={searchTerm ? 'Prueba con otros filtros o términos de búsqueda' : 'Aún no has agregado clientes al sistema'}
+                    action={<button className="workers-btn-primary" onClick={openCreate}><Plus size={16} /> Agregar el primero</button>}
+                />
             ) : viewMode === 'cards' ? (
                 <div className="cl-grid">
                     {filtered.map(c => (

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { DollarSign, X } from 'lucide-react';
 import useApi from '../../hooks/useApi';
 import { useAuth } from '../../context/AuthContext';
+import { BASE_URL } from '../../utils/api';
 import PaymentUploadModal from '../../components/admin/PaymentUploadModal';
 import './Payroll.css';
 
@@ -186,7 +187,7 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
 
   const totalDeductions = wDeductions.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
   const netToTransfer = workerModal
-    ? parseFloat(workerModal.gross_pay || 0) - totalDeductions
+    ? parseFloat(workerModal.gross_pay || 0) + parseFloat(workerModal.per_diem_amount || 0) - totalDeductions
     : 0;
 
   const handleFileSelect = (f) => {
@@ -208,7 +209,7 @@ function PayrollDetail({ payroll, weekObj, api, onActionComplete, onRefreshPayro
       const formData = new FormData();
       formData.append('screenshot', wFile);
       const res = await fetch(
-        `http://localhost:5000/api/payroll/lines/${workerModal.id}/upload-screenshot`,
+        `${BASE_URL}/api/payroll/lines/${workerModal.id}/upload-screenshot`,
         { method: 'POST', credentials: 'include', body: formData }
       );
       const json = await res.json();
@@ -903,7 +904,7 @@ export default function AdminPayroll() {
 
   const handleGlobalGenerate = () => {
     if (!weeks || weeks.length === 0) return;
-    const firstUngenerated = weeks.find(w => !w.payroll_id);
+    const firstUngenerated = weeks.find(w => !w.payroll_id || w.status === 'ungenerated');
     if (!firstUngenerated) {
       showToast('info', 'Todas las semanas visibles ya tienen nómina generada.');
       return;

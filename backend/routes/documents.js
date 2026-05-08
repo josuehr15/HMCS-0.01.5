@@ -3,7 +3,7 @@ const router = express.Router();
 const path = require('path');
 const multer = require('multer');
 const auth = require('../middleware/auth');
-const { getDocuments, uploadDocument, downloadDocument, deleteDocument } = require('../controllers/documentController');
+const { getDocuments, getDocumentsAudit, uploadDocument, downloadDocument, deleteDocument } = require('../controllers/documentController');
 
 // ── Configure multer ──────────────────────────────────────────────
 const UPLOADS_DIR = path.join(__dirname, '..', 'uploads', 'documents');
@@ -34,6 +34,7 @@ const upload = multer({
 router.use(auth);
 
 router.get('/', getDocuments);
+router.get('/audit', getDocumentsAudit);   // MUST be before /:id
 router.post('/upload', upload.single('file'), uploadDocument);
 router.get('/:id/download', downloadDocument);
 router.delete('/:id', deleteDocument);

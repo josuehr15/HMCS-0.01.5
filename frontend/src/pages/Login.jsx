@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, Loader } from 'lucide-react';
@@ -15,11 +15,86 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+    const canvasRef = useRef(null);
 
     // Pre-fill remembered email
     useEffect(() => {
         const saved = localStorage.getItem(LS_KEY);
         if (saved) { setEmail(saved); setRemember(true); }
+    }, []);
+
+    // ── Dot-matrix particle canvas — Nexis Compute style ────────────────
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [], animId;
+        let mouse = { x: -9999, y: -9999 };
+
+        const DOT_SPACING = 28;
+        const DOT_RADIUS  = 1.2;
+        const DOT_COLOR   = 'rgba(42, 108, 149,';  // brand blue
+
+        function resize() {
+            width  = canvas.width  = canvas.offsetWidth;
+            height = canvas.height = canvas.offsetHeight;
+            buildGrid();
+        }
+
+        function buildGrid() {
+            particles = [];
+            const cols = Math.ceil(width  / DOT_SPACING) + 1;
+            const rows = Math.ceil(height / DOT_SPACING) + 1;
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < rows; r++) {
+                    particles.push({
+                        x: c * DOT_SPACING,
+                        y: r * DOT_SPACING,
+                        baseAlpha: 0.12 + Math.random() * 0.18,
+                        phase: Math.random() * Math.PI * 2,
+                        speed: 0.003 + Math.random() * 0.004,
+                    });
+                }
+            }
+        }
+
+        function draw(t) {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                // Breathing pulse
+                const pulse = 0.5 + 0.5 * Math.sin(t * p.speed + p.phase);
+                // Pointer proximity brightening
+                const dx = p.x - mouse.x;
+                const dy = p.y - mouse.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const proximity = Math.max(0, 1 - dist / 120);
+                const alpha = p.baseAlpha * pulse + proximity * 0.35;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, DOT_RADIUS + proximity * 1.2, 0, Math.PI * 2);
+                ctx.fillStyle = `${DOT_COLOR} ${Math.min(alpha, 0.85)})`;
+                ctx.fill();
+            });
+            animId = requestAnimationFrame(draw);
+        }
+
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+        canvas.addEventListener('mouseleave', () => {
+            mouse.x = -9999; mouse.y = -9999;
+        });
+
+        resize();
+        window.addEventListener('resize', resize);
+        animId = requestAnimationFrame(draw);
+
+        return () => {
+            cancelAnimationFrame(animId);
+            window.removeEventListener('resize', resize);
+        };
     }, []);
 
     const handleSubmit = async (e) => {
@@ -55,6 +130,8 @@ const Login = () => {
                 LEFT PANEL — 60% brand panel
                 ════════════════════════════════ */}
             <div className="login-left">
+                {/* Dot-matrix particle canvas — Nexis Compute style */}
+                <canvas ref={canvasRef} className="login-left__canvas" aria-hidden="true" />
                 <div className="login-left__inner">
                     {/* Logo */}
                     <img

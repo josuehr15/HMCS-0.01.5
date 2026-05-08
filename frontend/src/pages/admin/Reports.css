@@ -236,6 +236,25 @@
     color: #2A6C95;
 }
 
+.rpt-export-btn--pdf {
+    background: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: #fff;
+}
+
+.rpt-export-btn--pdf:hover {
+    background: #0A6B4E;
+    border-color: #0A6B4E;
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(8, 84, 61, 0.3);
+}
+
+.rpt-export-btn--pdf:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 /* ─── View toggle (Márgenes) ─────────────────────────────────────────────────── */
 .rpt-view-toggle {
     display: flex;
@@ -393,12 +412,4 @@
     animation: spin 1s linear infinite;
 }
 
-.rpt-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 40px;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
+

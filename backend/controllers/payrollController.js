@@ -380,10 +380,11 @@ const markWorkerPaid = async (req, res) => {
                 paid_at: allPaid ? new Date() : null,
             }, { transaction: t });
 
-            // Create Transaction Record for the payment
+            // FIX C10: usar total_to_transfer (net_pay + per_diem) en vez de gross_pay
+            // gross_pay no refleja lo que realmente se transfiere al worker
             await Transaction.create({
                 date: new Date(),
-                amount: parseFloat(line.gross_pay),
+                amount: parseFloat(line.total_to_transfer),
                 type: 'expense',
                 description: `Payroll week ${payroll.week_start_date}`,
                 worker_id: line.worker_id,

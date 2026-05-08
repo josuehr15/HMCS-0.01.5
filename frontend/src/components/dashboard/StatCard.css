@@ -60,9 +60,74 @@
     color: var(--error);
 }
 
-/* Refined hover lift for stat cards used with .card class */
+/* ─── Neuform-inspired stat card refinements ─────────── */
+/* Título: estilo label Aether Node — uppercase, mono feel */
+.stat-card__title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    opacity: 0.85;
+}
+
+/* Valor KPI — Montserrat bold, Quantum Core style */
+.stat-card__value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+/* Icon background — glass tinted */
+.stat-card__icon--up {
+    background: rgba(16, 185, 129, 0.10);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.stat-card__icon--down {
+    background: rgba(239, 68, 68, 0.10);
+    color: var(--error);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.stat-card__icon--neutral {
+    background: rgba(42, 108, 149, 0.10);
+    color: var(--color-primary);
+    border: 1px solid rgba(42, 108, 149, 0.15);
+}
+
+/* Hover lift — Compliance Platform: 160ms ease */
 .card.stat-card:hover,
 .card.stat-card--clickable:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.09);
+    box-shadow: 0 0 0 1px rgba(42,108,149,0.12),
+                0 4px 12px rgba(42,108,149,0.10),
+                0 12px 28px -6px rgba(42,108,149,0.08);
+    border-color: rgba(42, 108, 149, 0.18);
+}
+
+/* Dark mode: sutil teal glow — Nexis Compute style */
+[data-theme="dark"] .card.stat-card:hover,
+[data-theme="dark"] .card.stat-card--clickable:hover {
+    box-shadow: 0 0 0 1px rgba(42,108,149,0.20),
+                0 4px 16px rgba(42,108,149,0.15),
+                0 16px 32px -8px rgba(0,0,0,0.4);
+    border-color: rgba(42, 108, 149, 0.25);
+}
+
+[data-theme="dark"] .stat-card__icon--up {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.20);
+}
+[data-theme="dark"] .stat-card__icon--down {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.20);
+}
+[data-theme="dark"] .stat-card__icon--neutral {
+    background: rgba(42, 108, 149, 0.14);
+    border: 1px solid rgba(42, 108, 149, 0.22);
 }

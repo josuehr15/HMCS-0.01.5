@@ -11,10 +11,20 @@
     padding: 12px 16px;
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
-    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
     position: sticky;
     top: 0;
     z-index: 50;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="dark"] .contractor-header {
+    background: rgba(13, 15, 23, 0.90);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+                0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .contractor-header__left {
@@ -101,4 +111,30 @@
     background: var(--hover);
     border-radius: 8px;
     transform: none;
+}
+/* ─── Shift change badge ─── */
+.contractor-nav-item__icon-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contractor-nav-badge {
+    position: absolute;
+    top: -5px;
+    right: -7px;
+    background: #EF4444;
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    line-height: 1;
+    box-shadow: 0 0 0 2px var(--bg-card);
 }

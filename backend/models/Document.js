@@ -49,6 +49,15 @@ const Document = sequelize.define('Document', {
         allowNull: true,
         references: { model: 'users', key: 'id' },
     },
+    deleted_by: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'users', key: 'id' },
+    },
+    deleted_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
     notes: {
         type: DataTypes.TEXT,
         allowNull: true,

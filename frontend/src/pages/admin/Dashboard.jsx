@@ -12,6 +12,7 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     CartesianGrid, AreaChart, Area, PieChart as RePieChart, Pie, Cell,
 } from 'recharts';
+import Skeleton from '../../components/Skeleton';
 import useApi from '../../hooks/useApi';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -129,8 +130,8 @@ const Dashboard = () => {
     // ── Persist preferences ──
     useEffect(() => {
         try {
-            localStorage.setItem('hmcs_widgets', JSON.stringify(activeWidgets));
-            localStorage.setItem('hmcs_sizes', JSON.stringify(widgetSizes));
+            localStorage.setItem('hmcs_widget_order', JSON.stringify(activeWidgets));
+            localStorage.setItem('hmcs_widget_sizes', JSON.stringify(widgetSizes));
         } catch { /* silent */ }
     }, [activeWidgets, widgetSizes]);
 
@@ -156,8 +157,9 @@ const Dashboard = () => {
                 const overtimeHrs = te.reduce((s, e) => s + parseFloat(e.overtime_hours || 0), 0);
                 const paidInv = inv.filter(x => x.status === 'paid');
                 const pendingInv = inv.filter(x => x.status !== 'paid' && x.status !== 'approved');
-                const revenue = inv.reduce((s, i) => s + parseFloat(i.total || 0), 0);
-                const paidAmt = paidInv.reduce((s, i) => s + parseFloat(i.total || 0), 0);
+                // FIX C5: revenue solo cuenta facturas PAGADAS — antes sumaba todas causando inflación
+                const revenue = paidInv.reduce((s, i) => s + parseFloat(i.total || 0), 0);
+                const paidAmt = revenue; // paidAmt = revenue ahora que revenue solo es paid
                 const pendingAmt = pendingInv.reduce((s, i) => s + parseFloat(i.total || 0), 0);
                 const perDiem = te.reduce((s, e) => s + parseFloat(e.per_diem_amount || 0), 0);
                 const activeProj = proj.filter(x => x.status === 'active' || x.is_active);
@@ -354,15 +356,17 @@ const Dashboard = () => {
     /* ═══════════════════════════════════════════════════════
        CHART DATA
        ═══════════════════════════════════════════════════════ */
-    const cashflowData = [
-        { month: 'Sep', value: Math.round(stats.revenue * 0.6) },
-        { month: 'Oct', value: Math.round(stats.revenue * 0.7) },
-        { month: 'Nov', value: Math.round(stats.revenue * 0.65) },
-        { month: 'Dic', value: Math.round(stats.revenue * 0.8) },
-        { month: 'Ene', value: Math.round(stats.revenue * 0.9) },
-        { month: 'Feb', value: Math.round(stats.revenue * 0.85) },
-        { month: 'Mar', value: Math.round(stats.revenue) },
-    ];
+    const cashflowData = (stats.revenue > 0)
+        ? [
+            { month: 'Sep', value: Math.round(stats.revenue * 0.6) },
+            { month: 'Oct', value: Math.round(stats.revenue * 0.7) },
+            { month: 'Nov', value: Math.round(stats.revenue * 0.65) },
+            { month: 'Dic', value: Math.round(stats.revenue * 0.8) },
+            { month: 'Ene', value: Math.round(stats.revenue * 0.9) },
+            { month: 'Feb', value: Math.round(stats.revenue * 0.85) },
+            { month: 'Mar', value: Math.round(stats.revenue) },
+        ]
+        : [];
 
     const pieData = [
         { name: 'Ganancia', value: Math.max(parseFloat(stats.profitMargin), 0) },
@@ -375,12 +379,26 @@ const Dashboard = () => {
     const userName = user?.first_name || user?.email?.split('@')[0] || 'Admin';
     const today = new Date().toLocaleDateString('es-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    // Loading
+    // Loading — skeleton grid matching the real widget layout
     if (loading) {
         return (
-            <div className="dashboard ds-loading">
-                <div className="ds-loading__spinner" />
-                <p>Cargando dashboard...</p>
+            <div className="dashboard fade-in">
+                <div className="ds-header">
+                    <div>
+                        <Skeleton variant="text" width="240px" height={24} />
+                        <div style={{ marginTop: 6 }}>
+                            <Skeleton variant="text" width="160px" height={14} />
+                        </div>
+                    </div>
+                </div>
+                <div className="ds-grid ds-grid--skeleton">
+                    <div className="ds-card-skeleton"><Skeleton variant="card" height={140} /></div>
+                    <div className="ds-card-skeleton"><Skeleton variant="card" height={140} /></div>
+                    <div className="ds-card-skeleton"><Skeleton variant="card" height={140} /></div>
+                    <div className="ds-card-skeleton"><Skeleton variant="card" height={140} /></div>
+                    <div className="ds-card-skeleton ds-card-skeleton--wide"><Skeleton variant="chart" height={220} /></div>
+                    <div className="ds-card-skeleton ds-card-skeleton--wide"><Skeleton variant="card" height={220} /></div>
+                </div>
             </div>
         );
     }
@@ -588,7 +606,7 @@ const Dashboard = () => {
                         <div className="ds-projects-row">
                             {projects.slice(0, 3).map((p, i) => {
                                 const colors = ['#0D9488', '#2A6C95', '#7C3AED'];
-                                const pct = [68, 45, 22];
+                                const pct = [0, 0, 0];
                                 return (
                                     <div key={p.id || i} className="ds-project">
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>

@@ -13,10 +13,24 @@ const {
     resetWorkerPassword,
     getWorkerLinkedData,
     getWorkerStats,
+    getMyProfile,
+    updateMyProfile,
+    generateMyDocs,
+    getAssignedWorkers,
 } = require('../controllers/workerController');
 
 // All routes require JWT authentication
 router.use(auth);
+
+// ── Contractor: ver y actualizar su propio perfil (debe ir ANTES de /:id) ──
+// GET    /api/workers/me
+router.get('/me', checkRole('contractor'), getMyProfile);
+// PATCH  /api/workers/me
+router.patch('/me', checkRole('contractor'), updateMyProfile);
+// POST   /api/workers/me/generate-docs
+router.post('/me/generate-docs', checkRole('contractor'), generateMyDocs);
+// GET    /api/workers/assigned  (coworkers in same projects)
+router.get('/assigned', checkRole('contractor'), getAssignedWorkers);
 
 // ── Collection routes ──────────────────────────────────────────────
 // GET    /api/workers

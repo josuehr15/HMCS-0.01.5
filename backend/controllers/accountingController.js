@@ -5,6 +5,8 @@ const {
     Worker, Client, Project, Invoice, InvoiceLine, Payroll, PayrollLine, PerDiemEntry, Trade, User,
 } = require('../models');
 const { successResponse, errorResponse } = require('../utils/responseHandler');
+// SEC-SSN: decrypt SSN when building 1099 responses (AES-256-GCM encrypted at rest)
+const { decrypt: decryptSSN } = require('../utils/encryption');
 
 // ═════════════════════════════════════════════════════════════
 // SEED — create default categories if none exist
@@ -681,7 +683,7 @@ const getTaxSummary = async (req, res) => {
                     first_name: w.first_name,
                     last_name: w.last_name,
                     worker_code: w.worker_code,
-                    ssn: w.ssn_encrypted,   // getter decrypts it
+                    ssn: decryptSSN(w.ssn_encrypted), // SEC-SSN: decrypt for 1099 filing (admin only endpoint)
                     address: w.address,
                     city: w.city,
                     state: w.state,
@@ -887,7 +889,8 @@ const ensureImportColumns = async () => {
     };
     await tryAdd(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS import_batch_id VARCHAR(50) DEFAULT NULL`);
     await tryAdd(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS import_source VARCHAR(50) DEFAULT NULL`);
-    await tryAdd(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_imported TINYINT(1) NOT NULL DEFAULT 0`);
+    // FIX C8: TINYINT(1) → BOOLEAN (PostgreSQL syntax)
+    await tryAdd(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_imported BOOLEAN NOT NULL DEFAULT FALSE`);
 };
 ensureImportColumns().catch(() => {});
 
@@ -943,6 +946,9 @@ const _parseCsvBoA = (csvContent) => {
 const applyRulesToTransactions = async (transactions, rules) => {
     const results = [];
     for (const txn of transactions) {
+        // FIX C9: no sobreescribir categorización manual — si ya tiene category_id, saltar
+        if (txn.category_id) continue;
+
         const desc = (txn.description || '').toLowerCase();
         const isExpense = txn.type === 'expense';
 
@@ -950,7 +956,9 @@ const applyRulesToTransactions = async (transactions, rules) => {
             if (rule.record_type === 'expense' && !isExpense) continue;
             if (rule.record_type === 'income'  &&  isExpense) continue;
 
-            const matched = rule.keywords.some(kw =>
+            // FIX C6: usar every() (AND) en vez de some() (OR)
+            // El Libro 2 exige que TODAS las keywords estén presentes para que la regla aplique
+            const matched = rule.keywords.every(kw =>
                 desc.includes(kw.toLowerCase().trim())
             );
             if (!matched) continue;
@@ -1078,7 +1086,8 @@ const previewRuleCount = async (req, res) => {
             const isExpense = txn.type === 'expense';
             if (record_type === 'expense' && !isExpense) return false;
             if (record_type === 'income'  &&  isExpense) return false;
-            return keywords.some(kw => desc.includes(kw.toLowerCase().trim()));
+            // FIX C6: usar every() (AND) en vez de some() (OR) — consistente con applyRulesToTransactions
+            return keywords.every(kw => desc.includes(kw.toLowerCase().trim()));
         });
         return res.json({ success: true, count: matched.length });
     } catch (e) {
@@ -1208,8 +1217,9 @@ const getImportHistory = async (req, res) => {
                 [fn('COUNT', col('id')),              'total_count'],
                 [fn('SUM', literal("CASE WHEN is_active = true THEN 1 ELSE 0 END")),  'active_count'],
                 [fn('SUM', literal("CASE WHEN is_active = false THEN 1 ELSE 0 END")), 'undone_count'],
-                [fn('SUM', literal("CASE WHEN `type` = 'expense' AND is_active = true THEN amount ELSE 0 END")), 'total_expenses'],
-                [fn('SUM', literal("CASE WHEN `type` = 'income'  AND is_active = true THEN amount ELSE 0 END")), 'total_income'],
+                // FIX C8: backticks → double-quotes (PostgreSQL identifier quoting)
+                [fn('SUM', literal(`CASE WHEN "type" = 'expense' AND is_active = true THEN amount ELSE 0 END`)), 'total_expenses'],
+                [fn('SUM', literal(`CASE WHEN "type" = 'income'  AND is_active = true THEN amount ELSE 0 END`)), 'total_income'],
             ],
             group: ['import_batch_id', 'import_source'],
             order: [[fn('MIN', col('created_at')), 'DESC']],

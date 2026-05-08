@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Upload, FileText, FileImage, Download, Trash2, Loader, X } from 'lucide-react';
+import { API_URL as API_BASE } from '../utils/api';
 import './DocumentUploader.css';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Helper: fetch with Authorization header + credentials (cookies)
 const authFetch = (url, options = {}) => {
@@ -68,7 +67,7 @@ export default function DocumentUploader({ ownerType, ownerId, token }) {
             if (ownerId) params.set('owner_id', ownerId);
             const res = await authFetch(`${API_BASE}/documents?${params}`);
             const json = await res.json();
-            setDocs(json.data || json || []);
+            setDocs(Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []));
         } catch { setDocs([]); }
         finally { setLoading(false); }
     };
@@ -103,7 +102,10 @@ export default function DocumentUploader({ ownerType, ownerId, token }) {
             });
             const json = await res.json();
             if (!res.ok) { setError(json.message || 'Error al subir archivo.'); return; }
-            setDocs(prev => [json.data || json, ...prev]);
+            const newDoc = json.data;
+            if (newDoc && typeof newDoc === 'object' && newDoc.id) {
+              setDocs(prev => [newDoc, ...prev]);
+            }
         } catch { setError('Error al subir archivo.'); }
         finally { setUploading(false); }
     };

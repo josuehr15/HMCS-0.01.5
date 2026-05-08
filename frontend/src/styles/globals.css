@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ─── CSS Variables ──────────────────────────────────── */
 :root {
@@ -24,30 +24,120 @@
   --transition: all 0.2s ease;
   --sidebar-width: 260px;
   --sidebar-collapsed: 72px;
+
+  /* ── Neuform Glass System ──────────────────────────── */
+  /* Superficies vidrio — inspirado en Capital Overview + Nexis Compute */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-md: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-md: rgba(255, 255, 255, 0.15);
+  --glass-blur: blur(12px);
+  --glass-blur-sm: blur(4px);
+  --glass-blur-lg: blur(32px);
+
+  /* ── Glow Shadows — Neuform Nexis / Capital ────────── */
+  --glow-primary: 0 0 20px rgba(42, 108, 149, 0.25);
+  --glow-primary-sm: 0 0 12px rgba(42, 108, 149, 0.18);
+  --glow-success: 0 0 16px rgba(16, 185, 129, 0.20);
+  --glow-warning: 0 0 16px rgba(245, 158, 11, 0.20);
+
+  /* ── Premium Card Shadow (Capital Overview style) ──── */
+  --shadow-card: 0 0 0 1px rgba(0,0,0,0.06),
+                 0 1px 1px -0.5px rgba(0,0,0,0.06),
+                 0 3px 3px -1.5px rgba(0,0,0,0.06),
+                 0 6px 6px -3px rgba(0,0,0,0.06),
+                 0 12px 12px -6px rgba(0,0,0,0.06);
+  --shadow-card-hover: 0 0 0 1px rgba(42,108,149,0.15),
+                       0 4px 12px rgba(42,108,149,0.12),
+                       0 12px 28px -6px rgba(42,108,149,0.10);
+
+  /* ── Gradient border shell (Compliance Platform / Aether Node) */
+  --gradient-shell-light: linear-gradient(to right bottom,
+    rgba(255,255,255,0.95), rgba(255,255,255,0.5), rgba(203,213,225,0.3));
+  --gradient-shell-dark: linear-gradient(
+    rgba(255,255,255,0.08), rgba(0,0,0,0));
+
+  /* ── Motion (Neuform: 150ms–300ms, cubic-bezier) ───── */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+
+  /* ── Typography Scale ────────────────────────────────── */
+  --fs-xs: 0.625rem;   /* 10px */
+  --fs-sm: 0.75rem;    /* 12px */
+  --fs-base: 0.875rem; /* 14px */
+  --fs-lg: 1rem;       /* 16px */
+  --fs-xl: 1.25rem;    /* 20px */
+  --fs-2xl: 1.5rem;    /* 24px */
+  --fs-3xl: 2rem;      /* 32px */
+
+  /* ── Spacing Scale ───────────────────────────────────── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
 }
 
 /* ─── Light Theme (default) ──────────────────────────── */
+/* Inspirado en Compliance Platform + Modern Intelligent Workspace */
+/* Surface más definida: #FAFAFA bg, cards #FFFFFF puras, border #E5E7EB */
 [data-theme="light"] {
-  --bg: #F5F5F5;
+  --bg: #F4F6FA;
   --bg-card: #FFFFFF;
   --bg-sidebar: #FFFFFF;
-  --text: #1A1A1A;
-  --text-muted: #6B7280;
-  --text-secondary: #9CA3AF;
-  --border: #E5E7EB;
-  --hover: #F3F4F6;
+  --text: #0F172A;
+  --text-muted: #64748B;
+  --text-secondary: #94A3B8;
+  --text-faint: #CBD5E1;
+  --border: #E2E8F0;
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --hover: #F8FAFC;
+
+  /* Sombras light mode — Compliance Platform layered shadows */
+  --shadow-card: 0 0 0 1px rgba(0,0,0,0.05),
+                 0 1px 2px -0.5px rgba(0,0,0,0.05),
+                 0 4px 8px -2px rgba(0,0,0,0.04);
+  --shadow-card-hover: 0 0 0 1px rgba(42,108,149,0.12),
+                       0 4px 12px rgba(42,108,149,0.10),
+                       0 12px 24px -6px rgba(42,108,149,0.08);
 }
 
 /* ─── Dark Theme ─────────────────────────────────────── */
+/* Inspirado en Capital Overview Dashboard: surface #131316, border muy sutil */
 [data-theme="dark"] {
-  --bg: #0F1117;
-  --bg-card: #1A1D27;
-  --bg-sidebar: #141620;
+  --bg: #0D0F17;
+  --bg-card: #131620;
+  --bg-sidebar: #0F1117;
   --text: #F1F5F9;
   --text-muted: #94A3B8;
   --text-secondary: #64748B;
-  --border: #2D3348;
-  --hover: #232738;
+  --text-faint: #4B5563;
+  --border: #1F2937;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --hover: #1A1D2A;
+
+  /* Override glass con valores dark */
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-md: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-md: rgba(255, 255, 255, 0.12);
+
+  /* Card sombra en dark mode */
+  --shadow-card: 0 0 0 1px rgba(255,255,255,0.04),
+                 0 1px 1px -0.5px rgba(0,0,0,0.3),
+                 0 6px 16px -4px rgba(0,0,0,0.4);
+}
+
+/* ─── Light Theme ────────────────────────────────────── */
+/* Inspirado en Compliance Platform: #FAFAFA bg, #F8F9FA surface */
+[data-theme="light"] {
+  --text-faint: #9CA3AF;
+  --border-subtle: rgba(0, 0, 0, 0.05);
 }
 
 /* ─── Reset ──────────────────────────────────────────── */
@@ -149,16 +239,64 @@ img {
 }
 
 /* ─── Card ───────────────────────────────────────────── */
+/* Neuform: glass first — backdrop-filter + subtle border + layered shadow */
 .card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   padding: 24px;
-  transition: var(--transition);
+  transition: transform var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) ease;
+  box-shadow: var(--shadow-card);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-card-hover);
+  border-color: rgba(42, 108, 149, 0.18);
+}
+
+/* Card glass — para overlays y paneles sobre fondos oscuros */
+.card-glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.card-glass:hover {
+  background: var(--glass-bg-md);
+  border-color: var(--glass-border-md);
+}
+
+/* Card con gradient border shell (Compliance Platform / Aether Node style) */
+.card-premium {
+  position: relative;
+  border-radius: var(--radius-lg);
+}
+
+.card-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--gradient-shell-light);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box,
+                linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .card-premium::before {
+  background: var(--gradient-shell-dark);
 }
 
 /* ─── Buttons ────────────────────────────────────────── */
@@ -387,7 +525,8 @@ img {
 
 /* Card hover effect */
 .card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
 }
 
 .card-hover:hover {
@@ -395,7 +534,7 @@ img {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-/* Button hover effect global */
+/* Button hover effect global — más sutil, Neuform 150ms */
 button:not(.no-lift):hover {
   transform: translateY(-1px);
 }
@@ -417,16 +556,19 @@ button:not(.no-lift):active {
 
 /* Aplica a TODOS los overlays de modal existentes */
 .workers-modal-overlay {
-  animation: fadeIn 0.2s ease;
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  animation: fadeIn var(--duration-fast) ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .workers-modal {
-  animation: slideUp 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: slideUp var(--duration-slow) var(--ease-out);
   /* max-height removido — el overlay se encarga del scroll */
   display: flex;
   flex-direction: column;
+  box-shadow: var(--shadow-card),
+              0 20px 48px -8px rgba(0, 0, 0, 0.35);
 }
 
 .workers-modal__body {
